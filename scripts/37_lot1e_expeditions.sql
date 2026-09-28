@@ -197,8 +197,10 @@ CREATE TABLE shipment_exception (
 );
 
 CREATE INDEX ix_shipment_exception_unresolved
-  ON shipment_exception(is_resolved, exception_at)
-  WHERE is_resolved = FALSE;
+  ON shipment_exception(
+    CASE WHEN NOT is_resolved THEN 1 END,
+    CASE WHEN NOT is_resolved THEN exception_at END
+  );
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══

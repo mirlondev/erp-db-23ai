@@ -79,8 +79,11 @@ CREATE INDEX ix_interface_log_endpoint   ON interface_log(endpoint_code, created
 CREATE INDEX ix_interface_log_status     ON interface_log(status, created_at DESC);
 CREATE INDEX ix_interface_log_entity     ON interface_log(entity_type, entity_id);
 CREATE INDEX ix_interface_log_corr       ON interface_log(correlation_id);
-CREATE INDEX ix_interface_log_errors     ON interface_log(endpoint_code, created_at DESC) WHERE status IN ('ERROR','TIMEOUT','SERVER_ERROR');
-
+-- ⚠️ CORRECTION ORA-02158 : index fonctionnel (DESC déplacé sur l'expression)
+CREATE INDEX ix_interface_log_errors ON interface_log(
+  CASE WHEN status IN ('ERROR','TIMEOUT','SERVER_ERROR') THEN endpoint_code END,
+  CASE WHEN status IN ('ERROR','TIMEOUT','SERVER_ERROR') THEN created_at END
+);
 PROMPT
 PROMPT [3/5] sync_queue  — file d'attente pour synchronisations cross-systèmes
 CREATE TABLE sync_queue (
@@ -110,7 +113,12 @@ CREATE TABLE sync_queue (
   CONSTRAINT ck_sync_locked             CHECK ((locked_by IS NULL) = (locked_at IS NULL))
 );
 
-CREATE INDEX ix_sync_queue_pending      ON sync_queue(status, priority, next_attempt_at) WHERE status = 'PENDING';
+-- ⚠️ CORRECTION ORA-02158 : index fonctionnel
+CREATE INDEX ix_sync_queue_pending ON sync_queue(
+  CASE WHEN status = 'PENDING' THEN priority END,
+  CASE WHEN status = 'PENDING' THEN next_attempt_at END,
+  CASE WHEN status = 'PENDING' THEN status END
+);
 CREATE INDEX ix_sync_queue_entity       ON sync_queue(entity_type, entity_id);
 CREATE INDEX ix_sync_queue_target       ON sync_queue(target_system, status);
 CREATE INDEX ix_sync_queue_corr         ON sync_queue(correlation_id);
@@ -193,7 +201,8 @@ GRANT SELECT, INSERT, UPDATE ON app_sys.import_batch       TO app_api;
 GRANT SELECT, INSERT, UPDATE ON app_sys.export_config      TO app_api;
 
 -- Job DBMS_SCHEDULER pour traiter sync_queue
-GRANT EXECUTE ON DBMS_SCHEDULER TO app_api;
+GRANT CREATE JOB TO app_api;
+
 
 PROMPT
 PROMPT ═══ Validation — Tables ═══
