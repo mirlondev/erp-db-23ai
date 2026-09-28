@@ -102,6 +102,8 @@ PROMPT [12] Volumétrie clé
 SELECT 'app_product.product'        AS tbl, COUNT(*) AS nb FROM app_product.product
 UNION ALL SELECT 'app_product.promo_header',   COUNT(*) FROM app_product.promo_header
 UNION ALL SELECT 'app_product.price_tier',     COUNT(*) FROM app_product.price_tier
+UNION ALL SELECT 'app_product.promo_pos_config', COUNT(*) FROM app_product.promo_pos_config
+UNION ALL SELECT 'app_product.loyalty_status_config',COUNT(*) FROM app_product.loyalty_status_config
 UNION ALL SELECT 'app_party.party',          COUNT(*) FROM app_party.party
 UNION ALL SELECT 'app_party.loyalty_card',     COUNT(*) FROM app_party.loyalty_card
 UNION ALL SELECT 'app_party.loyalty_operation',COUNT(*) FROM app_party.loyalty_operation
