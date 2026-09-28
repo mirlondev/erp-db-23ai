@@ -40,7 +40,15 @@ for script in \
   27_lot_r11_alerts.sql \
   28_lot_r12_reporting.sql \
   29_lot_r13_security.sql \
-  30_lot_r14_interfaces.sql
+  30_lot_r14_interfaces.sql \
+  31_pkg_pos_sales.sql \
+  32_pkg_pos_sales_body.sql \
+  33_trg_invoice_overdue.sql \
+  34_app_api_extensibility.sql \
+  35_lot1ab_doc_complement.sql \
+  36_lot1cd_costs_doc_commercial.sql \
+  37_lot1e_expeditions.sql \
+  38_ohada_skeleton.sql
 do
     echo ""
     echo "▶ Exécution : $script"

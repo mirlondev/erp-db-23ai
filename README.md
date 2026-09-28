@@ -27,7 +27,8 @@ Migration d'un ERP classique **Oracle 11g** (391 tables, 6 schémas) vers **Orac
 | `app_cash`    | Caisses & mouvements                                                |
 | `app_hist`    | Schéma d'archivage (cold storage)                                    |
 | `app_api`     | Vues exposées (Duality + classiques JSON)                           |
-| `app_ar`      | **Accounts Receivable** — factures, avoirs, règlements (R5)         |
+| `app_ar`      | Accounts Receivable — factures, avoirs, règlements                   |
+| `app_ship`    | **Expéditions** — transporteurs, tracking, exceptions (Lot 1E)      |
 
 ## Démarrage rapide
 
@@ -79,6 +80,15 @@ cd scripts
 | **R12** | **KPI & Reporting + 3 MV**     |  **5** | **app_api**     | **✅ ici**    |
 | **R13** | **Sécurité avancée & Audit**   |  **5** | **app_sys**     | **✅ ici**    |
 | **R14** | **Interfaces & Intégrations**  |  **5** | **app_sys**     | **✅ ici**    |
+| QW.1  | pkg_pos_sales + trg_invoice_overdue + dv_invoice + dashboard         |   -    | multi          | **✅ lot 2** |
+| 1A   | Lignes document complémentaires  |   5    | app_doc         | **✅**       |
+| 1B   | Entêtes document complémentaires |   6    | app_doc         | **✅**       |
+| 1C   | Coûts / Frais d'approche         |   4    | app_doc         | **✅**       |
+| 1D   | Documents commerciaux            |   4    | app_doc         | **✅**       |
+| 1E   | Expéditions (nouveau app_ship)   |   7    | app_ship        | **✅**       |
+| 1F   | Demandes de prix (app_purchase)  |   4    | à créer         | ⏸️ reporté  |
+| 1G   | Factures & Règlements (app_ar)   |   5    | app_ar (R5)     | ⏸️ couvert par R5 |
+| OHADA | **Squelette module comptable**   |   8    | app_gl          | **✅**       |
 
 > Couverture actuelle : **~110 tables modernes / 391 legacy ≈ 28 %**. Le modèle structure est en place. **R1-R14 ✅ COMPLETS** — voir procédure.txt pour les évolutions futures (Lot 1C-1G, etc.).
 

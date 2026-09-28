@@ -24,10 +24,10 @@ SELECT username, default_tablespace, account_status
  ORDER BY username;
 
 PROMPT
-PROMPT [2b] Schéma app_ar créé
+PROMPT [2b] Schémas additionnels créés
 SELECT username, account_status, default_tablespace
   FROM dba_users
- WHERE username = 'APP_AR';
+ WHERE username IN ('APP_AR','APP_SHIP');
 
 PROMPT
 PROMPT [3] Nombre de tables par schéma
@@ -138,6 +138,8 @@ UNION ALL SELECT 'app_sales.ticket_discount',COUNT(*) FROM app_sales.ticket_disc
 UNION ALL SELECT 'app_sales.pos_cash_closure', COUNT(*) FROM app_sales.pos_cash_closure
 UNION ALL SELECT 'app_gl.gl_entry',          COUNT(*) FROM app_gl.gl_entry
 UNION ALL SELECT 'app_gl.gl_entry_line',     COUNT(*) FROM app_gl.gl_entry_line
+UNION ALL SELECT 'app_gl.gl_account_ohada',  COUNT(*) FROM app_gl.gl_account_ohada
+UNION ALL SELECT 'app_gl.gl_cost_center',    COUNT(*) FROM app_gl.gl_cost_center
 UNION ALL SELECT 'app_cash.cash_register',   COUNT(*) FROM app_cash.cash_register
 UNION ALL SELECT 'app_cash.cash_movement',   COUNT(*) FROM app_cash.cash_movement;
 

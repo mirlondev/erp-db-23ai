@@ -41,6 +41,9 @@
 | Décisionnel | R11, R12 | 14 | nouveau (pas d'équivalent) |
 | Sécurité | R13 | 5 | nouveau (pas d'équivalent) |
 | Interfaces | R14 | 5 | nouveau (pas d'équivalent) |
+| **Documents commerciaux (Lot 1A-1D)** | 1A-1D | **19** | **~70% (GCBRDD, GCBRDE)** |
+| **Expéditions (Lot 1E)** | 1E | **7 (+ app_ship)** | **~80% (GCEXPEDITION)** |
+| **Comptabilité OHADA (squelette)** | 38 | **8** | **~15% (CP_*)** |
 
 ### Features 23ai/26ai exploitées
 
@@ -56,36 +59,27 @@
 | ROW STORE COMPRESS ADVANCED | MV reporting | mv_hourly_sales, mv_monthly_top_products, mv_customer_performance |
 | Index partiels WHERE | alert open/audit critical/queue pending | plusieurs |
 
-## ❌ Ce qui N'EST PAS FAIT
+## ❌ Ce qui N'EST PAS FAIT (mis à jour)
 
-### 1. Lot 1A-1G (Documents commerciaux) — **reporté par décision design**
-- **1A** Lignes document complémentaires (5 tables, dont doc_imputation, doc_line_lot, doc_line_serial)
-- **1B** Entêtes document complémentaires (6 tables)
-- **1C** Coûts / Frais d'approche (4 tables)
-- **1D** Documents commerciaux (4 tables)
-- **1E** Expéditions — **nouveau schéma `app_ship`** (7 tables dont `GCEXPEDITION`)
-- **1F** Demandes de prix — **nouveau schéma `app_purchase`** (4 tables)
-- **1G** Factures & Règlements — **nouveau schéma `app_ar`** partiellement couvert par R5
-- *Total à faire* : **~25-30 tables + 2 schémas**
+### 1. Lot 1F (Achats) — reporté
+- Demandes de prix — nouveau schéma `app_purchase` (4 tables) : GCPTIE_*
 
 ### 2. Module comptabilité complet (XCPTA — ~94 tables, préfixe CP*)
-C'est le **plus gros gap**. Le legacy `CP_*` contient probablement :
-- Plan comptable OHADA (sysplan)
-- Écritures (CP_ECRITURE, CP_PIECE, CP_MOUV)
-- Lettrage / Rapprochements bancaires
-- Déclarations TVA
-- États financiers
-- Centres de coût / Axes analytiques
+**Squelette OHADA posé** (8 tables + plan SYSCOHADA seeds). Manquent :
+- Immobilisations (CP_IMMO_*)
+- États financiers (bilan, compte de résultat, CPF selon normes)
+- Lettrage / Rapprochements bancaires (~6 tables supplémentaires)
+- Déclarations TVA (~3 tables)
 - Immobilisations
-
-**Couverture actuelle** : seulement `app_gl.gl_entry`, `gl_entry_line`, `gl_journal`, `gl_account`, `gl_period` (~8 tables sur ~94)
+- Provisions / Régularisations
+- Sous-total à faire : **~80-90 tables**
 
 ### 3. Modules KERNEL/Utilitaires (UT* — 6 tables)
 - Tables `UT*` legacy (utilisateurs avancés, préférences, sessions techniques)
 - Non couvertes — peut-être déjà géré par R13 (sécurité)
 
 ### 4. Migration de données (legacy → 23ai)
-**Aucun script ETL écrit**. La migration du contenu des 391 tables legacy vers les ~110 tables modernes demande :
+**Aucun script ETL écrit**. La migration du contenu des 391 tables legacy vers les ~135 tables modernes demande :
 - Mapping de champs legacy → modernes
 - Troncature / concaténation de champs
 - Gestion des NULL/valeurs par défaut
@@ -93,8 +87,8 @@ C'est le **plus gros gap**. Le legacy `CP_*` contient probablement :
 - Dry-run + validation
 
 ### 5. Couche PL/SQL métier (60 packages legacy → modernes)
-- Seulement **4 packages modernes** : pkg_pricing, pkg_inventory, pkg_sales, pkg_gl
-- Manque : facturation avancée, calculs comptables, génération PDF, exports, **pkg_pos_sales** (R8 mentionnait)
+- **5 packages modernes** : pkg_pricing, pkg_inventory, pkg_sales, pkg_gl, pkg_pos_sales
+- Manque : facturation avancée, calculs comptables, génération PDF, exports
 
 ### 6. Données de test reales
 - 22 seeds "vitrine" mais pas de jeu de données de **production-like** (millions de lignes)
