@@ -29,7 +29,8 @@ for script in \
   16_jobs.sql \
   17_lot_r1_promotions.sql \
   18_lot_r2_loyalty.sql \
-  19_lot_r3_stock_avance.sql
+  19_lot_r3_stock_avance.sql \
+  20_lot_r4_replenishment.sql
 do
     echo ""
     echo "▶ Exécution : $script"

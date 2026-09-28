@@ -67,7 +67,7 @@ cd scripts
 | **R1**  | **Promotions & Remises**     |  **8** | **app_product** | **✅ ici**    |
 | **R2**  | **Fidélité client**          |  **7** | **app_party**   | **✅ ici**    |
 | **R3**  | **Stock avancé**             |  **7** | **app_inv**     | **✅ ici**    |
-| R4   | Réappro & transferts             |   6    | app_inv         | ⏳ planifié   |
+| **R4**  | **Réappro & Transferts**      |  **6** | **app_inv**     | **✅ ici**    |
 | R5   | Facturation & avoirs             |   7    | app_doc         | ⏳ planifié   |
 | R6   | Règlements clients avancés       |   6    | app_cash        | ⏳ planifié   |
 | R7   | POS : retours, remises ligne     |   4    | app_sales       | ⏳ planifié   |
@@ -79,7 +79,7 @@ cd scripts
 | R13  | Sécurité avancée & audit         |   5    | app_sys         | ⏳ planifié   |
 | R14  | Interfaces & intégrations        |   5    | app_api         | ⏳ planifié   |
 
-> Couverture actuelle : ~52 tables modernes / 391 legacy ≈ 13 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
+> Couverture actuelle : ~58 tables modernes / 391 legacy ≈ 15 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
 
 ## Décisions techniques notables
 
