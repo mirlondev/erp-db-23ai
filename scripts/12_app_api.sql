@@ -52,7 +52,7 @@ BEGIN
                 OR view_name LIKE 'V\_%' ESCAPE '\') LOOP
     BEGIN
       EXECUTE IMMEDIATE 'DROP VIEW '||v.view_name;
-    EXCEPTION WHEN OTHERS THEN NULL;
+    EXCEPTION WHEN OTHERS THEN NULL; -- defensive drop : ignore "ORA-00942 table or view does not exist"
     END;
   END LOOP;
 END;

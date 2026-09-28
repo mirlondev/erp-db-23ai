@@ -55,7 +55,9 @@ for script in \
   42_etl_legacy_to_modern.sql \
   43_pkg_transfer_stock.sql \
   44_pkg_transfer_stock_body.sql \
-  45_lot1g_invoicing.sql
+  45_lot1g_invoicing.sql \
+  46_ohada_immobilisations.sql \
+  47_ohada_declarations.sql
 do
     echo ""
     echo "▶ Exécution : $script"

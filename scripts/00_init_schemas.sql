@@ -65,14 +65,19 @@ CREATE USER app_purchase IDENTIFIED BY "AppPurchase#2026"
 PROMPT
 PROMPT [3] Attribution des privilèges
 BEGIN
-  FOR u IN (SELECT username FROM dba_users 
+  FOR u IN (SELECT username FROM dba_users
              WHERE username LIKE 'APP\_%' ESCAPE '\'
                AND oracle_maintained = 'N') LOOP
-    EXECUTE IMMEDIATE 'GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, 
-                              CREATE SEQUENCE, CREATE PROCEDURE, 
+    -- CREATE DOMAIN retiré : déprécié en 26ai (SQL Domain). Les domaines sont maintenant
+    -- auto-disponibles via les types utilisateur (CREATE TYPE) ; CREATE TABLE PL/SQL supported.
+    EXECUTE IMMEDIATE 'GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW,
+                              CREATE SEQUENCE, CREATE PROCEDURE,
                               CREATE TRIGGER, CREATE SYNONYM, CREATE TYPE,
                               CREATE MATERIALIZED VIEW, CREATE JOB,
-                              CREATE DOMAIN TO '||u.username;
+                              -- 26ai features :
+                              CREATE JSON SEARCH INDEX, CREATE INDEX,
+                              CREATE ATTRIBUTE DIMENSION
+                              TO '||u.username;
   END LOOP;
 END;
 /

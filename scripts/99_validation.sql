@@ -144,6 +144,19 @@ UNION ALL SELECT 'app_gl.gl_entry',          COUNT(*) FROM app_gl.gl_entry
 UNION ALL SELECT 'app_gl.gl_entry_line',     COUNT(*) FROM app_gl.gl_entry_line
 UNION ALL SELECT 'app_gl.gl_account_ohada',  COUNT(*) FROM app_gl.gl_account_ohada
 UNION ALL SELECT 'app_gl.gl_cost_center',    COUNT(*) FROM app_gl.gl_cost_center
+UNION ALL SELECT 'app_gl.imm_asset',         COUNT(*) FROM app_gl.imm_asset
+UNION ALL SELECT 'app_gl.imm_depreciation',  COUNT(*) FROM app_gl.imm_depreciation
+UNION ALL SELECT 'app_gl.imm_disposal',      COUNT(*) FROM app_gl.imm_disposal
+UNION ALL SELECT 'app_gl.imm_revaluation',   COUNT(*) FROM app_gl.imm_revaluation
+UNION ALL SELECT 'app_gl.tax_form_type',     COUNT(*) FROM app_gl.tax_form_type
+UNION ALL SELECT 'app_gl.tax_declaration',   COUNT(*) FROM app_gl.tax_declaration
+UNION ALL SELECT 'app_gl.tax_declaration_line', COUNT(*) FROM app_gl.tax_declaration_line
+UNION ALL SELECT 'app_gl.tax_payment',       COUNT(*) FROM app_gl.tax_payment
+UNION ALL SELECT 'app_gl.tax_credit',        COUNT(*) FROM app_gl.tax_credit
+UNION ALL SELECT 'app_ar.invoice_installment',    COUNT(*) FROM app_ar.invoice_installment
+UNION ALL SELECT 'app_ar.invoice_dispute',        COUNT(*) FROM app_ar.invoice_dispute
+UNION ALL SELECT 'app_ar.dunning_schedule',       COUNT(*) FROM app_ar.dunning_schedule
+UNION ALL SELECT 'app_ar.collection_case',        COUNT(*) FROM app_ar.collection_case
 UNION ALL SELECT 'app_cash.cash_register',   COUNT(*) FROM app_cash.cash_register
 UNION ALL SELECT 'app_cash.cash_movement',   COUNT(*) FROM app_cash.cash_movement;
 

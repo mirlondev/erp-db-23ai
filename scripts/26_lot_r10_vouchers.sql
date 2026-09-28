@@ -135,7 +135,8 @@ CREATE TABLE voucher_transaction (
   CONSTRAINT ck_voucher_trans_balance     CHECK (balance_before >= 0
                                               AND balance_after >= 0
                                               AND balance_after <= balance_before
-                                                  + DECODE(transaction_type, 'RELOAD', amount, 0))
+                                                  + CASE WHEN transaction_type = 'RELOAD'
+                                                         THEN amount ELSE 0 END)
 );
 
 CREATE INDEX ix_voucher_trans_voucher     ON voucher_transaction(voucher_id);

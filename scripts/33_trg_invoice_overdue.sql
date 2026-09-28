@@ -21,7 +21,11 @@ PROMPT ════════════════════════�
 PROMPT   TRIGGER trg_invoice_overdue
 PROMPT ══════════════════════════════════════════════════════════
 
-BEGIN EXECUTE IMMEDIATE 'DROP TRIGGER trg_invoice_overdue'; EXCEPTION WHEN OTHERS THEN NULL; END;
+BEGIN EXECUTE IMMEDIATE 'DROP TRIGGER trg_invoice_overdue';
+  EXCEPTION WHEN OTHERS THEN
+    -- defensive : ne plante pas si trigger inexistant (ORA-0408)
+    IF SQLCODE NOT IN (-0408, -0407, -02443, -00942) THEN RAISE; END IF;
+END;
 /
 
 CREATE OR REPLACE TRIGGER trg_invoice_overdue
