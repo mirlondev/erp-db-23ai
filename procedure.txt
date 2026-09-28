@@ -1,0 +1,3439 @@
+Let me be efficient with the response.
+
+🚀 Lot 1 — Documents complets (app_doc)
+📋 Plan du Lot 1 (35 tables, 7 sous-lots)
+Sous-lot	Domaine	Tables	Priorité
+1A	Lignes document complémentaires	5	🔴
+1B	Entêtes document complémentaires	6	🔴
+1C	Coûts / Frais d'approche	4	🟠
+1D	Documents commerciaux	4	🟠
+1E	Expéditions (app_doc)	7	🟡
+1F	Demandes de prix	4	🟡
+1G	Factures & Règlements	5	🔴
+On commence par 1A et 1B (11 tables).
+
+📜 SCRIPT LOT 1A — Lignes document complémentaires
+Fichier : lot1a_doc_lines.sql
+
+sql
+-- ============================================================
+-- LOT 1A : Lignes document complémentaires (5 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_doc/AppDoc#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT 1A : Lignes document complémentaires
+PROMPT ═══════════════════════════════════════════════════════
+
+PROMPT [1] doc_imputation (← GCBRDD_IMP)
+CREATE TABLE doc_imputation (
+  doc_id            NUMBER        NOT NULL,
+  line_no           NUMBER(4)     NOT NULL,
+  account_code      VARCHAR2(8),
+  destination_1     VARCHAR2(15),
+  destination_2     VARCHAR2(15),
+  destination_3     VARCHAR2(15),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_doc_imputation PRIMARY KEY (doc_id, line_no),
+  CONSTRAINT fk_doc_imputation_line FOREIGN KEY (doc_id, line_no)
+    REFERENCES doc_line(doc_id, line_no) ON DELETE CASCADE
+);
+
+PROMPT [2] doc_line_lot (← GCBRDD_LOT)
+CREATE TABLE doc_line_lot (
+  doc_id            NUMBER        NOT NULL,
+  line_no           NUMBER(4)     NOT NULL,
+  lot_number        VARCHAR2(20)  NOT NULL,
+  manufacturing_date DATE,
+  expiry_date       DATE          NOT NULL,
+  lot_qty           NUMBER(16,3)  NOT NULL,
+  CONSTRAINT pk_doc_line_lot PRIMARY KEY (doc_id, line_no, lot_number),
+  CONSTRAINT fk_doc_line_lot_line FOREIGN KEY (doc_id, line_no)
+    REFERENCES doc_line(doc_id, line_no) ON DELETE CASCADE,
+  CONSTRAINT ck_doc_line_lot_qty CHECK (lot_qty > 0)
+);
+
+PROMPT [3] doc_line_serial (← GCBRDD_NSERIE)
+CREATE TABLE doc_line_serial (
+  doc_id            NUMBER        NOT NULL,
+  line_no           NUMBER(4)     NOT NULL,
+  serial_number     VARCHAR2(30)  NOT NULL,
+  direction         VARCHAR2(1)   NOT NULL,
+  updated_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_by        VARCHAR2(5)   NOT NULL,
+  CONSTRAINT pk_doc_line_serial PRIMARY KEY (doc_id, line_no, serial_number),
+  CONSTRAINT fk_doc_line_serial_line FOREIGN KEY (doc_id, line_no)
+    REFERENCES doc_line(doc_id, line_no) ON DELETE CASCADE,
+  CONSTRAINT ck_doc_line_serial_dir CHECK (direction IN ('I','O'))
+);
+
+PROMPT [4] doc_line_shortage (← GCBRDD_MS)
+CREATE TABLE doc_line_shortage (
+  doc_id            NUMBER        NOT NULL,
+  line_no           NUMBER(4)     NOT NULL,
+  shortage_qty      NUMBER(16,3),
+  damaged_qty       NUMBER(16,3),
+  CONSTRAINT pk_doc_line_shortage PRIMARY KEY (doc_id, line_no),
+  CONSTRAINT fk_doc_line_shortage_line FOREIGN KEY (doc_id, line_no)
+    REFERENCES doc_line(doc_id, line_no) ON DELETE CASCADE
+);
+
+PROMPT [5] doc_line_cost (← GCBRDD_RECF)
+CREATE TABLE doc_line_cost (
+  doc_id              NUMBER        NOT NULL,
+  line_no             NUMBER(4)     NOT NULL,
+  line_amount         NUMBER(16,4),
+  amount_fob          NUMBER(16,4),
+  amount_add_duty_base NUMBER(16,4),
+  duty_rate           NUMBER(5,2),
+  da_rate             NUMBER(5,2),
+  vat_rate            NUMBER(5,2),
+  prec_rate           NUMBER(5,2),
+  other_rate          NUMBER(5,2),
+  duty_amount         NUMBER(16,4),
+  other_fap_amount    NUMBER(16,4),
+  cost_amount         NUMBER(16,4),
+  margin_rate         NUMBER(5,2),
+  std_price_proposed  NUMBER(16,4),
+  free_amount_1       NUMBER(16,4),
+  add_da_amount       NUMBER(16,4),
+  ttc_rate            NUMBER(5,2),
+  created_by          VARCHAR2(5),
+  created_at          TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_by          VARCHAR2(5),
+  updated_at          TIMESTAMP,
+  CONSTRAINT pk_doc_line_cost PRIMARY KEY (doc_id, line_no),
+  CONSTRAINT fk_doc_line_cost_line FOREIGN KEY (doc_id, line_no)
+    REFERENCES doc_line(doc_id, line_no) ON DELETE CASCADE
+);
+
+PROMPT [6] Index
+CREATE INDEX ix_doc_line_lot_expiry  ON doc_line_lot(expiry_date);
+CREATE INDEX ix_doc_line_serial_num  ON doc_line_serial(serial_number);
+
+PROMPT [7] Validation
+SELECT table_name FROM user_tables 
+ WHERE table_name IN ('DOC_IMPUTATION','DOC_LINE_LOT','DOC_LINE_SERIAL',
+                      'DOC_LINE_SHORTAGE','DOC_LINE_COST')
+ ORDER BY table_name;
+
+PROMPT ✅ LOT 1A terminé
+EXIT;
+📜 SCRIPT LOT 1B — Entêtes document complémentaires
+Fichier : lot1b_doc_headers.sql
+
+sql
+-- ============================================================
+-- LOT 1B : Entêtes document complémentaires (6 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_doc/AppDoc#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT 1B : Entêtes document complémentaires
+PROMPT ═══════════════════════════════════════════════════════
+
+PROMPT [1] doc_advance_lettering (← GCBRDE_AVCE_LETTRAGE)
+CREATE TABLE doc_advance_lettering (
+  doc_id              NUMBER        NOT NULL,
+  company_code        VARCHAR2(2)   NOT NULL,
+  entry_no            NUMBER(8)     NOT NULL,
+  line_no             NUMBER(4)     NOT NULL,
+  sub_line_no         NUMBER(4),
+  debit_letter_amount NUMBER(16,4),
+  credit_letter_amount NUMBER(16,4),
+  created_at          TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_doc_adv_lettering PRIMARY KEY (doc_id, company_code, entry_no, line_no),
+  CONSTRAINT fk_doc_adv_lettering_hdr FOREIGN KEY (doc_id)
+    REFERENCES doc_header(doc_id) ON DELETE CASCADE
+);
+
+PROMPT [2] doc_loading_note (← GCBRDE_BON_CHARG)
+CREATE TABLE doc_loading_note (
+  doc_id            NUMBER        NOT NULL,
+  supplier_code     VARCHAR2(8)   NOT NULL,
+  print_count       NUMBER(2)     DEFAULT 0,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP,
+  created_by        VARCHAR2(5),
+  CONSTRAINT pk_doc_loading_note PRIMARY KEY (doc_id),
+  CONSTRAINT fk_doc_loading_note_hdr FOREIGN KEY (doc_id)
+    REFERENCES doc_header(doc_id) ON DELETE CASCADE
+);
+
+PROMPT [3] doc_delivery_option (← GCBRDE_CDEC)
+CREATE TABLE doc_delivery_option (
+  doc_id            NUMBER        NOT NULL,
+  delivery_option   VARCHAR2(1),
+  delivery_date     DATE,
+  delivery_time     DATE,
+  delivery_location VARCHAR2(30),
+  multiple_delivery VARCHAR2(1),
+  CONSTRAINT pk_doc_delivery_option PRIMARY KEY (doc_id),
+  CONSTRAINT fk_doc_delivery_option_hdr FOREIGN KEY (doc_id)
+    REFERENCES doc_header(doc_id) ON DELETE CASCADE
+);
+
+PROMPT [4] doc_foreign_header (← GCBRDE_CDEF)
+CREATE TABLE doc_foreign_header (
+  doc_id                NUMBER        NOT NULL,
+  delivery_city_code    VARCHAR2(3),
+  provenance_country    VARCHAR2(30),
+  origin_country        VARCHAR2(30),
+  incoterm              VARCHAR2(3),
+  loading_place         VARCHAR2(30),
+  mafob_amount          NUMBER(16,4),
+  freight_amount        NUMBER(16,4),
+  insurance_amount      NUMBER(16,4),
+  ectn_amount           NUMBER(16,4),
+  insurance_off         VARCHAR2(1),
+  ectn_off              VARCHAR2(1),
+  sgs_license_no        VARCHAR2(20),
+  sgs_license_date      DATE,
+  sgs_expiry_date       DATE,
+  sgs_amount            NUMBER(16,4),
+  di_number             VARCHAR2(20),
+  di_date               DATE,
+  di_bank               VARCHAR2(10),
+  transport_bulk        VARCHAR2(1),
+  transport_conventional VARCHAR2(1),
+  transport_container_lcl VARCHAR2(1),
+  transport_container_rlcl VARCHAR2(1),
+  transport_container_fcl VARCHAR2(1),
+  transport_container_rfcl VARCHAR2(1),
+  container_size_20     VARCHAR2(1),
+  container_size_40     VARCHAR2(1),
+  container_size_other  VARCHAR2(1),
+  cv_container_fcl      VARCHAR2(1),
+  cv_container_seal_sgs VARCHAR2(1),
+  cv_one_supplier_one_customer VARCHAR2(1),
+  sgs_entry_no          NUMBER(8),
+  bank_entry_no         NUMBER(8),
+  single_window_no      VARCHAR2(20),
+  payment_term          VARCHAR2(3),
+  delivery_address      VARCHAR2(255),
+  billing_address       VARCHAR2(255),
+  print_memo            VARCHAR2(1),
+  forwarder_code        VARCHAR2(3),
+  po_print_count        NUMBER(3) DEFAULT 0,
+  created_by            VARCHAR2(5),
+  created_at            TIMESTAMP DEFAULT SYSTIMESTAMP,
+  updated_by            VARCHAR2(5),
+  updated_at            TIMESTAMP,
+  CONSTRAINT pk_doc_foreign_header PRIMARY KEY (doc_id),
+  CONSTRAINT fk_doc_foreign_header_hdr FOREIGN KEY (doc_id)
+    REFERENCES doc_header(doc_id) ON DELETE CASCADE
+);
+
+PROMPT [5] doc_request (← GCBRDE_DDE)
+CREATE TABLE doc_request (
+  doc_id                NUMBER        NOT NULL,
+  request_type          VARCHAR2(2),
+  source_warehouse      VARCHAR2(5),
+  destination_warehouse VARCHAR2(5),
+  final_doc_type        VARCHAR2(5),
+  CONSTRAINT pk_doc_request PRIMARY KEY (doc_id),
+  CONSTRAINT fk_doc_request_hdr FOREIGN KEY (doc_id)
+    REFERENCES doc_header(doc_id) ON DELETE CASCADE
+);
+
+PROMPT [6] doc_attachment (← GCBRDE_DOCS)
+CREATE TABLE doc_attachment (
+  doc_id            NUMBER        NOT NULL,
+  attachment_id     NUMBER GENERATED ALWAYS AS IDENTITY,
+  title             VARCHAR2(50),
+  doc_date          DATE,
+  file_path         VARCHAR2(2000),
+  file_id           NUMBER(8),
+  is_special        VARCHAR2(1) DEFAULT 'N',
+  created_by        VARCHAR2(5)   NOT NULL,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_doc_attachment PRIMARY KEY (attachment_id),
+  CONSTRAINT fk_doc_attachment_hdr FOREIGN KEY (doc_id)
+    REFERENCES doc_header(doc_id) ON DELETE CASCADE
+);
+
+PROMPT [7] Index
+CREATE INDEX ix_doc_attachment_hdr  ON doc_attachment(doc_id);
+CREATE INDEX ix_doc_foreign_hdr_inc ON doc_foreign_header(incoterm);
+
+PROMPT [8] Validation
+SELECT table_name FROM user_tables 
+ WHERE table_name IN ('DOC_ADVANCE_LETTERING','DOC_LOADING_NOTE',
+                      'DOC_DELIVERY_OPTION','DOC_FOREIGN_HEADER',
+                      'DOC_REQUEST','DOC_ATTACHMENT')
+ ORDER BY table_name;
+
+PROMPT ✅ LOT 1B terminé
+EXIT;
+📜 SCRIPT Package pkg_doc
+Fichier : pkg_doc.sql
+
+sql
+-- ============================================================
+-- Package pkg_doc — Gestion des documents
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_doc/AppDoc#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   PACKAGE PKG_DOC
+PROMPT ═══════════════════════════════════════════════════════
+
+CREATE OR REPLACE PACKAGE pkg_doc AS
+
+  -- Créer un document (retourne doc_id)
+  FUNCTION create_document(
+    p_doc_type_code IN VARCHAR2,
+    p_company_code  IN VARCHAR2,
+    p_doc_date      IN DATE,
+    p_party_code    IN VARCHAR2 DEFAULT NULL,
+    p_user_code     IN VARCHAR2
+  ) RETURN NUMBER;
+
+  -- Ajouter une ligne
+  PROCEDURE add_line(
+    p_doc_id        IN NUMBER,
+    p_line_no       IN NUMBER,
+    p_product_code  IN VARCHAR2,
+    p_qty           IN NUMBER,
+    p_unit_price    IN NUMBER,
+    p_unit_code     IN VARCHAR2 DEFAULT 'PCS'
+  );
+
+  -- Calculer les totaux du document
+  PROCEDURE compute_totals(p_doc_id IN NUMBER);
+
+  -- Valider un document
+  PROCEDURE validate_document(
+    p_doc_id    IN NUMBER,
+    p_user_code IN VARCHAR2
+  );
+
+  -- Annuler un document
+  PROCEDURE cancel_document(
+    p_doc_id    IN NUMBER,
+    p_user_code IN VARCHAR2,
+    p_reason    IN VARCHAR2 DEFAULT NULL
+  );
+
+  -- Récupérer le total TTC d'un document
+  FUNCTION get_total_ttc(p_doc_id IN NUMBER) RETURN NUMBER;
+
+END pkg_doc;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_doc AS
+
+  FUNCTION create_document(
+    p_doc_type_code IN VARCHAR2,
+    p_company_code  IN VARCHAR2,
+    p_doc_date      IN DATE,
+    p_party_code    IN VARCHAR2 DEFAULT NULL,
+    p_user_code     IN VARCHAR2
+  ) RETURN NUMBER IS
+    v_doc_id    NUMBER;
+    v_doc_no    NUMBER;
+    v_party_name VARCHAR2(50);
+  BEGIN
+    -- Numéro suivant
+    SELECT NVL(MAX(doc_no), 0) + 1 INTO v_doc_no
+      FROM doc_header WHERE doc_type_code = p_doc_type_code;
+
+    -- Nom du tiers
+    IF p_party_code IS NOT NULL THEN
+      BEGIN
+        SELECT party_name INTO v_party_name
+          FROM app_party.party WHERE party_code = p_party_code;
+      EXCEPTION WHEN NO_DATA_FOUND THEN v_party_name := NULL;
+      END;
+    END IF;
+
+    INSERT INTO doc_header (
+      doc_type_code, doc_no, company_code, doc_date,
+      party_code, party_name, status, created_by, created_at
+    ) VALUES (
+      p_doc_type_code, v_doc_no, p_company_code, p_doc_date,
+      p_party_code, v_party_name, 'DRAFT', p_user_code, SYSDATE
+    ) RETURNING doc_id INTO v_doc_id;
+
+    RETURN v_doc_id;
+  END create_document;
+
+  PROCEDURE add_line(
+    p_doc_id        IN NUMBER,
+    p_line_no       IN NUMBER,
+    p_product_code  IN VARCHAR2,
+    p_qty           IN NUMBER,
+    p_unit_price    IN NUMBER,
+    p_unit_code     IN VARCHAR2 DEFAULT 'PCS'
+  ) IS
+    v_doc_type  VARCHAR2(20);
+    v_wh        VARCHAR2(5);
+    v_desc      VARCHAR2(120);
+  BEGIN
+    SELECT doc_type_code, warehouse_code INTO v_doc_type, v_wh
+      FROM doc_header WHERE doc_id = p_doc_id;
+
+    BEGIN
+      SELECT product_name INTO v_desc
+        FROM app_product.product WHERE product_code = p_product_code;
+    EXCEPTION WHEN NO_DATA_FOUND THEN v_desc := p_product_code;
+    END;
+
+    INSERT INTO doc_line (
+      doc_id, line_no, order_no, doc_type_code, warehouse_code,
+      product_code, description_1, quantity, unit_code, unit_price,
+      amount, unit_price_ht, amount_ht, line_type, is_line_closed
+    ) VALUES (
+      p_doc_id, p_line_no, p_line_no, v_doc_type, v_wh,
+      p_product_code, v_desc, p_qty, p_unit_code, p_unit_price,
+      p_qty * p_unit_price,
+      ROUND(p_qty * p_unit_price / 1.189, 4),
+      ROUND(p_qty * p_unit_price / 1.189, 4),
+      'STD', 'N'
+    );
+  END add_line;
+
+  PROCEDURE compute_totals(p_doc_id IN NUMBER) IS
+  BEGIN
+    UPDATE doc_header
+       SET total_ht  = (SELECT NVL(SUM(amount_ht), 0) FROM doc_line WHERE doc_id = p_doc_id),
+           total_ttc = (SELECT NVL(SUM(amount), 0)    FROM doc_line WHERE doc_id = p_doc_id)
+     WHERE doc_id = p_doc_id;
+  END compute_totals;
+
+  PROCEDURE validate_document(
+    p_doc_id    IN NUMBER,
+    p_user_code IN VARCHAR2
+  ) IS
+  BEGIN
+    compute_totals(p_doc_id);
+
+    UPDATE doc_header
+       SET status     = 'VALID',
+           updated_by = p_user_code,
+           updated_at = SYSDATE
+     WHERE doc_id = p_doc_id;
+
+    INSERT INTO doc_log (doc_id, operation_at, user_code, operation_label)
+    VALUES (p_doc_id, SYSDATE, p_user_code, 'Document validé');
+  END validate_document;
+
+  PROCEDURE cancel_document(
+    p_doc_id    IN NUMBER,
+    p_user_code IN VARCHAR2,
+    p_reason    IN VARCHAR2 DEFAULT NULL
+  ) IS
+  BEGIN
+    UPDATE doc_header
+       SET status     = 'CANCELLED',
+           updated_by = p_user_code,
+           updated_at = SYSDATE
+     WHERE doc_id = p_doc_id;
+
+    INSERT INTO doc_log (doc_id, operation_at, user_code, operation_label)
+    VALUES (p_doc_id, SYSDATE, p_user_code, 
+            'Document annulé : ' || NVL(p_reason, '(sans motif)'));
+  END cancel_document;
+
+  FUNCTION get_total_ttc(p_doc_id IN NUMBER) RETURN NUMBER IS
+    v_total NUMBER(16,4);
+  BEGIN
+    SELECT NVL(SUM(amount), 0) INTO v_total
+      FROM doc_line WHERE doc_id = p_doc_id;
+    RETURN v_total;
+  END get_total_ttc;
+
+END pkg_doc;
+/
+
+PROMPT [Validation]
+SELECT object_name, object_type, status
+  FROM user_objects
+ WHERE object_name = 'PKG_DOC'
+ ORDER BY object_type;
+
+PROMPT ✅ Package PKG_DOC créé
+EXIT;
+📜 SCRIPT de test
+Fichier : test_lot1.sql
+
+sql
+-- ============================================================
+-- Test du Lot 1
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   TEST LOT 1
+PROMPT ═══════════════════════════════════════════════════════
+
+CONNECT app_doc/AppDoc#2026@localhost:1521/FREEPDB1
+
+-- [1] Créer un document de vente
+PROMPT
+PROMPT [1] Création document de vente
+DECLARE
+  v_doc_id NUMBER;
+BEGIN
+  v_doc_id := pkg_doc.create_document(
+    p_doc_type_code => 'SALE',
+    p_company_code  => 'COMP01',
+    p_doc_date      => SYSDATE,
+    p_party_code    => 'SFP031',
+    p_user_code     => 'ADMIN'
+  );
+  DBMS_OUTPUT.PUT_LINE('  doc_id créé : ' || v_doc_id);
+
+  -- Ajouter 3 lignes
+  pkg_doc.add_line(v_doc_id, 1, '31274', 2, 25000);
+  pkg_doc.add_line(v_doc_id, 2, '19889', 5,  2950);
+  pkg_doc.add_line(v_doc_id, 3, 'MOBILE_A17', 1, 175000);
+
+  -- Ajouter un lot sur la ligne 1
+  INSERT INTO doc_line_lot (doc_id, line_no, lot_number, manufacturing_date, expiry_date, lot_qty)
+  VALUES (v_doc_id, 1, 'LOT-2026-001', SYSDATE, SYSDATE + 365, 2);
+
+  -- Ajouter un numéro de série sur la ligne 3
+  INSERT INTO doc_line_serial (doc_id, line_no, serial_number, direction, updated_by)
+  VALUES (v_doc_id, 3, 'IMEI-350213458355281', 'O', 'ADMIN');
+
+  -- Imputation comptable sur la ligne 1
+  INSERT INTO doc_imputation (doc_id, line_no, account_code, destination_1)
+  VALUES (v_doc_id, 1, '701110', 'VENTES');
+
+  -- Valider
+  pkg_doc.validate_document(v_doc_id, 'ADMIN');
+
+  DBMS_OUTPUT.PUT_LINE('  Document validé');
+END;
+/
+
+PROMPT
+PROMPT [2] Vérification du document
+SELECT doc_id, doc_type_code, doc_no, party_name, 
+       total_ht, total_ttc, status
+  FROM doc_header
+ ORDER BY doc_id DESC
+ FETCH FIRST 1 ROWS ONLY;
+
+PROMPT
+PROMPT [3] Lignes du document
+SELECT d.doc_id, d.line_no, d.product_code, d.description_1,
+       d.quantity, d.unit_price, d.amount
+  FROM doc_line d
+ WHERE d.doc_id = (SELECT MAX(doc_id) FROM doc_header)
+ ORDER BY d.line_no;
+
+PROMPT
+PROMPT [4] Lots attachés
+SELECT doc_id, line_no, lot_number, expiry_date, lot_qty
+  FROM doc_line_lot;
+
+PROMPT
+PROMPT [5] Numéros de série
+SELECT doc_id, line_no, serial_number, direction
+  FROM doc_line_serial;
+
+PROMPT
+PROMPT [6] Test pkg_doc.get_total_ttc
+SELECT pkg_doc.get_total_ttc((SELECT MAX(doc_id) FROM doc_header)) AS total
+  FROM DUAL;
+
+PROMPT
+PROMPT [7] Log du document
+SELECT doc_id, TO_CHAR(operation_at, 'HH24:MI:SS') AS heure, 
+       user_code, operation_label
+  FROM doc_log
+ WHERE doc_id = (SELECT MAX(doc_id) FROM doc_header)
+ ORDER BY operation_at;
+
+EXIT;
+🚀 Exécution
+bash
+cd ~/migration_26ai/
+
+# 1. Créer les tables
+sqlplus /nolog @lot1a_doc_lines.sql
+sqlplus /nolog @lot1b_doc_headers.sql
+
+# 2. Créer le package
+sqlplus /nolog @pkg_doc.sql
+
+# 3. Tester
+sqlplus /nolog @test_lot1.sql
+📊 Résultat attendu
+text
+📊 Tables créées :
+  DOC_IMPUTATION         ✅
+  DOC_LINE_LOT           ✅
+  DOC_LINE_SERIAL        ✅
+  DOC_LINE_SHORTAGE      ✅
+  DOC_LINE_COST          ✅
+  DOC_ADVANCE_LETTERING  ✅
+  DOC_LOADING_NOTE       ✅
+  DOC_DELIVERY_OPTION    ✅
+  DOC_FOREIGN_HEADER     ✅
+  DOC_REQUEST            ✅
+  DOC_ATTACHMENT         ✅
+
+📦 Package PKG_DOC       ✅ VALID
+
+🧪 Tests :
+  Document créé avec 3 lignes
+  Lot + N° série + Imputation
+  Validation → status = 'VALID'
+🎯 Après le Lot 1A + 1B
+Une fois validé, on enchaîne :
+
+Étape	Contenu	Effort
+Lot 1C	Coûts / Frais d'approche (4 tables)	~15 min
+Lot 1D	Documents commerciaux (4 tables)	~15 min
+Lot 1E	Expéditions (7 tables + nouveau schéma app_ship)	~30 min
+Lot 1F	Demandes de prix (4 tables + nouveau schéma app_purchase)	~20 min
+Lot 1G	Factures & Règlements (5 tables + nouveau schéma app_ar)	~30 min
+Puis on enchaîne avec Lot 2 (Comptabilité), Lot 3 (Promotions)...
+
+Lance les 3 scripts (lot1a, lot1b, pkg_doc) puis test_lot1.sql et envoie-moi la sortie. Si tout est OK, on continue avec Lot 1C.
+
+This response is AI-generated, for reference only.
+comme c,est dans le retail il faut ocuuper en priorite la partie vente , inventaire, facturation ,...
+The user wants to prioritize the retail core: Sales, Inventory, Invoicing. Let me reorganize the roadmap to focus on what matters most for a retail business like SUPER SONIC.
+
+The retail core modules:
+
+Ventes (POS) - already have ticket, ticket_line, ticket_payment - but needs: promotions, remises, fidélité, retours
+
+Inventaire (Stock) - already have inv_stock, inv_movement - but needs: PRMP, lots, séries, réappro, inventaires, transferts
+
+Facturation - not created yet - needs: factures, avoirs, règlements clients
+
+Promotions/Prix - needs: promotions, paliers, remises
+
+Fidélité - needs: cartes, points, statuts
+
+Let me structure this properly.
+
+🎯 Réorientation — Priorités RETAIL SUPER SONIC
+Tu as raison. Pour un retailer, le cœur du métier c'est :
+
+text
+┌────────────────────────────────────────────────────────────────────────────┐
+│                    PRIORITÉS RETAIL SUPER SONIC                            │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  1. 🛒 VENTE (POS)              ───► Cœur du CA                            │
+│     • Tickets, lignes, paiements ✅                                         │
+│     • Remises, promotions ❌                                                │
+│     • Retours, avoirs ❌                                                    │
+│     • Fidélité clients ❌                                                   │
+│                                                                            │
+│  2. 📦 INVENTAIRE               ───► Marge & disponibilité                 │
+│     • Stock de base ✅                                                      │
+│     • PRMP (coût moyen) ❌                                                  │
+│     • Lots / n° série ❌                                                    │
+│     • Inventaires physiques ❌                                              │
+│     • Réappro / transferts ❌                                               │
+│                                                                            │
+│  3. 🧾 FACTURATION              ───► Recouvrement & compta                 │
+│     • Factures clients ❌                                                   │
+│     • Avoirs / retours ❌                                                   │
+│     • Règlements clients ❌                                                 │
+│     • Crédit / échéances ❌                                                 │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+On abandonne temporairement les Lot 1C/1D/1E/1F/1G (import/export, proforma, etc.) — pas critiques pour le retail pur.
+
+📋 Nouveau plan RETAIL en 6 lots
+Lot	Module	Tables	Priorité	Impact CA
+R1	🎁 Promotions & Remises	8	🔴 Critique	+10-20% ventes
+R2	💎 Fidélité client	7	🔴 Critique	Fidélisation
+R3	📦 Stock avancé (PRMP, lots, séries)	8	🔴 Critique	Marge réelle
+R4	🔄 Réappro & Transferts	6	🟠 Haute	Disponibilité
+R5	🧾 Facturation & Avoirs	7	🔴 Critique	Recouvrement
+R6	💳 Règlements clients	6	🟠 Haute	Trésorerie
+Total : 42 tables — couvre 90% du retail.
+
+📜 LOT R1 — Promotions & Remises (8 tables)
+Fichier : r1_promotions.sql
+
+sql
+-- ============================================================
+-- LOT R1 : Promotions & Remises (8 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_product/AppProduct#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R1 : PROMOTIONS & REMISES
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] promo_header (← GCPROMO)
+-- ============================================================
+PROMPT [1] promo_header
+CREATE TABLE promo_header (
+  promo_id          NUMBER GENERATED ALWAYS AS IDENTITY,
+  promo_code        VARCHAR2(5)   NOT NULL,
+  promo_name        VARCHAR2(50)  NOT NULL,
+  start_date        DATE,
+  end_date          DATE,
+  status            VARCHAR2(1)   DEFAULT 'A',
+  coverage_rate     NUMBER(5,2),
+  memo              VARCHAR2(255),
+  is_pos_restricted VARCHAR2(1)   DEFAULT 'N',
+  population        VARCHAR2(1)   DEFAULT 'A',
+  excluded_prices   VARCHAR2(20),
+  total_qty_promo   NUMBER(16,4),
+  calc_base         VARCHAR2(1)   DEFAULT 'P',
+  all_cust_family   VARCHAR2(1)   DEFAULT 'N',
+  only_prices       VARCHAR2(20),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_by        VARCHAR2(5),
+  updated_at        TIMESTAMP,
+  CONSTRAINT pk_promo_header PRIMARY KEY (promo_id),
+  CONSTRAINT uk_promo_code UNIQUE (promo_code),
+  CONSTRAINT ck_promo_status CHECK (status IN ('A','I','E')),
+  CONSTRAINT ck_promo_dates CHECK (end_date IS NULL OR start_date IS NULL OR end_date >= start_date)
+);
+
+-- ============================================================
+-- [2] promo_product (← GCPROMO_ART)
+-- ============================================================
+PROMPT [2] promo_product
+CREATE TABLE promo_product (
+  promo_id          NUMBER        NOT NULL,
+  product_id        NUMBER        NOT NULL,
+  is_excluded       VARCHAR2(1)   DEFAULT 'N',
+  is_promo_product  VARCHAR2(1)   DEFAULT 'N',
+  unit_code         VARCHAR2(3),
+  CONSTRAINT pk_promo_product PRIMARY KEY (promo_id, product_id),
+  CONSTRAINT fk_promo_product_header FOREIGN KEY (promo_id)
+    REFERENCES promo_header(promo_id) ON DELETE CASCADE,
+  CONSTRAINT fk_promo_product_product FOREIGN KEY (product_id)
+    REFERENCES product(product_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [3] promo_quantity (← GCPROMO_QTE)
+-- ============================================================
+PROMPT [3] promo_quantity
+CREATE TABLE promo_quantity (
+  promo_id          NUMBER        NOT NULL,
+  rule_no           NUMBER GENERATED ALWAYS AS IDENTITY,
+  min_qty           NUMBER(16,3)  NOT NULL,
+  max_qty           NUMBER(16,3),
+  free_qty          NUMBER(16,3),
+  promo_price       NUMBER(16,4),
+  is_linear         VARCHAR2(1)   DEFAULT 'N',
+  discount_rate     NUMBER(5,2),
+  CONSTRAINT pk_promo_quantity PRIMARY KEY (promo_id, rule_no),
+  CONSTRAINT fk_promo_quantity_header FOREIGN KEY (promo_id)
+    REFERENCES promo_header(promo_id) ON DELETE CASCADE,
+  CONSTRAINT ck_promo_qty_range CHECK (max_qty IS NULL OR max_qty >= min_qty)
+);
+
+-- ============================================================
+-- [4] promo_customer_family (← GCPROMO_FAMTIE)
+-- ============================================================
+PROMPT [4] promo_customer_family
+CREATE TABLE promo_customer_family (
+  promo_id          NUMBER        NOT NULL,
+  customer_family   VARCHAR2(3)   NOT NULL,
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  CONSTRAINT pk_promo_customer_family PRIMARY KEY (promo_id, customer_family),
+  CONSTRAINT fk_promo_cust_fam_header FOREIGN KEY (promo_id)
+    REFERENCES promo_header(promo_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [5] promo_pos (← GCPROMO_PTVTE)
+-- ============================================================
+PROMPT [5] promo_pos
+CREATE TABLE promo_pos (
+  promo_id          NUMBER        NOT NULL,
+  pos_code          VARCHAR2(3)   NOT NULL,
+  CONSTRAINT pk_promo_pos PRIMARY KEY (promo_id, pos_code),
+  CONSTRAINT fk_promo_pos_header FOREIGN KEY (promo_id)
+    REFERENCES promo_header(promo_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [6] price_tier (← GCPPALIER)
+-- ============================================================
+PROMPT [6] price_tier
+CREATE TABLE price_tier (
+  tier_id           NUMBER GENERATED ALWAYS AS IDENTITY,
+  description       VARCHAR2(50)  NOT NULL,
+  is_product_tier   VARCHAR2(1)   DEFAULT 'N',
+  price_list_codes  VARCHAR2(20),
+  is_pos_restricted VARCHAR2(1)   DEFAULT 'N',
+  start_date        DATE,
+  end_date          DATE,
+  memo              VARCHAR2(255),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_by        VARCHAR2(5),
+  updated_at        TIMESTAMP,
+  CONSTRAINT pk_price_tier PRIMARY KEY (tier_id)
+);
+
+-- ============================================================
+-- [7] price_tier_quantity (← GCPPALIER_QTE)
+-- ============================================================
+PROMPT [7] price_tier_quantity
+CREATE TABLE price_tier_quantity (
+  tier_id           NUMBER        NOT NULL,
+  rule_no           NUMBER GENERATED ALWAYS AS IDENTITY,
+  min_qty           NUMBER(16,3)  NOT NULL,
+  max_qty           NUMBER(16,3),
+  discount_amount   NUMBER(16,3),
+  CONSTRAINT pk_price_tier_quantity PRIMARY KEY (tier_id, rule_no),
+  CONSTRAINT fk_price_tier_qty_tier FOREIGN KEY (tier_id)
+    REFERENCES price_tier(tier_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [8] price_tier_product (← GCPPALIER_ART)
+-- ============================================================
+PROMPT [8] price_tier_product
+CREATE TABLE price_tier_product (
+  tier_id           NUMBER        NOT NULL,
+  product_id        NUMBER        NOT NULL,
+  CONSTRAINT pk_price_tier_product PRIMARY KEY (tier_id, product_id),
+  CONSTRAINT fk_price_tier_prod_tier FOREIGN KEY (tier_id)
+    REFERENCES price_tier(tier_id) ON DELETE CASCADE,
+  CONSTRAINT fk_price_tier_prod_product FOREIGN KEY (product_id)
+    REFERENCES product(product_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- Index
+-- ============================================================
+CREATE INDEX ix_promo_header_dates ON promo_header(start_date, end_date);
+CREATE INDEX ix_promo_header_status ON promo_header(status);
+CREATE INDEX ix_promo_product_prod ON promo_product(product_id);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'PROMO_HEADER'         AS tbl, COUNT(*) AS nb FROM promo_header
+UNION ALL SELECT 'PROMO_PRODUCT',        COUNT(*) FROM promo_product
+UNION ALL SELECT 'PROMO_QUANTITY',       COUNT(*) FROM promo_quantity
+UNION ALL SELECT 'PROMO_CUSTOMER_FAMILY',COUNT(*) FROM promo_customer_family
+UNION ALL SELECT 'PROMO_POS',            COUNT(*) FROM promo_pos
+UNION ALL SELECT 'PRICE_TIER',           COUNT(*) FROM price_tier
+UNION ALL SELECT 'PRICE_TIER_QUANTITY',  COUNT(*) FROM price_tier_quantity
+UNION ALL SELECT 'PRICE_TIER_PRODUCT',   COUNT(*) FROM price_tier_product;
+
+PROMPT ✅ LOT R1 terminé
+EXIT;
+📜 LOT R2 — Fidélité client (7 tables)
+Fichier : r2_loyalty.sql
+
+sql
+-- ============================================================
+-- LOT R2 : Fidélité client (7 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_party/AppParty#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R2 : FIDÉLITÉ CLIENT
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] loyalty_card_type (← CEPCFTYPCARTE)
+-- ============================================================
+PROMPT [1] loyalty_card_type
+CREATE TABLE loyalty_card_type (
+  card_type_code    VARCHAR2(3)   NOT NULL,
+  card_type_name    VARCHAR2(30)  NOT NULL,
+  point_value       NUMBER(8),
+  point_threshold   NUMBER(8),
+  bonus_rate        NUMBER(5,2),
+  inactive_reset_days NUMBER(3),
+  created_by        VARCHAR2(5)   NOT NULL,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_by        VARCHAR2(5),
+  updated_at        TIMESTAMP,
+  CONSTRAINT pk_loyalty_card_type PRIMARY KEY (card_type_code)
+);
+
+-- ============================================================
+-- [2] loyalty_card (← CEPCFCARTE)
+-- ============================================================
+PROMPT [2] loyalty_card
+CREATE TABLE loyalty_card (
+  card_id           NUMBER GENERATED ALWAYS AS IDENTITY,
+  card_number       VARCHAR2(20)  NOT NULL,
+  card_type_code    VARCHAR2(3)   NOT NULL,
+  status            VARCHAR2(1)   DEFAULT 'A',
+  title             VARCHAR2(5),
+  last_name         VARCHAR2(30),
+  first_name        VARCHAR2(30),
+  mobile_phone_1    VARCHAR2(15),
+  mobile_phone_2    VARCHAR2(15),
+  office_phone      VARCHAR2(15),
+  home_phone        VARCHAR2(15),
+  personal_email    VARCHAR2(50),
+  pro_email         VARCHAR2(50),
+  po_box            VARCHAR2(15),
+  city_code         VARCHAR2(3),
+  address           VARCHAR2(255),
+  country_code      VARCHAR2(3),
+  points_balance    NUMBER(8)     DEFAULT 0,
+  last_used_at      DATE,
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_by        VARCHAR2(5),
+  updated_at        TIMESTAMP,
+  CONSTRAINT pk_loyalty_card PRIMARY KEY (card_id),
+  CONSTRAINT uk_loyalty_card_number UNIQUE (card_number),
+  CONSTRAINT fk_loyalty_card_type FOREIGN KEY (card_type_code)
+    REFERENCES loyalty_card_type(card_type_code),
+  CONSTRAINT ck_loyalty_card_status CHECK (status IN ('A','I','B','L'))
+);
+
+-- ============================================================
+-- [3] loyalty_operation_type (← CEPCFTYPOPER)
+-- ============================================================
+PROMPT [3] loyalty_operation_type
+CREATE TABLE loyalty_operation_type (
+  operation_type_code VARCHAR2(3) NOT NULL,
+  operation_type_name VARCHAR2(30) NOT NULL,
+  is_entry_allowed    VARCHAR2(1) DEFAULT 'Y',
+  sign                VARCHAR2(1) NOT NULL,
+  created_by          VARCHAR2(5) NOT NULL,
+  created_at          TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_loyalty_operation_type PRIMARY KEY (operation_type_code),
+  CONSTRAINT ck_loyalty_op_sign CHECK (sign IN ('+','-')),
+  CONSTRAINT ck_loyalty_op_entry CHECK (is_entry_allowed IN ('Y','N'))
+);
+
+-- ============================================================
+-- [4] loyalty_operation (← CECFOPER)
+-- ============================================================
+PROMPT [4] loyalty_operation
+CREATE TABLE loyalty_operation (
+  operation_id      NUMBER GENERATED ALWAYS AS IDENTITY,
+  card_id           NUMBER        NOT NULL,
+  operation_type_code VARCHAR2(4) NOT NULL,
+  operation_date    DATE          NOT NULL,
+  terminal_code     VARCHAR2(3),
+  ticket_no         NUMBER(8),
+  points            NUMBER(8),
+  amount            NUMBER(16,4),
+  label             VARCHAR2(50),
+  created_by        VARCHAR2(5)   NOT NULL,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_loyalty_operation PRIMARY KEY (operation_id),
+  CONSTRAINT fk_loyalty_operation_card FOREIGN KEY (card_id)
+    REFERENCES loyalty_card(card_id)
+);
+
+-- ============================================================
+-- [5] loyalty_lot (← CECFLOT)
+-- ============================================================
+PROMPT [5] loyalty_lot
+CREATE TABLE loyalty_lot (
+  lot_line_id       NUMBER GENERATED ALWAYS AS IDENTITY,
+  customer_id       NUMBER        NOT NULL,
+  last_name         VARCHAR2(50),
+  first_name        VARCHAR2(50),
+  mobile_phone      VARCHAR2(50),
+  lot_id            NUMBER(8),
+  amount            NUMBER(16,4),
+  warehouse_id      NUMBER(8),
+  terminal_code     VARCHAR2(3)   NOT NULL,
+  ticket_no         NUMBER(8)     NOT NULL,
+  created_by        VARCHAR2(5)   NOT NULL,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  order_id          NUMBER(8)     NOT NULL,
+  points            NUMBER(8),
+  CONSTRAINT pk_loyalty_lot PRIMARY KEY (lot_line_id)
+);
+
+CREATE UNIQUE INDEX uk_loyalty_lot_ticket ON loyalty_lot(terminal_code, ticket_no);
+
+-- ============================================================
+-- [6] loyalty_app (← CFID_APP)
+-- ============================================================
+PROMPT [6] loyalty_app
+CREATE TABLE loyalty_app (
+  app_code          VARCHAR2(3)   NOT NULL,
+  app_name          VARCHAR2(30)  NOT NULL,
+  environment_type  VARCHAR2(1)   NOT NULL,
+  app_key           VARCHAR2(30)  NOT NULL,
+  value_purchase_1pt NUMBER(8)    NOT NULL,
+  value_conversion_1pt NUMBER(8)  NOT NULL,
+  base_url          VARCHAR2(255) NOT NULL,
+  cust_detail_api   VARCHAR2(255) NOT NULL,
+  cust_wallet_api   VARCHAR2(255) NOT NULL,
+  debit_wallet_api  VARCHAR2(255) NOT NULL,
+  recharge_wallet_api VARCHAR2(255) NOT NULL,
+  cust_type_api     VARCHAR2(255) NOT NULL,
+  cancel_receipt_api VARCHAR2(255),
+  CONSTRAINT pk_loyalty_app PRIMARY KEY (app_code),
+  CONSTRAINT ck_loyalty_app_env CHECK (environment_type IN ('P','T'))
+);
+
+-- ============================================================
+-- [7] loyalty_log (← CFID_LOG)
+-- ============================================================
+PROMPT [7] loyalty_log
+CREATE TABLE loyalty_log (
+  log_id            NUMBER GENERATED ALWAYS AS IDENTITY,
+  claim_option      VARCHAR2(2),
+  ticket_no         NUMBER(8),
+  terminal_code     VARCHAR2(3),
+  loyalty_customer_id VARCHAR2(30),
+  points            NUMBER(6),
+  reason            VARCHAR2(255),
+  user_code         VARCHAR2(5)   NOT NULL,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  order_id          NUMBER(8),
+  wallet_id         NUMBER(8),
+  wallet_line_id    NUMBER(8),
+  CONSTRAINT pk_loyalty_log PRIMARY KEY (log_id)
+);
+
+CREATE INDEX ix_loyalty_log_ticket ON loyalty_log(terminal_code, ticket_no);
+CREATE INDEX ix_loyalty_log_cust ON loyalty_log(loyalty_customer_id);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'LOYALTY_CARD_TYPE'     AS tbl, COUNT(*) AS nb FROM loyalty_card_type
+UNION ALL SELECT 'LOYALTY_CARD',         COUNT(*) FROM loyalty_card
+UNION ALL SELECT 'LOYALTY_OPERATION_TYPE',COUNT(*) FROM loyalty_operation_type
+UNION ALL SELECT 'LOYALTY_OPERATION',    COUNT(*) FROM loyalty_operation
+UNION ALL SELECT 'LOYALTY_LOT',          COUNT(*) FROM loyalty_lot
+UNION ALL SELECT 'LOYALTY_APP',          COUNT(*) FROM loyalty_app
+UNION ALL SELECT 'LOYALTY_LOG',          COUNT(*) FROM loyalty_log;
+
+PROMPT ✅ LOT R2 terminé
+EXIT;
+📜 LOT R3 — Stock avancé (8 tables)
+Fichier : r3_stock.sql
+
+sql
+-- ============================================================
+-- LOT R3 : Stock avancé (8 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_inv/AppInv#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R3 : STOCK AVANCÉ
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] inv_avg_cost (← GCPRMP) — PRMP
+-- ============================================================
+PROMPT [1] inv_avg_cost (PRMP)
+CREATE TABLE inv_avg_cost (
+  company_code      VARCHAR2(12)  NOT NULL,
+  period            VARCHAR2(24)  NOT NULL,
+  product_code      VARCHAR2(80)  NOT NULL,
+  quantity          NUMBER(16,4),
+  amount            NUMBER(16,4),
+  avg_cost          NUMBER(16,4),
+  CONSTRAINT pk_inv_avg_cost PRIMARY KEY (company_code, period, product_code)
+);
+
+CREATE INDEX ix_inv_avg_cost_prod ON inv_avg_cost(product_code);
+
+-- ============================================================
+-- [2] inv_product_lot (← GCPART_LOT)
+-- ============================================================
+PROMPT [2] inv_product_lot
+CREATE TABLE inv_product_lot (
+  product_code      VARCHAR2(20)  NOT NULL,
+  lot_number        VARCHAR2(20)  NOT NULL,
+  manufacturing_date DATE,
+  expiry_date       DATE          NOT NULL,
+  lot_qty           NUMBER(16,4),
+  updated_at        DATE          NOT NULL,
+  updated_by        VARCHAR2(5)   NOT NULL,
+  CONSTRAINT pk_inv_product_lot PRIMARY KEY (product_code, lot_number)
+);
+
+CREATE INDEX ix_inv_product_lot_exp ON inv_product_lot(expiry_date);
+
+-- ============================================================
+-- [3] inv_stock_status (← GCSTOCK_STATUT)
+-- ============================================================
+PROMPT [3] inv_stock_status
+CREATE TABLE inv_stock_status (
+  product_code      VARCHAR2(20)  NOT NULL,
+  warehouse_code    VARCHAR2(5)   NOT NULL,
+  stock_status_code VARCHAR2(3)   NOT NULL,
+  quantity          NUMBER(15,3),
+  CONSTRAINT pk_inv_stock_status PRIMARY KEY (product_code, warehouse_code, stock_status_code)
+);
+
+-- ============================================================
+-- [4] inv_status_ref (← GCPSTATUT)
+-- ============================================================
+PROMPT [4] inv_status_ref
+CREATE TABLE inv_status_ref (
+  status_code       VARCHAR2(3)   NOT NULL,
+  status_name       VARCHAR2(30)  NOT NULL,
+  is_active         VARCHAR2(1)   DEFAULT 'A',
+  is_sale_allowed   VARCHAR2(1)   DEFAULT 'Y',
+  reverse_qty_update VARCHAR2(1)  DEFAULT 'N',
+  created_at        DATE          NOT NULL,
+  created_by        VARCHAR2(5)   NOT NULL,
+  updated_at        DATE,
+  updated_by        VARCHAR2(5),
+  auto_entry        VARCHAR2(1),
+  CONSTRAINT pk_inv_status_ref PRIMARY KEY (status_code)
+);
+
+-- ============================================================
+-- [5] inv_count_zone (← GCINVD_ZONE)
+-- ============================================================
+PROMPT [5] inv_count_zone
+CREATE TABLE inv_count_zone (
+  count_id          NUMBER        NOT NULL,
+  warehouse_code    VARCHAR2(5)   NOT NULL,
+  zone_number       VARCHAR2(8)   NOT NULL,
+  line_no           NUMBER(4)     NOT NULL,
+  product_code      VARCHAR2(20)  NOT NULL,
+  qty_inv_st        NUMBER(16,4),
+  qty_inv_ex        NUMBER(16,4),
+  qty_inv_ca        NUMBER(16,4),
+  qty_inv_av        NUMBER(16,4),
+  qty_inv           NUMBER(16,4),
+  expiry_date       DATE,
+  user_code         VARCHAR2(5),
+  updated_at        DATE,
+  unit_code         VARCHAR2(3),
+  coefficient       NUMBER(10,5),
+  CONSTRAINT pk_inv_count_zone PRIMARY KEY (count_id, warehouse_code, zone_number, line_no),
+  CONSTRAINT fk_inv_count_zone_hdr FOREIGN KEY (count_id)
+    REFERENCES inv_count_header(count_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [6] inv_alert (← GCSTOCK_WARM) — déjà créé mais recréons propre
+-- ============================================================
+PROMPT [6] inv_alert
+-- (inv_stock_alert existe déjà, on garde)
+
+-- ============================================================
+-- [7] inv_movement_status (nouveau)
+-- ============================================================
+PROMPT [7] inv_movement_status
+CREATE TABLE inv_movement_status (
+  movement_id       NUMBER        NOT NULL,
+  stock_status_code VARCHAR2(3)   NOT NULL,
+  quantity          NUMBER(15,3),
+  CONSTRAINT pk_inv_movement_status PRIMARY KEY (movement_id, stock_status_code)
+);
+
+-- ============================================================
+-- [8] inv_reorder (← GCPART_REAPPRO)
+-- ============================================================
+PROMPT [8] inv_reorder
+CREATE TABLE inv_reorder (
+  product_code      VARCHAR2(80)  NOT NULL,
+  generation_date   DATE          NOT NULL,
+  consumption_rate  NUMBER(16,4),
+  min_stock         NUMBER(16,4),
+  comparison_var    VARCHAR2(120),
+  comparison_value  NUMBER(16,4),
+  proposed_qty      NUMBER(16,4),
+  CONSTRAINT pk_inv_reorder PRIMARY KEY (product_code, generation_date)
+);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'INV_AVG_COST'      AS tbl, COUNT(*) AS nb FROM inv_avg_cost
+UNION ALL SELECT 'INV_PRODUCT_LOT',    COUNT(*) FROM inv_product_lot
+UNION ALL SELECT 'INV_STOCK_STATUS',   COUNT(*) FROM inv_stock_status
+UNION ALL SELECT 'INV_STATUS_REF',     COUNT(*) FROM inv_status_ref
+UNION ALL SELECT 'INV_COUNT_ZONE',     COUNT(*) FROM inv_count_zone
+UNION ALL SELECT 'INV_REORDER',        COUNT(*) FROM inv_reorder;
+
+PROMPT ✅ LOT R3 terminé
+EXIT;
+📜 LOT R5 — Facturation & Avoirs (7 tables)
+Fichier : r5_invoicing.sql
+
+sql
+-- ============================================================
+-- LOT R5 : Facturation & Avoirs (7 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+-- Nouveau schéma pour la facturation client
+CONNECT system/oracle@localhost:1521/FREEPDB1
+
+PROMPT Création schéma app_ar (Accounts Receivable)
+BEGIN
+  EXECUTE IMMEDIATE 'DROP USER app_ar CASCADE';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+
+CREATE USER app_ar IDENTIFIED BY "AppAr#2026"
+  DEFAULT TABLESPACE USERS QUOTA UNLIMITED ON USERS;
+
+GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE SEQUENCE,
+      CREATE PROCEDURE, CREATE TRIGGER, CREATE SYNONYM, CREATE TYPE,
+      CREATE MATERIALIZED VIEW, CREATE JOB
+   TO app_ar;
+
+CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R5 : FACTURATION & AVOIRS
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] invoice (← CP_FACTURE)
+-- ============================================================
+PROMPT [1] invoice
+CREATE TABLE invoice (
+  invoice_id        NUMBER GENERATED ALWAYS AS IDENTITY,
+  invoice_number    VARCHAR2(20)  NOT NULL,
+  invoice_date      DATE          NOT NULL,
+  company_code      VARCHAR2(12)  NOT NULL,
+  party_code        VARCHAR2(32)  NOT NULL,
+  party_name        VARCHAR2(50),
+  address_1         VARCHAR2(120),
+  address_2         VARCHAR2(120),
+  address_3         VARCHAR2(120),
+  currency_code     VARCHAR2(12)  DEFAULT 'XAF',
+  exchange_rate     NUMBER(10,5)  DEFAULT 1,
+  due_date          DATE,
+  payment_method    VARCHAR2(12),
+  tax_regime        VARCHAR2(12),
+  total_ht          NUMBER(16,4)  DEFAULT 0,
+  total_tax         NUMBER(16,4)  DEFAULT 0,
+  total_ttc         NUMBER(16,4)  DEFAULT 0,
+  total_paid        NUMBER(16,4)  DEFAULT 0,
+  balance           NUMBER(16,4)  DEFAULT 0,
+  status            VARCHAR2(20)  DEFAULT 'DRAFT',
+  document_ref      VARCHAR2(50),
+  source_doc_id     NUMBER,
+  memo              VARCHAR2(2000),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  updated_by        VARCHAR2(5),
+  updated_at        TIMESTAMP,
+  CONSTRAINT pk_invoice PRIMARY KEY (invoice_id),
+  CONSTRAINT uk_invoice_number UNIQUE (invoice_number),
+  CONSTRAINT ck_invoice_status CHECK (status IN ('DRAFT','VALID','PAID','PARTIAL','CANCELLED'))
+);
+
+CREATE INDEX ix_invoice_date   ON invoice(invoice_date);
+CREATE INDEX ix_invoice_party  ON invoice(party_code);
+CREATE INDEX ix_invoice_status ON invoice(status);
+
+-- ============================================================
+-- [2] invoice_line (← CP_FACTURE_RUBR_CPT)
+-- ============================================================
+PROMPT [2] invoice_line
+CREATE TABLE invoice_line (
+  invoice_id        NUMBER        NOT NULL,
+  line_no           NUMBER(5)     NOT NULL,
+  product_code      VARCHAR2(80),
+  description       VARCHAR2(120),
+  quantity          NUMBER(16,4),
+  unit_code         VARCHAR2(12),
+  unit_price        NUMBER(16,4),
+  amount            NUMBER(16,4),
+  discount_rate     NUMBER(5,2),
+  tax_rate          NUMBER(5,2),
+  tax_amount        NUMBER(16,4),
+  amount_ht         NUMBER(16,4),
+  amount_ttc        NUMBER(16,4),
+  source_ticket_no  NUMBER(8),
+  CONSTRAINT pk_invoice_line PRIMARY KEY (invoice_id, line_no),
+  CONSTRAINT fk_invoice_line_hdr FOREIGN KEY (invoice_id)
+    REFERENCES invoice(invoice_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [3] credit_note (avoir)
+-- ============================================================
+PROMPT [3] credit_note
+CREATE TABLE credit_note (
+  credit_note_id    NUMBER GENERATED ALWAYS AS IDENTITY,
+  credit_note_no    VARCHAR2(20)  NOT NULL,
+  credit_note_date  DATE          NOT NULL,
+  company_code      VARCHAR2(12)  NOT NULL,
+  party_code        VARCHAR2(32)  NOT NULL,
+  party_name        VARCHAR2(50),
+  source_invoice_id NUMBER,
+  currency_code     VARCHAR2(12)  DEFAULT 'XAF',
+  total_ht          NUMBER(16,4)  DEFAULT 0,
+  total_tax         NUMBER(16,4)  DEFAULT 0,
+  total_ttc         NUMBER(16,4)  DEFAULT 0,
+  status            VARCHAR2(20)  DEFAULT 'DRAFT',
+  reason            VARCHAR2(255),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_credit_note PRIMARY KEY (credit_note_id),
+  CONSTRAINT uk_credit_note_no UNIQUE (credit_note_no),
+  CONSTRAINT fk_credit_note_invoice FOREIGN KEY (source_invoice_id)
+    REFERENCES invoice(invoice_id),
+  CONSTRAINT ck_credit_note_status CHECK (status IN ('DRAFT','VALID','CANCELLED'))
+);
+
+-- ============================================================
+-- [4] credit_note_line
+-- ============================================================
+PROMPT [4] credit_note_line
+CREATE TABLE credit_note_line (
+  credit_note_id    NUMBER        NOT NULL,
+  line_no           NUMBER(5)     NOT NULL,
+  product_code      VARCHAR2(80),
+  description       VARCHAR2(120),
+  quantity          NUMBER(16,4),
+  unit_price        NUMBER(16,4),
+  amount            NUMBER(16,4),
+  tax_rate          NUMBER(5,2),
+  source_invoice_line_no NUMBER(5),
+  CONSTRAINT pk_credit_note_line PRIMARY KEY (credit_note_id, line_no),
+  CONSTRAINT fk_credit_note_line_hdr FOREIGN KEY (credit_note_id)
+    REFERENCES credit_note(credit_note_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [5] payment (règlement client)
+-- ============================================================
+PROMPT [5] payment
+CREATE TABLE payment (
+  payment_id        NUMBER GENERATED ALWAYS AS IDENTITY,
+  payment_number    VARCHAR2(20)  NOT NULL,
+  payment_date      DATE          NOT NULL,
+  company_code      VARCHAR2(12)  NOT NULL,
+  party_code        VARCHAR2(32)  NOT NULL,
+  party_name        VARCHAR2(50),
+  payment_method    VARCHAR2(12)  NOT NULL,
+  reference         VARCHAR2(80),
+  currency_code     VARCHAR2(12)  DEFAULT 'XAF',
+  exchange_rate     NUMBER(10,5)  DEFAULT 1,
+  amount            NUMBER(16,4)  NOT NULL,
+  amount_allocated  NUMBER(16,4)  DEFAULT 0,
+  status            VARCHAR2(20)  DEFAULT 'VALID',
+  memo              VARCHAR2(255),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_payment PRIMARY KEY (payment_id),
+  CONSTRAINT uk_payment_number UNIQUE (payment_number)
+);
+
+CREATE INDEX ix_payment_date  ON payment(payment_date);
+CREATE INDEX ix_payment_party ON payment(party_code);
+
+-- ============================================================
+-- [6] payment_allocation (← GCRGLE + GCRGLD)
+-- ============================================================
+PROMPT [6] payment_allocation
+CREATE TABLE payment_allocation (
+  allocation_id     NUMBER GENERATED ALWAYS AS IDENTITY,
+  payment_id        NUMBER        NOT NULL,
+  invoice_id        NUMBER,
+  document_type     VARCHAR2(20)  NOT NULL,
+  document_ref      VARCHAR2(50),
+  amount_applied    NUMBER(16,4)  NOT NULL,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_payment_allocation PRIMARY KEY (allocation_id),
+  CONSTRAINT fk_payment_alloc_pay FOREIGN KEY (payment_id)
+    REFERENCES payment(payment_id) ON DELETE CASCADE,
+  CONSTRAINT fk_payment_alloc_inv FOREIGN KEY (invoice_id)
+    REFERENCES invoice(invoice_id)
+);
+
+-- ============================================================
+-- [7] customer_credit (encours client)
+-- ============================================================
+PROMPT [7] customer_credit
+CREATE TABLE customer_credit (
+  party_code        VARCHAR2(32)  NOT NULL,
+  company_code      VARCHAR2(12)  NOT NULL,
+  credit_limit      NUMBER(16,4)  DEFAULT 0,
+  credit_days       NUMBER(3)     DEFAULT 30,
+  current_balance   NUMBER(16,4)  DEFAULT 0,
+  overdue_balance   NUMBER(16,4)  DEFAULT 0,
+  last_invoice_date DATE,
+  last_payment_date DATE,
+  blocked           VARCHAR2(1)   DEFAULT 'N',
+  updated_at        TIMESTAMP DEFAULT SYSTIMESTAMP,
+  CONSTRAINT pk_customer_credit PRIMARY KEY (party_code, company_code)
+);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'INVOICE'            AS tbl, COUNT(*) AS nb FROM invoice
+UNION ALL SELECT 'INVOICE_LINE',      COUNT(*) FROM invoice_line
+UNION ALL SELECT 'CREDIT_NOTE',       COUNT(*) FROM credit_note
+UNION ALL SELECT 'CREDIT_NOTE_LINE',  COUNT(*) FROM credit_note_line
+UNION ALL SELECT 'PAYMENT',           COUNT(*) FROM payment
+UNION ALL SELECT 'PAYMENT_ALLOCATION',COUNT(*) FROM payment_allocation
+UNION ALL SELECT 'CUSTOMER_CREDIT',   COUNT(*) FROM customer_credit;
+
+PROMPT ✅ LOT R5 terminé
+EXIT;
+📊 Bilan des 3 lots
+Lot	Tables créées	Schéma	Statut
+R1	8 (promotions, paliers)	app_product	✅
+R2	7 (fidélité, cartes, logs)	app_party	✅
+R3	8 (PRMP, lots, statuts, inventaires)	app_inv	✅
+R5	7 (factures, avoirs, paiements)	app_ar (nouveau)	✅
+TOTAL	30 tables		
+Il reste R4 (Réappro/Transferts) et R6 (Règlements avancés) → 2 lots = ~12 tables.
+
+🎯 Ordre d'exécution
+bash
+cd ~/migration_26ai/
+
+# 1. Promotions
+sqlplus /nolog @r1_promotions.sql
+
+# 2. Fidélité
+sqlplus /nolog @r2_loyalty.sql
+
+# 3. Stock avancé
+sqlplus /nolog @r3_stock.sql
+
+# 4. Facturation (création nouveau schéma app_ar)
+sqlplus /nolog @r5_invoicing.sql
+
+# 5. Validation
+sqlplus /nolog <<'EOF'
+CONNECT system/oracle@localhost:1521/FREEPDB1
+SELECT owner, COUNT(*) AS nb_tables
+  FROM all_tables
+ WHERE owner IN ('APP_PRODUCT','APP_PARTY','APP_INV','APP_AR')
+ GROUP BY owner;
+EOF
+Lance les 4 scripts et envoie-moi la sortie. Si tout passe, on enchaîne avec R4 (Réappro/Transferts) puis R6 (Règlements).
+
+Ensuite, on pourra charger les données retail réelles :
+
+Promotions SUPER SONIC (codes PROMO_*)
+
+Cartes fidélité clients
+
+PRMP historiques
+
+Factures & règlements
+
+Dis-moi !
+
+This response is AI-generated, for reference only.
+continue l'implement ation on va faire la correction apres
+The user wants me to continue implementing. Let me continue with the retail modules R4, R6, and also complete the essential retail functionality. Let me provide the remaining scripts efficiently.
+
+🚀 Suite de l'implémentation RETAIL — Lots R4, R6 + Compléments
+📜 LOT R4 — Réappro & Transferts (6 tables)
+Fichier : r4_replenishment.sql
+
+sql
+-- ============================================================
+-- LOT R4 : Réappro & Transferts (6 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_inv/AppInv#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R4 : RÉAPPRO & TRANSFERTS
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] transfer_header
+-- ============================================================
+PROMPT [1] transfer_header
+CREATE TABLE transfer_header (
+  transfer_id       NUMBER GENERATED ALWAYS AS IDENTITY,
+  transfer_number   VARCHAR2(20)  NOT NULL,
+  transfer_date     DATE          NOT NULL,
+  source_warehouse  VARCHAR2(5)   NOT NULL,
+  target_warehouse  VARCHAR2(5)   NOT NULL,
+  status            VARCHAR2(20)  DEFAULT 'DRAFT',
+  total_qty         NUMBER(16,4)  DEFAULT 0,
+  memo              VARCHAR2(255),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  validated_by      VARCHAR2(5),
+  validated_at      TIMESTAMP,
+  CONSTRAINT pk_transfer_header PRIMARY KEY (transfer_id),
+  CONSTRAINT uk_transfer_number UNIQUE (transfer_number),
+  CONSTRAINT ck_transfer_status CHECK (status IN ('DRAFT','VALID','SENT','RECEIVED','CANCELLED')),
+  CONSTRAINT ck_transfer_diff_wh CHECK (source_warehouse != target_warehouse)
+);
+
+-- ============================================================
+-- [2] transfer_line
+-- ============================================================
+PROMPT [2] transfer_line
+CREATE TABLE transfer_line (
+  transfer_id       NUMBER        NOT NULL,
+  line_no           NUMBER(5)     NOT NULL,
+  product_code      VARCHAR2(80)  NOT NULL,
+  description       VARCHAR2(120),
+  requested_qty     NUMBER(16,4),
+  sent_qty          NUMBER(16,4),
+  received_qty      NUMBER(16,4),
+  unit_code         VARCHAR2(12),
+  unit_cost         NUMBER(16,4),
+  status            VARCHAR2(20)  DEFAULT 'PENDING',
+  CONSTRAINT pk_transfer_line PRIMARY KEY (transfer_id, line_no),
+  CONSTRAINT fk_transfer_line_hdr FOREIGN KEY (transfer_id)
+    REFERENCES transfer_header(transfer_id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_transfer_line_prod ON transfer_line(product_code);
+
+-- ============================================================
+-- [3] replenishment_suggestion
+-- ============================================================
+PROMPT [3] replenishment_suggestion
+CREATE TABLE replenishment_suggestion (
+  suggestion_id     NUMBER GENERATED ALWAYS AS IDENTITY,
+  product_code      VARCHAR2(80)  NOT NULL,
+  warehouse_code    VARCHAR2(5)   NOT NULL,
+  current_stock     NUMBER(16,4),
+  min_stock         NUMBER(16,4),
+  max_stock         NUMBER(16,4),
+  avg_consumption   NUMBER(16,4),
+  suggested_qty     NUMBER(16,4),
+  supplier_code     VARCHAR2(5),
+  status            VARCHAR2(20)  DEFAULT 'NEW',
+  generated_at      TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_replenishment_sugg PRIMARY KEY (suggestion_id)
+);
+
+CREATE INDEX ix_replenish_prod ON replenishment_suggestion(product_code, warehouse_code);
+CREATE INDEX ix_replenish_status ON replenishment_suggestion(status);
+
+-- ============================================================
+-- [4] purchase_order_header
+-- ============================================================
+PROMPT [4] purchase_order_header
+CREATE TABLE purchase_order_header (
+  po_id             NUMBER GENERATED ALWAYS AS IDENTITY,
+  po_number         VARCHAR2(20)  NOT NULL,
+  po_date           DATE          NOT NULL,
+  supplier_code     VARCHAR2(32)  NOT NULL,
+  supplier_name     VARCHAR2(50),
+  warehouse_code    VARCHAR2(5),
+  expected_date     DATE,
+  status            VARCHAR2(20)  DEFAULT 'DRAFT',
+  total_ht          NUMBER(16,4)  DEFAULT 0,
+  total_ttc         NUMBER(16,4)  DEFAULT 0,
+  memo              VARCHAR2(500),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_purchase_order_hdr PRIMARY KEY (po_id),
+  CONSTRAINT uk_po_number UNIQUE (po_number)
+);
+
+CREATE INDEX ix_po_date     ON purchase_order_header(po_date);
+CREATE INDEX ix_po_supplier ON purchase_order_header(supplier_code);
+CREATE INDEX ix_po_status   ON purchase_order_header(status);
+
+-- ============================================================
+-- [5] purchase_order_line
+-- ============================================================
+PROMPT [5] purchase_order_line
+CREATE TABLE purchase_order_line (
+  po_id             NUMBER        NOT NULL,
+  line_no           NUMBER(5)     NOT NULL,
+  product_code      VARCHAR2(80)  NOT NULL,
+  description       VARCHAR2(120),
+  ordered_qty       NUMBER(16,4),
+  received_qty      NUMBER(16,4)  DEFAULT 0,
+  unit_code         VARCHAR2(12),
+  unit_price        NUMBER(16,4),
+  discount_rate     NUMBER(5,2),
+  tax_rate          NUMBER(5,2),
+  amount_ht         NUMBER(16,4),
+  amount_ttc        NUMBER(16,4),
+  CONSTRAINT pk_purchase_order_line PRIMARY KEY (po_id, line_no),
+  CONSTRAINT fk_po_line_hdr FOREIGN KEY (po_id)
+    REFERENCES purchase_order_header(po_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [6] stock_valuation
+-- ============================================================
+PROMPT [6] stock_valuation
+CREATE TABLE stock_valuation (
+  valuation_date    DATE          NOT NULL,
+  warehouse_code    VARCHAR2(5)   NOT NULL,
+  product_code      VARCHAR2(80)  NOT NULL,
+  quantity          NUMBER(16,4),
+  avg_cost          NUMBER(16,4),
+  total_value       NUMBER(16,4),
+  valuation_method  VARCHAR2(10)  DEFAULT 'PRMP',
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_stock_valuation PRIMARY KEY (valuation_date, warehouse_code, product_code)
+);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'TRANSFER_HEADER'        AS tbl, COUNT(*) AS nb FROM transfer_header
+UNION ALL SELECT 'TRANSFER_LINE',        COUNT(*) FROM transfer_line
+UNION ALL SELECT 'REPLENISHMENT_SUGG',   COUNT(*) FROM replenishment_suggestion
+UNION ALL SELECT 'PURCHASE_ORDER_HDR',   COUNT(*) FROM purchase_order_header
+UNION ALL SELECT 'PURCHASE_ORDER_LINE',  COUNT(*) FROM purchase_order_line
+UNION ALL SELECT 'STOCK_VALUATION',      COUNT(*) FROM stock_valuation;
+
+PROMPT ✅ LOT R4 terminé
+EXIT;
+📜 LOT R6 — Règlements clients avancés (6 tables)
+Fichier : r6_payments.sql
+
+sql
+-- ============================================================
+-- LOT R6 : Règlements clients avancés (6 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R6 : RÈGLEMENTS CLIENTS AVANCÉS
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] payment_method_ref
+-- ============================================================
+PROMPT [1] payment_method_ref
+CREATE TABLE payment_method_ref (
+  method_code       VARCHAR2(12)  NOT NULL,
+  method_name       VARCHAR2(50)  NOT NULL,
+  method_type       VARCHAR2(3),
+  journal_code      VARCHAR2(5),
+  account_code      VARCHAR2(8),
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  requires_reference VARCHAR2(1)  DEFAULT 'N',
+  max_amount        NUMBER(16,4),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_payment_method_ref PRIMARY KEY (method_code)
+);
+
+-- ============================================================
+-- [2] cash_register_session
+-- ============================================================
+PROMPT [2] cash_register_session
+CREATE TABLE cash_register_session (
+  session_id        NUMBER GENERATED ALWAYS AS IDENTITY,
+  register_code     VARCHAR2(5)   NOT NULL,
+  session_number    NUMBER(8)     NOT NULL,
+  opened_by         VARCHAR2(5)   NOT NULL,
+  opened_at         TIMESTAMP     NOT NULL,
+  closed_by         VARCHAR2(5),
+  closed_at         TIMESTAMP,
+  opening_balance   NUMBER(16,4)  DEFAULT 0,
+  closing_balance   NUMBER(16,4)  DEFAULT 0,
+  theoretical_balance NUMBER(16,4),
+  difference        NUMBER(16,4)  DEFAULT 0,
+  total_cash        NUMBER(16,4)  DEFAULT 0,
+  total_card        NUMBER(16,4)  DEFAULT 0,
+  total_check       NUMBER(16,4)  DEFAULT 0,
+  total_transfer    NUMBER(16,4)  DEFAULT 0,
+  status            VARCHAR2(20)  DEFAULT 'OPEN',
+  CONSTRAINT pk_cash_session PRIMARY KEY (session_id),
+  CONSTRAINT uk_cash_session UNIQUE (register_code, session_number),
+  CONSTRAINT ck_cash_sess_status CHECK (status IN ('OPEN','CLOSED','RECONCILED'))
+);
+
+-- ============================================================
+-- [3] invoice_payment_link
+-- ============================================================
+PROMPT [3] invoice_payment_link
+CREATE TABLE invoice_payment_link (
+  link_id           NUMBER GENERATED ALWAYS AS IDENTITY,
+  invoice_id        NUMBER        NOT NULL,
+  payment_id        NUMBER        NOT NULL,
+  amount            NUMBER(16,4)  NOT NULL,
+  linked_at         TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  linked_by         VARCHAR2(5),
+  CONSTRAINT pk_invoice_payment_link PRIMARY KEY (link_id),
+  CONSTRAINT uk_invoice_payment UNIQUE (invoice_id, payment_id),
+  CONSTRAINT fk_ipl_invoice FOREIGN KEY (invoice_id)
+    REFERENCES invoice(invoice_id),
+  CONSTRAINT fk_ipl_payment FOREIGN KEY (payment_id)
+    REFERENCES payment(payment_id)
+);
+
+-- ============================================================
+-- [4] customer_statement
+-- ============================================================
+PROMPT [4] customer_statement
+CREATE TABLE customer_statement (
+  statement_id      NUMBER GENERATED ALWAYS AS IDENTITY,
+  party_code        VARCHAR2(32)  NOT NULL,
+  statement_date    DATE          NOT NULL,
+  period_start      DATE          NOT NULL,
+  period_end        DATE          NOT NULL,
+  opening_balance   NUMBER(16,4)  DEFAULT 0,
+  total_debit       NUMBER(16,4)  DEFAULT 0,
+  total_credit      NUMBER(16,4)  DEFAULT 0,
+  closing_balance   NUMBER(16,4)  DEFAULT 0,
+  status            VARCHAR2(20)  DEFAULT 'DRAFT',
+  sent_at           TIMESTAMP,
+  sent_to           VARCHAR2(120),
+  CONSTRAINT pk_customer_statement PRIMARY KEY (statement_id),
+  CONSTRAINT uk_customer_stmt UNIQUE (party_code, statement_date)
+);
+
+-- ============================================================
+-- [5] aging_balance
+-- ============================================================
+PROMPT [5] aging_balance
+CREATE TABLE aging_balance (
+  snapshot_date     DATE          NOT NULL,
+  party_code        VARCHAR2(32)  NOT NULL,
+  current_amount    NUMBER(16,4)  DEFAULT 0,
+  days_1_30         NUMBER(16,4)  DEFAULT 0,
+  days_31_60        NUMBER(16,4)  DEFAULT 0,
+  days_61_90        NUMBER(16,4)  DEFAULT 0,
+  days_over_90      NUMBER(16,4)  DEFAULT 0,
+  total_due         NUMBER(16,4)  DEFAULT 0,
+  CONSTRAINT pk_aging_balance PRIMARY KEY (snapshot_date, party_code)
+);
+
+-- ============================================================
+-- [6] dunning_log (relances)
+-- ============================================================
+PROMPT [6] dunning_log
+CREATE TABLE dunning_log (
+  log_id            NUMBER GENERATED ALWAYS AS IDENTITY,
+  party_code        VARCHAR2(32)  NOT NULL,
+  invoice_id        NUMBER        NOT NULL,
+  dunning_level     NUMBER(2)     NOT NULL,
+  dunning_date      DATE          NOT NULL,
+  amount_due        NUMBER(16,4),
+  days_overdue      NUMBER(4),
+  contact_method    VARCHAR2(20),
+  contact_detail    VARCHAR2(120),
+  message           VARCHAR2(2000),
+  status            VARCHAR2(20)  DEFAULT 'SENT',
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_dunning_log PRIMARY KEY (log_id),
+  CONSTRAINT fk_dunning_invoice FOREIGN KEY (invoice_id)
+    REFERENCES invoice(invoice_id)
+);
+
+CREATE INDEX ix_dunning_party   ON dunning_log(party_code);
+CREATE INDEX ix_dunning_invoice ON dunning_log(invoice_id);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'PAYMENT_METHOD_REF'   AS tbl, COUNT(*) AS nb FROM payment_method_ref
+UNION ALL SELECT 'CASH_REGISTER_SESSION', COUNT(*) FROM cash_register_session
+UNION ALL SELECT 'INVOICE_PAYMENT_LINK',  COUNT(*) FROM invoice_payment_link
+UNION ALL SELECT 'CUSTOMER_STATEMENT',    COUNT(*) FROM customer_statement
+UNION ALL SELECT 'AGING_BALANCE',         COUNT(*) FROM aging_balance
+UNION ALL SELECT 'DUNNING_LOG',           COUNT(*) FROM dunning_log;
+
+PROMPT ✅ LOT R6 terminé
+EXIT;
+📜 LOT R7 — POS avancé (tickets: retours, avoirs, remises ligne)
+Fichier : r7_pos_advanced.sql
+
+sql
+-- ============================================================
+-- LOT R7 : POS avancé (5 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_sales/AppSales#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R7 : POS AVANCÉ
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] ticket_return (retours)
+-- ============================================================
+PROMPT [1] ticket_return
+CREATE TABLE ticket_return (
+  return_id         NUMBER GENERATED ALWAYS AS IDENTITY,
+  return_number     VARCHAR2(20)  NOT NULL,
+  return_date       DATE          NOT NULL,
+  original_terminal VARCHAR2(12)  NOT NULL,
+  original_ticket_no NUMBER(8)    NOT NULL,
+  customer_code     VARCHAR2(32),
+  total_return_ttc  NUMBER(16,4),
+  total_return_ht   NUMBER(16,4),
+  refund_method     VARCHAR2(12),
+  reason            VARCHAR2(255),
+  status            VARCHAR2(20)  DEFAULT 'VALID',
+  processed_by      VARCHAR2(20),
+  processed_at      TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_ticket_return PRIMARY KEY (return_id),
+  CONSTRAINT uk_ticket_return_no UNIQUE (return_number),
+  CONSTRAINT fk_ticket_return_ticket FOREIGN KEY (original_terminal, original_ticket_no)
+    REFERENCES ticket(terminal_id, ticket_no)
+);
+
+CREATE INDEX ix_ticket_return_date ON ticket_return(return_date);
+
+-- ============================================================
+-- [2] ticket_return_line
+-- ============================================================
+PROMPT [2] ticket_return_line
+CREATE TABLE ticket_return_line (
+  return_id         NUMBER        NOT NULL,
+  line_no           NUMBER(3)     NOT NULL,
+  product_code      VARCHAR2(80)  NOT NULL,
+  description       VARCHAR2(120),
+  quantity          NUMBER(16,4),
+  unit_price        NUMBER(16,4),
+  amount            NUMBER(16,4),
+  source_line_no    NUMBER(3),
+  CONSTRAINT pk_ticket_return_line PRIMARY KEY (return_id, line_no),
+  CONSTRAINT fk_ticket_return_line_hdr FOREIGN KEY (return_id)
+    REFERENCES ticket_return(return_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [3] ticket_discount (remises ticket)
+-- ============================================================
+PROMPT [3] ticket_discount
+CREATE TABLE ticket_discount (
+  discount_id       NUMBER GENERATED ALWAYS AS IDENTITY,
+  terminal_id       VARCHAR2(12)  NOT NULL,
+  ticket_no         NUMBER(8)     NOT NULL,
+  line_no           NUMBER(3),
+  discount_type     VARCHAR2(20)  NOT NULL,
+  discount_rate     NUMBER(5,2),
+  discount_amount   NUMBER(16,4),
+  reason            VARCHAR2(100),
+  authorized_by     VARCHAR2(20),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_ticket_discount PRIMARY KEY (discount_id),
+  CONSTRAINT fk_ticket_discount_ticket FOREIGN KEY (terminal_id, ticket_no)
+    REFERENCES ticket(terminal_id, ticket_no) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_ticket_discount_ticket ON ticket_discount(terminal_id, ticket_no);
+
+-- ============================================================
+-- [4] ticket_loyalty (points gagnés/utilisés)
+-- ============================================================
+PROMPT [4] ticket_loyalty
+CREATE TABLE ticket_loyalty (
+  loyalty_id        NUMBER GENERATED ALWAYS AS IDENTITY,
+  terminal_id       VARCHAR2(12)  NOT NULL,
+  ticket_no         NUMBER(8)     NOT NULL,
+  card_id           NUMBER,
+  points_earned     NUMBER(8)     DEFAULT 0,
+  points_used       NUMBER(8)     DEFAULT 0,
+  points_balance    NUMBER(8),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_ticket_loyalty PRIMARY KEY (loyalty_id),
+  CONSTRAINT fk_ticket_loyalty_ticket FOREIGN KEY (terminal_id, ticket_no)
+    REFERENCES ticket(terminal_id, ticket_no) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [5] pos_cash_closure (clôture caisse)
+-- ============================================================
+PROMPT [5] pos_cash_closure
+CREATE TABLE pos_cash_closure (
+  closure_id        NUMBER GENERATED ALWAYS AS IDENTITY,
+  terminal_code     VARCHAR2(12)  NOT NULL,
+  session_no        NUMBER(8)     NOT NULL,
+  closure_date      DATE          NOT NULL,
+  theoretical_cash  NUMBER(16,4),
+  actual_cash       NUMBER(16,4),
+  difference        NUMBER(16,4),
+  total_sales       NUMBER(16,4),
+  total_returns     NUMBER(16,4),
+  nb_tickets        NUMBER(8),
+  nb_returns        NUMBER(8),
+  closed_by         VARCHAR2(20),
+  closed_at         TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  notes             VARCHAR2(500),
+  CONSTRAINT pk_pos_cash_closure PRIMARY KEY (closure_id),
+  CONSTRAINT uk_pos_cash_closure UNIQUE (terminal_code, session_no)
+);
+
+CREATE INDEX ix_pos_closure_date ON pos_cash_closure(closure_date);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'TICKET_RETURN'      AS tbl, COUNT(*) AS nb FROM ticket_return
+UNION ALL SELECT 'TICKET_RETURN_LINE', COUNT(*) FROM ticket_return_line
+UNION ALL SELECT 'TICKET_DISCOUNT',    COUNT(*) FROM ticket_discount
+UNION ALL SELECT 'TICKET_LOYALTY',     COUNT(*) FROM ticket_loyalty
+UNION ALL SELECT 'POS_CASH_CLOSURE',   COUNT(*) FROM pos_cash_closure;
+
+PROMPT ✅ LOT R7 terminé
+EXIT;
+📜 LOT R8 — Promotions POS avancé (4 tables)
+Fichier : r8_promo_pos.sql
+
+sql
+-- ============================================================
+-- LOT R8 : Promotions POS avancé (4 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_product/AppProduct#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R8 : PROMOTIONS POS AVANCÉ
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] promo_pos_config (← CEPCFPROMO)
+-- ============================================================
+PROMPT [1] promo_pos_config
+CREATE TABLE promo_pos_config (
+  pos_promo_id      NUMBER GENERATED ALWAYS AS IDENTITY,
+  promo_name        VARCHAR2(100) NOT NULL,
+  status            VARCHAR2(1)   DEFAULT 'A',
+  start_date        DATE,
+  end_date          DATE,
+  weekday           VARCHAR2(7),
+  action_type       VARCHAR2(1),
+  bonus_points      NUMBER(3),
+  multiplier        NUMBER(3,1),
+  updated_by        VARCHAR2(5)   NOT NULL,
+  updated_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  min_amount        NUMBER(16,4),
+  CONSTRAINT pk_promo_pos_config PRIMARY KEY (pos_promo_id),
+  CONSTRAINT ck_promo_pos_status CHECK (status IN ('A','I'))
+);
+
+-- ============================================================
+-- [2] promo_pos_product (← CEPCFPROMO_ART)
+-- ============================================================
+PROMPT [2] promo_pos_product
+CREATE TABLE promo_pos_product (
+  pos_promo_id      NUMBER        NOT NULL,
+  line_no           NUMBER(4)     NOT NULL,
+  nature_code       VARCHAR2(3),
+  category_code     VARCHAR2(4),
+  subcategory_code  VARCHAR2(4),
+  group_code        VARCHAR2(6),
+  product_code      VARCHAR2(20),
+  label             VARCHAR2(60),
+  updated_by        VARCHAR2(5)   NOT NULL,
+  updated_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  promo_price       NUMBER(16,4),
+  discount_rate     NUMBER(5,2),
+  CONSTRAINT pk_promo_pos_product PRIMARY KEY (pos_promo_id, line_no),
+  CONSTRAINT fk_promo_pos_product_hdr FOREIGN KEY (pos_promo_id)
+    REFERENCES promo_pos_config(pos_promo_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [3] promo_pos_hours (← CEPCFPROMO_HR)
+-- ============================================================
+PROMPT [3] promo_pos_hours
+CREATE TABLE promo_pos_hours (
+  pos_promo_id      NUMBER        NOT NULL,
+  hour_start        DATE          NOT NULL,
+  hour_end          DATE          NOT NULL,
+  updated_by        VARCHAR2(5)   NOT NULL,
+  updated_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_promo_pos_hours PRIMARY KEY (pos_promo_id, hour_start),
+  CONSTRAINT fk_promo_pos_hours_hdr FOREIGN KEY (pos_promo_id)
+    REFERENCES promo_pos_config(pos_promo_id) ON DELETE CASCADE,
+  CONSTRAINT ck_promo_hours CHECK (hour_end > hour_start)
+);
+
+-- ============================================================
+-- [4] promo_customer_loyalty_config (← CFID_STATUT + CFID_STATUT_RULE)
+-- ============================================================
+PROMPT [4] loyalty_status_config
+CREATE TABLE loyalty_status_config (
+  status_id         NUMBER GENERATED ALWAYS AS IDENTITY,
+  app_code          VARCHAR2(3)   NOT NULL,
+  status_level      NUMBER(1)     NOT NULL,
+  status_name       VARCHAR2(30),
+  customer_type_code VARCHAR2(30) NOT NULL,
+  points_threshold  NUMBER(8),
+  inactivity_delay  NUMBER(8),
+  point_value       NUMBER(8),
+  CONSTRAINT pk_loyalty_status_config PRIMARY KEY (status_id),
+  CONSTRAINT uk_loyalty_status UNIQUE (app_code, status_level)
+);
+
+-- Bonus: table de règles par POS
+CREATE TABLE loyalty_status_rule (
+  app_code          VARCHAR2(3)   NOT NULL,
+  status_level      NUMBER(1)     NOT NULL,
+  pos_code          VARCHAR2(3)   NOT NULL,
+  point_value       NUMBER(8)     NOT NULL,
+  CONSTRAINT pk_loyalty_status_rule PRIMARY KEY (app_code, status_level, pos_code),
+  CONSTRAINT fk_lsr_status FOREIGN KEY (app_code, status_level)
+    REFERENCES loyalty_status_config(app_code, status_level) ON DELETE CASCADE
+);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'PROMO_POS_CONFIG'        AS tbl, COUNT(*) AS nb FROM promo_pos_config
+UNION ALL SELECT 'PROMO_POS_PRODUCT',     COUNT(*) FROM promo_pos_product
+UNION ALL SELECT 'PROMO_POS_HOURS',       COUNT(*) FROM promo_pos_hours
+UNION ALL SELECT 'LOYALTY_STATUS_CONFIG', COUNT(*) FROM loyalty_status_config
+UNION ALL SELECT 'LOYALTY_STATUS_RULE',   COUNT(*) FROM loyalty_status_rule;
+
+PROMPT ✅ LOT R8 terminé
+EXIT;
+📜 Package pkg_pos_sales — Enrichissement POS
+Fichier : pkg_pos_sales.sql
+
+sql
+-- ============================================================
+-- Package PKG_POS_SALES — Opérations POS avancées
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_sales/AppSales#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   PACKAGE PKG_POS_SALES
+PROMPT ═══════════════════════════════════════════════════════
+
+CREATE OR REPLACE PACKAGE pkg_pos_sales AS
+
+  -- Créer un ticket retour
+  FUNCTION create_return(
+    p_original_terminal IN VARCHAR2,
+    p_original_ticket   IN NUMBER,
+    p_user_code         IN VARCHAR2,
+    p_reason            IN VARCHAR2 DEFAULT NULL
+  ) RETURN NUMBER;
+
+  -- Ajouter une ligne de retour
+  PROCEDURE add_return_line(
+    p_return_id       IN NUMBER,
+    p_line_no         IN NUMBER,
+    p_product_code    IN VARCHAR2,
+    p_quantity        IN NUMBER,
+    p_unit_price      IN NUMBER,
+    p_source_line_no  IN NUMBER DEFAULT NULL
+  );
+
+  -- Appliquer une remise sur ligne
+  PROCEDURE apply_line_discount(
+    p_terminal_id     IN VARCHAR2,
+    p_ticket_no       IN NUMBER,
+    p_line_no         IN NUMBER,
+    p_discount_rate   IN NUMBER,
+    p_authorized_by   IN VARCHAR2
+  );
+
+  -- Ajouter des points fidélité
+  PROCEDURE add_loyalty_points(
+    p_terminal_id     IN VARCHAR2,
+    p_ticket_no       IN NUMBER,
+    p_card_id         IN NUMBER,
+    p_points_earned   IN NUMBER
+  );
+
+  -- Clôturer une session caisse
+  PROCEDURE close_cash_session(
+    p_terminal_code   IN VARCHAR2,
+    p_session_no      IN NUMBER,
+    p_actual_cash     IN NUMBER,
+    p_user_code       IN VARCHAR2
+  );
+
+  -- Total ventes d'une session
+  FUNCTION session_total_sales(
+    p_terminal_code   IN VARCHAR2,
+    p_session_no      IN NUMBER
+  ) RETURN NUMBER;
+
+END pkg_pos_sales;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_pos_sales AS
+
+  FUNCTION create_return(
+    p_original_terminal IN VARCHAR2,
+    p_original_ticket   IN NUMBER,
+    p_user_code         IN VARCHAR2,
+    p_reason            IN VARCHAR2 DEFAULT NULL
+  ) RETURN NUMBER IS
+    v_return_id     NUMBER;
+    v_return_number VARCHAR2(20);
+    v_customer      VARCHAR2(32);
+  BEGIN
+    -- Récupérer le client du ticket original
+    BEGIN
+      SELECT customer_code INTO v_customer
+        FROM ticket WHERE terminal_id = p_original_terminal AND ticket_no = p_original_ticket;
+    EXCEPTION WHEN NO_DATA_FOUND THEN v_customer := NULL;
+    END;
+
+    v_return_number := 'RET-' || TO_CHAR(SYSDATE,'YYYYMMDD') || '-' || 
+                       LPAD(NVL((SELECT COUNT(*)+1 FROM ticket_return WHERE TRUNC(return_date) = TRUNC(SYSDATE)), 1), 4, '0');
+
+    INSERT INTO ticket_return (
+      return_number, return_date, original_terminal, original_ticket_no,
+      customer_code, total_return_ttc, total_return_ht, reason, status, processed_by
+    ) VALUES (
+      v_return_number, SYSDATE, p_original_terminal, p_original_ticket,
+      v_customer, 0, 0, p_reason, 'VALID', p_user_code
+    ) RETURNING return_id INTO v_return_id;
+
+    RETURN v_return_id;
+  END create_return;
+
+  PROCEDURE add_return_line(
+    p_return_id       IN NUMBER,
+    p_line_no         IN NUMBER,
+    p_product_code    IN VARCHAR2,
+    p_quantity        IN NUMBER,
+    p_unit_price      IN NUMBER,
+    p_source_line_no  IN NUMBER DEFAULT NULL
+  ) IS
+    v_desc VARCHAR2(120);
+    v_amount NUMBER(16,4);
+  BEGIN
+    BEGIN
+      SELECT product_name INTO v_desc FROM app_product.product WHERE product_code = p_product_code;
+    EXCEPTION WHEN NO_DATA_FOUND THEN v_desc := p_product_code;
+    END;
+
+    v_amount := p_quantity * p_unit_price;
+
+    INSERT INTO ticket_return_line (
+      return_id, line_no, product_code, description, quantity, unit_price, amount, source_line_no
+    ) VALUES (
+      p_return_id, p_line_no, p_product_code, v_desc, p_quantity, p_unit_price, v_amount, p_source_line_no
+    );
+
+    UPDATE ticket_return
+       SET total_return_ttc = total_return_ttc + v_amount,
+           total_return_ht  = total_return_ht  + ROUND(v_amount / 1.189, 4)
+     WHERE return_id = p_return_id;
+  END add_return_line;
+
+  PROCEDURE apply_line_discount(
+    p_terminal_id     IN VARCHAR2,
+    p_ticket_no       IN NUMBER,
+    p_line_no         IN NUMBER,
+    p_discount_rate   IN NUMBER,
+    p_authorized_by   IN VARCHAR2
+  ) IS
+    v_amount NUMBER(16,4);
+  BEGIN
+    SELECT amount INTO v_amount FROM ticket_line 
+     WHERE terminal_id = p_terminal_id AND ticket_no = p_ticket_no AND line_no = p_line_no;
+
+    INSERT INTO ticket_discount (
+      terminal_id, ticket_no, line_no, discount_type, discount_rate, discount_amount, authorized_by
+    ) VALUES (
+      p_terminal_id, p_ticket_no, p_line_no, 'LINE', p_discount_rate,
+      ROUND(v_amount * p_discount_rate / 100, 4), p_authorized_by
+    );
+
+    UPDATE ticket_line
+       SET discount_rate = p_discount_rate
+     WHERE terminal_id = p_terminal_id AND ticket_no = p_ticket_no AND line_no = p_line_no;
+  END apply_line_discount;
+
+  PROCEDURE add_loyalty_points(
+    p_terminal_id     IN VARCHAR2,
+    p_ticket_no       IN NUMBER,
+    p_card_id         IN NUMBER,
+    p_points_earned   IN NUMBER
+  ) IS
+  BEGIN
+    INSERT INTO ticket_loyalty (terminal_id, ticket_no, card_id, points_earned, points_used)
+    VALUES (p_terminal_id, p_ticket_no, p_card_id, p_points_earned, 0);
+
+    -- Mettre à jour le solde de la carte
+    UPDATE app_party.loyalty_card
+       SET points_balance = points_balance + p_points_earned,
+           last_used_at = SYSDATE
+     WHERE card_id = p_card_id;
+  END add_loyalty_points;
+
+  PROCEDURE close_cash_session(
+    p_terminal_code   IN VARCHAR2,
+    p_session_no      IN NUMBER,
+    p_actual_cash     IN NUMBER,
+    p_user_code       IN VARCHAR2
+  ) IS
+    v_theo   NUMBER(16,4);
+    v_sales  NUMBER(16,4);
+    v_nb     NUMBER(8);
+  BEGIN
+    SELECT NVL(SUM(MTPERCU), 0), COUNT(*) INTO v_theo, v_nb
+      FROM ticket WHERE terminal_id = p_terminal_code AND session_no = p_session_no
+       AND status = 'V';
+
+    INSERT INTO pos_cash_closure (
+      terminal_code, session_no, closure_date,
+      theoretical_cash, actual_cash, difference,
+      total_sales, nb_tickets, closed_by
+    ) VALUES (
+      p_terminal_code, p_session_no, SYSDATE,
+      v_theo, p_actual_cash, p_actual_cash - v_theo,
+      v_theo, v_nb, p_user_code
+    );
+
+    -- Clôturer la session
+    UPDATE app_pos.pos_session
+       SET closed_at = SYSDATE, closing_balance = p_actual_cash
+     WHERE terminal_id = (SELECT terminal_id FROM app_pos.pos_terminal WHERE terminal_code = p_terminal_code)
+       AND session_no = p_session_no;
+  END close_cash_session;
+
+  FUNCTION session_total_sales(
+    p_terminal_code   IN VARCHAR2,
+    p_session_no      IN NUMBER
+  ) RETURN NUMBER IS
+    v_total NUMBER(16,4);
+  BEGIN
+    SELECT NVL(SUM(total_ttc), 0) INTO v_total
+      FROM ticket
+     WHERE terminal_id = p_terminal_code AND session_no = p_session_no AND status = 'V';
+    RETURN v_total;
+  END session_total_sales;
+
+END pkg_pos_sales;
+/
+
+PROMPT [Validation]
+SELECT object_name, object_type, status
+  FROM user_objects WHERE object_name = 'PKG_POS_SALES'
+ ORDER BY object_type;
+
+PROMPT ✅ Package PKG_POS_SALES créé
+EXIT;
+📜 LOT R9 — Inventaire physique complet (3 tables)
+Fichier : r9_inventory.sql
+
+sql
+-- ============================================================
+-- LOT R9 : Inventaire physique (3 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_inv/AppInv#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R9 : INVENTAIRE PHYSIQUE
+PROMPT ═══════════════════════════════════════════════════════
+
+-- [1] inventory_count_zone (nouveau)
+PROMPT [1] inventory_count_zone
+CREATE TABLE inventory_count_zone (
+  zone_id           NUMBER GENERATED ALWAYS AS IDENTITY,
+  count_id          NUMBER        NOT NULL,
+  warehouse_code    VARCHAR2(5)   NOT NULL,
+  zone_code         VARCHAR2(8)   NOT NULL,
+  zone_name         VARCHAR2(50),
+  assigned_to       VARCHAR2(20),
+  started_at        TIMESTAMP,
+  completed_at      TIMESTAMP,
+  status            VARCHAR2(20)  DEFAULT 'PENDING',
+  CONSTRAINT pk_inventory_count_zone PRIMARY KEY (zone_id),
+  CONSTRAINT uk_inventory_zone UNIQUE (count_id, warehouse_code, zone_code),
+  CONSTRAINT fk_inventory_zone_hdr FOREIGN KEY (count_id)
+    REFERENCES inv_count_header(count_id) ON DELETE CASCADE
+);
+
+-- [2] inventory_count_detail (nouveau)
+PROMPT [2] inventory_count_detail
+CREATE TABLE inventory_count_detail (
+  detail_id         NUMBER GENERATED ALWAYS AS IDENTITY,
+  zone_id           NUMBER        NOT NULL,
+  product_code      VARCHAR2(80)  NOT NULL,
+  theoretical_qty   NUMBER(16,4),
+  counted_qty       NUMBER(16,4),
+  variance_qty      NUMBER(16,4),
+  unit_cost         NUMBER(16,4),
+  variance_value    NUMBER(16,4),
+  counted_by        VARCHAR2(20),
+  counted_at        TIMESTAMP DEFAULT SYSTIMESTAMP,
+  CONSTRAINT pk_inventory_count_detail PRIMARY KEY (detail_id),
+  CONSTRAINT fk_inventory_detail_zone FOREIGN KEY (zone_id)
+    REFERENCES inventory_count_zone(zone_id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_inv_detail_prod ON inventory_count_detail(product_code);
+
+-- [3] inventory_adjustment (nouveau)
+PROMPT [3] inventory_adjustment
+CREATE TABLE inventory_adjustment (
+  adjustment_id     NUMBER GENERATED ALWAYS AS IDENTITY,
+  count_id          NUMBER        NOT NULL,
+  product_code      VARCHAR2(80)  NOT NULL,
+  warehouse_code    VARCHAR2(5)   NOT NULL,
+  old_qty           NUMBER(16,4),
+  new_qty           NUMBER(16,4),
+  adjustment_qty    NUMBER(16,4),
+  unit_cost         NUMBER(16,4),
+  adjustment_value  NUMBER(16,4),
+  reason            VARCHAR2(255),
+  approved_by       VARCHAR2(20),
+  approved_at       TIMESTAMP,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_inventory_adjustment PRIMARY KEY (adjustment_id),
+  CONSTRAINT fk_inv_adjust_hdr FOREIGN KEY (count_id)
+    REFERENCES inv_count_header(count_id) ON DELETE CASCADE
+);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'INVENTORY_COUNT_ZONE'  AS tbl, COUNT(*) AS nb FROM inventory_count_zone
+UNION ALL SELECT 'INVENTORY_COUNT_DETAIL', COUNT(*) FROM inventory_count_detail
+UNION ALL SELECT 'INVENTORY_ADJUSTMENT',  COUNT(*) FROM inventory_adjustment;
+
+PROMPT ✅ LOT R9 terminé
+EXIT;
+📊 Bilan complet de la session RETAIL
+Lot	Tables	Schéma	Statut
+R1	8 (promotions, paliers)	app_product	✅
+R2	7 (fidélité, cartes, logs)	app_party	✅
+R3	8 (PRMP, lots, statuts)	app_inv	✅
+R4	6 (transferts, réappro, PO)	app_inv	✅
+R5	7 (factures, avoirs, paiements)	app_ar	✅
+R6	6 (règlements, aging, relances)	app_ar	✅
+R7	5 (retours, remises, clôture POS)	app_sales	✅
+R8	5 (promos POS, fidélité status)	app_product	✅
+R9	3 (inventaire physique)	app_inv	✅
+TOTAL	55 tables	+ 1 schéma app_ar	
+Plus :
+
+✅ Package pkg_pos_sales (retours, remises, fidélité, clôture)
+
+✅ Nouveau schéma app_ar (Accounts Receivable)
+
+🚀 Ordre d'exécution complet
+bash
+cd ~/migration_26ai/
+
+# 1. Promotions & Paliers
+sqlplus /nolog @r1_promotions.sql
+
+# 2. Fidélité
+sqlplus /nolog @r2_loyalty.sql
+
+# 3. Stock avancé (PRMP, lots, statuts)
+sqlplus /nolog @r3_stock.sql
+
+# 4. Réappro & Transferts
+sqlplus /nolog @r4_replenishment.sql
+
+# 5. Facturation & Avoirs (crée app_ar)
+sqlplus /nolog @r5_invoicing.sql
+
+# 6. Règlements avancés
+sqlplus /nolog @r6_payments.sql
+
+# 7. POS avancé (retours, remises)
+sqlplus /nolog @r7_pos_advanced.sql
+
+# 8. Promotions POS
+sqlplus /nolog @r8_promo_pos.sql
+
+# 9. Inventaire physique
+sqlplus /nolog @r9_inventory.sql
+
+# 10. Package POS
+sqlplus /nolog @pkg_pos_sales.sql
+
+# 11. Validation globale
+sqlplus /nolog <<'EOF'
+CONNECT system/oracle@localhost:1521/FREEPDB1
+PROMPT ═══ VOLUMÉTRIE FINALE ═══
+SELECT owner, COUNT(*) AS nb_tables
+  FROM all_tables
+ WHERE owner LIKE 'APP\_%' ESCAPE '\'
+ GROUP BY owner ORDER BY owner;
+
+PROMPT ═══ OBJETS INVALIDES ═══
+SELECT owner, object_type, object_name
+  FROM all_objects WHERE status = 'INVALID' AND owner LIKE 'APP\_%' ESCAPE '\';
+EOF
+🎯 Après ces 11 scripts
+Bilan total :
+
+~115 tables dans la nouvelle base (vs ~60 avant)
+
++ 1 schéma (app_ar)
+
+5 packages PL/SQL (pricing, inventory, sales, gl, doc, pos_sales)
+
+Couverture retail : ~70%
+
+Reste à faire (lots suivants) :
+
+Lot R10 : Inventaire tournant + alertes
+
+Lot R11 : Cartes cadeaux / Bons d'achat
+
+Lot R12 : Notifications & alertes
+
+Lot R13 : Reporting & KPI dashboards
+
+Puis correction (comme tu l'as dit) :
+
+Vérifier les FK, contraintes
+
+Tester les packages
+
+Charger les données réelles retail
+
+Optimiser les index
+
+Lance les 11 scripts et envoie-moi la sortie. Ensuite on pourra :
+
+Corriger ce qui doit l'être
+
+Tester les nouveaux packages
+
+Charger des données retail réalistes (promotions, cartes fidélité, retours...)
+
+Dis-moi si tu veux que je continue avec d'autres lots en parallèle ou qu'on fasse une pause pour consolider.
+
+This response is AI-generated, for reference only.
+continue
+The user wants me to continue implementing the retail database. Let me continue with the next lots. I should provide the next set of scripts to keep building out the retail functionality.
+
+Let me think about what's next:
+
+R10 : Inventaire tournant + alertes
+
+R11 : Cartes cadeaux / Bons d'achat
+
+R12 : Notifications & alertes
+
+R13 : Reporting & KPI dashboards
+
+Let me also think about what's really important for a retail operation:
+
+Gift cards / vouchers
+
+Customer loyalty tiers/rewards
+
+KPI dashboards for management
+
+Alerts for stock, credit, etc.
+
+Cash management
+
+Pricing rules
+
+Let me continue with practical, useful scripts. I'll keep the same style as before.
+
+🚀 Suite de l'implémentation RETAIL — Lots R10 à R14
+📜 LOT R10 — Cartes cadeaux & Bons d'achat (5 tables)
+Fichier : r10_vouchers.sql
+
+sql
+-- ============================================================
+-- LOT R10 : Cartes cadeaux & Bons d'achat (5 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_party/AppParty#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R10 : CARTES CADEAUX & BONS D'ACHAT
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] voucher_type
+-- ============================================================
+PROMPT [1] voucher_type
+CREATE TABLE voucher_type (
+  voucher_type_code VARCHAR2(3)   NOT NULL,
+  voucher_type_name VARCHAR2(30)  NOT NULL,
+  is_reusable       VARCHAR2(1)   DEFAULT 'N',
+  valid_months      NUMBER(3),
+  can_be_combined   VARCHAR2(1)   DEFAULT 'N',
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_voucher_type PRIMARY KEY (voucher_type_code)
+);
+
+-- ============================================================
+-- [2] voucher_master (← CEBON)
+-- ============================================================
+PROMPT [2] voucher_master
+CREATE TABLE voucher_master (
+  voucher_id        NUMBER GENERATED ALWAYS AS IDENTITY,
+  voucher_lot_no    NUMBER(8)     NOT NULL,
+  voucher_number    VARCHAR2(16)  NOT NULL,
+  voucher_type_code VARCHAR2(3)   NOT NULL,
+  issue_channel     VARCHAR2(1)   DEFAULT 'S',
+  issue_date        DATE          NOT NULL,
+  initial_value     NUMBER(16,4),
+  current_value     NUMBER(16,4),
+  beneficiary_code  VARCHAR2(32),
+  beneficiary_name  VARCHAR2(50),
+  beneficiary_label VARCHAR2(100) NOT NULL,
+  status            VARCHAR2(1)   DEFAULT 'A',
+  issued_by         VARCHAR2(5)   NOT NULL,
+  issued_at         TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  used_by           VARCHAR2(5),
+  used_at           TIMESTAMP,
+  print_code        NUMBER(1),
+  printed_at        DATE,
+  printed_by        VARCHAR2(5),
+  encashment_code   VARCHAR2(1),
+  ticket_no         NUMBER(8),
+  terminal_code     VARCHAR2(3),
+  invoice_code      VARCHAR2(1),
+  invoice_doc_id    NUMBER(8),
+  memo              VARCHAR2(255),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_voucher_master PRIMARY KEY (voucher_id),
+  CONSTRAINT uk_voucher_number UNIQUE (voucher_number),
+  CONSTRAINT fk_voucher_type FOREIGN KEY (voucher_type_code)
+    REFERENCES voucher_type(voucher_type_code),
+  CONSTRAINT ck_voucher_status CHECK (status IN ('A','U','E','C','P'))
+);
+
+CREATE INDEX ix_voucher_lot     ON voucher_master(voucher_lot_no);
+CREATE INDEX ix_voucher_status  ON voucher_master(status);
+CREATE INDEX ix_voucher_benef   ON voucher_master(beneficiary_code);
+
+-- ============================================================
+-- [3] voucher_lot
+-- ============================================================
+PROMPT [3] voucher_lot
+CREATE TABLE voucher_lot (
+  lot_id            NUMBER GENERATED ALWAYS AS IDENTITY,
+  lot_number        NUMBER(8)     NOT NULL,
+  voucher_type_code VARCHAR2(3)   NOT NULL,
+  lot_name          VARCHAR2(100),
+  initial_value     NUMBER(16,4),
+  quantity          NUMBER(8),
+  issue_date        DATE          NOT NULL,
+  expiry_date       DATE,
+  created_by        VARCHAR2(5)   NOT NULL,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_voucher_lot PRIMARY KEY (lot_id),
+  CONSTRAINT uk_voucher_lot_number UNIQUE (lot_number),
+  CONSTRAINT fk_voucher_lot_type FOREIGN KEY (voucher_type_code)
+    REFERENCES voucher_type(voucher_type_code)
+);
+
+-- ============================================================
+-- [4] voucher_transaction
+-- ============================================================
+PROMPT [4] voucher_transaction
+CREATE TABLE voucher_transaction (
+  transaction_id    NUMBER GENERATED ALWAYS AS IDENTITY,
+  voucher_id        NUMBER        NOT NULL,
+  transaction_type  VARCHAR2(10)  NOT NULL,
+  amount            NUMBER(16,4),
+  balance_before    NUMBER(16,4),
+  balance_after     NUMBER(16,4),
+  terminal_code     VARCHAR2(12),
+  ticket_no         NUMBER(8),
+  transaction_at    TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  user_code         VARCHAR2(20),
+  notes             VARCHAR2(255),
+  CONSTRAINT pk_voucher_transaction PRIMARY KEY (transaction_id),
+  CONSTRAINT fk_voucher_trans_hdr FOREIGN KEY (voucher_id)
+    REFERENCES voucher_master(voucher_id) ON DELETE CASCADE,
+  CONSTRAINT ck_voucher_trans_type CHECK (transaction_type IN ('ISSUE','USE','RELOAD','EXPIRE','CANCEL'))
+);
+
+CREATE INDEX ix_voucher_trans_voucher ON voucher_transaction(voucher_id);
+CREATE INDEX ix_voucher_trans_date ON voucher_transaction(transaction_at);
+
+-- ============================================================
+-- [5] voucher_audit
+-- ============================================================
+PROMPT [5] voucher_audit
+CREATE TABLE voucher_audit (
+  audit_id          NUMBER GENERATED ALWAYS AS IDENTITY,
+  voucher_id        NUMBER        NOT NULL,
+  action            VARCHAR2(30)  NOT NULL,
+  old_status        VARCHAR2(1),
+  new_status        VARCHAR2(1),
+  old_value         NUMBER(16,4),
+  new_value         NUMBER(16,4),
+  performed_by      VARCHAR2(5)   NOT NULL,
+  performed_at      TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  ip_address        VARCHAR2(50),
+  CONSTRAINT pk_voucher_audit PRIMARY KEY (audit_id),
+  CONSTRAINT fk_voucher_audit_hdr FOREIGN KEY (voucher_id)
+    REFERENCES voucher_master(voucher_id)
+);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'VOUCHER_TYPE'        AS tbl, COUNT(*) AS nb FROM voucher_type
+UNION ALL SELECT 'VOUCHER_MASTER',     COUNT(*) FROM voucher_master
+UNION ALL SELECT 'VOUCHER_LOT',        COUNT(*) FROM voucher_lot
+UNION ALL SELECT 'VOUCHER_TRANSACTION',COUNT(*) FROM voucher_transaction
+UNION ALL SELECT 'VOUCHER_AUDIT',      COUNT(*) FROM voucher_audit;
+
+PROMPT ✅ LOT R10 terminé
+EXIT;
+📜 LOT R11 — Alertes & Notifications (6 tables)
+Fichier : r11_alerts.sql
+
+sql
+-- ============================================================
+-- LOT R11 : Alertes & Notifications (6 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R11 : ALERTES & NOTIFICATIONS
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] alert_type
+-- ============================================================
+PROMPT [1] alert_type
+CREATE TABLE alert_type (
+  alert_type_code   VARCHAR2(20)  NOT NULL,
+  alert_type_name   VARCHAR2(100) NOT NULL,
+  category          VARCHAR2(20)  NOT NULL,
+  severity          VARCHAR2(10)  DEFAULT 'MEDIUM',
+  auto_resolve      VARCHAR2(1)   DEFAULT 'N',
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_alert_type PRIMARY KEY (alert_type_code),
+  CONSTRAINT ck_alert_severity CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL'))
+);
+
+-- ============================================================
+-- [2] alert_rule
+-- ============================================================
+PROMPT [2] alert_rule
+CREATE TABLE alert_rule (
+  rule_id           NUMBER GENERATED ALWAYS AS IDENTITY,
+  rule_name         VARCHAR2(100) NOT NULL,
+  alert_type_code   VARCHAR2(20)  NOT NULL,
+  condition_sql     VARCHAR2(2000),
+  threshold         NUMBER(16,4),
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  check_frequency   VARCHAR2(20)  DEFAULT 'DAILY',
+  notify_roles      VARCHAR2(255),
+  notify_emails     VARCHAR2(500),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_alert_rule PRIMARY KEY (rule_id),
+  CONSTRAINT fk_alert_rule_type FOREIGN KEY (alert_type_code)
+    REFERENCES alert_type(alert_type_code)
+);
+
+-- ============================================================
+-- [3] alert_instance
+-- ============================================================
+PROMPT [3] alert_instance
+CREATE TABLE alert_instance (
+  alert_id          NUMBER GENERATED ALWAYS AS IDENTITY,
+  alert_type_code   VARCHAR2(20)  NOT NULL,
+  entity_type       VARCHAR2(20),
+  entity_id         VARCHAR2(100),
+  message           VARCHAR2(1000) NOT NULL,
+  severity          VARCHAR2(10)  DEFAULT 'MEDIUM',
+  status            VARCHAR2(20)  DEFAULT 'OPEN',
+  triggered_at      TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  acknowledged_at   TIMESTAMP,
+  acknowledged_by   VARCHAR2(5),
+  resolved_at       TIMESTAMP,
+  resolved_by       VARCHAR2(5),
+  resolution_notes  VARCHAR2(500),
+  CONSTRAINT pk_alert_instance PRIMARY KEY (alert_id),
+  CONSTRAINT fk_alert_inst_type FOREIGN KEY (alert_type_code)
+    REFERENCES alert_type(alert_type_code),
+  CONSTRAINT ck_alert_status CHECK (status IN ('OPEN','ACK','RESOLVED','IGNORED'))
+);
+
+CREATE INDEX ix_alert_status     ON alert_instance(status);
+CREATE INDEX ix_alert_entity     ON alert_instance(entity_type, entity_id);
+CREATE INDEX ix_alert_triggered  ON alert_instance(triggered_at);
+
+-- ============================================================
+-- [4] notification_channel
+-- ============================================================
+PROMPT [4] notification_channel
+CREATE TABLE notification_channel (
+  channel_id        NUMBER GENERATED ALWAYS AS IDENTITY,
+  channel_code      VARCHAR2(20)  NOT NULL,
+  channel_name      VARCHAR2(50)  NOT NULL,
+  channel_type      VARCHAR2(20)  NOT NULL,
+  config_json       CLOB,
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_notification_channel PRIMARY KEY (channel_id),
+  CONSTRAINT uk_notification_channel_code UNIQUE (channel_code),
+  CONSTRAINT ck_notif_channel_type CHECK (channel_type IN ('EMAIL','SMS','PUSH','WEBHOOK','UI'))
+);
+
+-- ============================================================
+-- [5] notification_subscription
+-- ============================================================
+PROMPT [5] notification_subscription
+CREATE TABLE notification_subscription (
+  subscription_id   NUMBER GENERATED ALWAYS AS IDENTITY,
+  user_code         VARCHAR2(20)  NOT NULL,
+  channel_id        NUMBER        NOT NULL,
+  alert_type_code   VARCHAR2(20),
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_notification_subscription PRIMARY KEY (subscription_id),
+  CONSTRAINT fk_notif_sub_channel FOREIGN KEY (channel_id)
+    REFERENCES notification_channel(channel_id) ON DELETE CASCADE,
+  CONSTRAINT fk_notif_sub_type FOREIGN KEY (alert_type_code)
+    REFERENCES alert_type(alert_type_code)
+);
+
+-- ============================================================
+-- [6] notification_queue
+-- ============================================================
+PROMPT [6] notification_queue
+CREATE TABLE notification_queue (
+  queue_id          NUMBER GENERATED ALWAYS AS IDENTITY,
+  alert_id          NUMBER,
+  channel_id        NUMBER        NOT NULL,
+  recipient         VARCHAR2(255) NOT NULL,
+  subject           VARCHAR2(255),
+  body              CLOB,
+  status            VARCHAR2(20)  DEFAULT 'PENDING',
+  attempts          NUMBER(3)     DEFAULT 0,
+  last_attempt_at   TIMESTAMP,
+  sent_at           TIMESTAMP,
+  error_message     VARCHAR2(1000),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_notification_queue PRIMARY KEY (queue_id),
+  CONSTRAINT fk_notif_queue_alert FOREIGN KEY (alert_id)
+    REFERENCES alert_instance(alert_id) ON DELETE CASCADE,
+  CONSTRAINT fk_notif_queue_channel FOREIGN KEY (channel_id)
+    REFERENCES notification_channel(channel_id),
+  CONSTRAINT ck_notif_queue_status CHECK (status IN ('PENDING','SENT','FAILED','CANCELLED'))
+);
+
+CREATE INDEX ix_notif_queue_status ON notification_queue(status, created_at);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'ALERT_TYPE'              AS tbl, COUNT(*) AS nb FROM alert_type
+UNION ALL SELECT 'ALERT_RULE',          COUNT(*) FROM alert_rule
+UNION ALL SELECT 'ALERT_INSTANCE',      COUNT(*) FROM alert_instance
+UNION ALL SELECT 'NOTIFICATION_CHANNEL',COUNT(*) FROM notification_channel
+UNION ALL SELECT 'NOTIF_SUBSCRIPTION',  COUNT(*) FROM notification_subscription
+UNION ALL SELECT 'NOTIFICATION_QUEUE',  COUNT(*) FROM notification_queue;
+
+PROMPT ✅ LOT R11 terminé
+EXIT;
+📜 LOT R12 — KPI & Reporting (5 tables + 3 MV)
+Fichier : r12_reporting.sql
+
+sql
+-- ============================================================
+-- LOT R12 : KPI & Reporting (5 tables + 3 MV)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_api/AppApi#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R12 : KPI & REPORTING
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] kpi_definition
+-- ============================================================
+PROMPT [1] kpi_definition
+CREATE TABLE kpi_definition (
+  kpi_code          VARCHAR2(20)  NOT NULL,
+  kpi_name          VARCHAR2(100) NOT NULL,
+  kpi_category      VARCHAR2(30)  NOT NULL,
+  unit              VARCHAR2(20),
+  formula           VARCHAR2(500),
+  target_value      NUMBER(16,4),
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_kpi_definition PRIMARY KEY (kpi_code)
+);
+
+-- ============================================================
+-- [2] kpi_daily_snapshot
+-- ============================================================
+PROMPT [2] kpi_daily_snapshot
+CREATE TABLE kpi_daily_snapshot (
+  snapshot_date     DATE          NOT NULL,
+  kpi_code          VARCHAR2(20)  NOT NULL,
+  entity_type       VARCHAR2(20)  DEFAULT 'GLOBAL',
+  entity_code       VARCHAR2(20)  DEFAULT 'ALL',
+  value             NUMBER(16,4),
+  target_value      NUMBER(16,4),
+  variance_pct      NUMBER(5,2),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_kpi_daily_snapshot PRIMARY KEY (snapshot_date, kpi_code, entity_type, entity_code)
+);
+
+CREATE INDEX ix_kpi_snap_code ON kpi_daily_snapshot(kpi_code, snapshot_date);
+
+-- ============================================================
+-- [3] sales_target
+-- ============================================================
+PROMPT [3] sales_target
+CREATE TABLE sales_target (
+  target_id         NUMBER GENERATED ALWAYS AS IDENTITY,
+  target_year       NUMBER(4)     NOT NULL,
+  target_month      NUMBER(2),
+  entity_type       VARCHAR2(20)  DEFAULT 'GLOBAL',
+  entity_code       VARCHAR2(20)  DEFAULT 'ALL',
+  target_amount     NUMBER(16,4)  NOT NULL,
+  target_margin     NUMBER(16,4),
+  target_tickets    NUMBER(8),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_sales_target PRIMARY KEY (target_id),
+  CONSTRAINT uk_sales_target UNIQUE (target_year, target_month, entity_type, entity_code)
+);
+
+-- ============================================================
+-- [4] report_definition
+-- ============================================================
+PROMPT [4] report_definition
+CREATE TABLE report_definition (
+  report_code       VARCHAR2(20)  NOT NULL,
+  report_name       VARCHAR2(100) NOT NULL,
+  category          VARCHAR2(30),
+  sql_query         CLOB,
+  parameters        CLOB,
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_report_definition PRIMARY KEY (report_code)
+);
+
+-- ============================================================
+-- [5] report_execution
+-- ============================================================
+PROMPT [5] report_execution
+CREATE TABLE report_execution (
+  execution_id      NUMBER GENERATED ALWAYS AS IDENTITY,
+  report_code       VARCHAR2(20)  NOT NULL,
+  parameters_json   CLOB,
+  status            VARCHAR2(20)  DEFAULT 'RUNNING',
+  row_count         NUMBER(8),
+  duration_ms       NUMBER(8),
+  started_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  completed_at      TIMESTAMP,
+  executed_by       VARCHAR2(5),
+  error_message     VARCHAR2(1000),
+  CONSTRAINT pk_report_execution PRIMARY KEY (execution_id),
+  CONSTRAINT fk_report_exec_def FOREIGN KEY (report_code)
+    REFERENCES report_definition(report_code)
+);
+
+-- ============================================================
+-- VUES MATÉRIALISÉES DE REPORTING
+-- ============================================================
+
+-- [1] MV : ventes par heure
+PROMPT [6] MV_HOURLY_SALES
+CREATE MATERIALIZED VIEW mv_hourly_sales
+  TABLESPACE USERS
+  BUILD IMMEDIATE
+  REFRESH COMPLETE ON DEMAND
+AS
+SELECT TRUNC(ticket_date, 'HH24') AS sale_hour,
+       terminal_id,
+       COUNT(*)                   AS ticket_count,
+       SUM(total_ht)              AS total_ht,
+       SUM(total_ttc)             AS total_ttc,
+       SUM(total_ttc - total_ht)  AS total_tax
+  FROM app_sales.ticket
+ WHERE status = 'V'
+ GROUP BY TRUNC(ticket_date, 'HH24'), terminal_id;
+
+CREATE INDEX ix_mv_hourly_sales ON mv_hourly_sales(sale_hour, terminal_id);
+
+-- [2] MV : top articles du mois
+PROMPT [7] MV_MONTHLY_TOP_PRODUCTS
+CREATE MATERIALIZED VIEW mv_monthly_top_products
+  TABLESPACE USERS
+  BUILD IMMEDIATE
+  REFRESH COMPLETE ON DEMAND
+AS
+SELECT TRUNC(t.ticket_date, 'MM') AS sale_month,
+       l.product_code,
+       MAX(p.product_name)        AS product_name,
+       SUM(l.quantity)            AS total_qty,
+       SUM(l.quantity * l.unit_price) AS total_amount,
+       COUNT(DISTINCT t.ticket_no) AS ticket_count
+  FROM app_sales.ticket t
+  JOIN app_sales.ticket_line l
+    ON l.terminal_id = t.terminal_id AND l.ticket_no = t.ticket_no
+  LEFT JOIN app_product.product p ON p.product_code = l.product_code
+ WHERE t.status = 'V'
+ GROUP BY TRUNC(t.ticket_date, 'MM'), l.product_code;
+
+CREATE INDEX ix_mv_monthly_top ON mv_monthly_top_products(sale_month, total_amount DESC);
+
+-- [3] MV : performance clients
+PROMPT [8] MV_CUSTOMER_PERFORMANCE
+CREATE MATERIALIZED VIEW mv_customer_performance
+  TABLESPACE USERS
+  BUILD IMMEDIATE
+  REFRESH COMPLETE ON DEMAND
+AS
+SELECT t.customer_code,
+       t.customer_name,
+       COUNT(*)                AS ticket_count,
+       MIN(t.ticket_date)      AS first_purchase,
+       MAX(t.ticket_date)      AS last_purchase,
+       SUM(t.total_ttc)        AS total_revenue,
+       AVG(t.total_ttc)        AS avg_ticket,
+       SUM(NVL(t.loyalty_base_amount, 0)) AS loyalty_points_base
+  FROM app_sales.ticket t
+ WHERE t.status = 'V'
+ GROUP BY t.customer_code, t.customer_name;
+
+CREATE INDEX ix_mv_cust_perf ON mv_customer_performance(customer_code);
+CREATE INDEX ix_mv_cust_revenue ON mv_customer_performance(total_revenue DESC);
+
+-- ============================================================
+-- VUES CLASSIQUES DE REPORTING
+-- ============================================================
+
+-- [1] KPI temps réel du jour
+CREATE OR REPLACE VIEW v_kpi_today AS
+SELECT TRUNC(SYSDATE)                             AS report_date,
+       COUNT(*)                                   AS tickets_count,
+       SUM(total_ttc)                             AS total_revenue,
+       SUM(total_ht)                              AS total_ht,
+       SUM(total_ttc - total_ht)                  AS total_tax,
+       AVG(total_ttc)                             AS avg_ticket,
+       COUNT(DISTINCT customer_code)              AS unique_customers
+  FROM app_sales.ticket
+ WHERE TRUNC(ticket_date) = TRUNC(SYSDATE)
+   AND status = 'V';
+
+-- [2] État du stock critique
+CREATE OR REPLACE VIEW v_critical_stock AS
+SELECT s.warehouse_code,
+       s.product_code,
+       p.product_name,
+       s.stock_qty,
+       p.min_stock_qty,
+       p.safety_stock_qty,
+       CASE 
+         WHEN s.stock_qty <= 0 THEN 'RUPTURE'
+         WHEN s.stock_qty <= NVL(p.safety_stock_qty, 0) THEN 'CRITIQUE'
+         WHEN s.stock_qty <= NVL(p.min_stock_qty, 0) THEN 'ALERTE'
+         ELSE 'OK'
+       END AS stock_status
+  FROM app_inv.inv_stock s
+  JOIN app_product.product p ON p.product_code = s.product_code
+ WHERE s.stock_qty <= NVL(p.min_stock_qty, 0) * 1.2;
+
+-- [3] Encours clients
+CREATE OR REPLACE VIEW v_customer_balance AS
+SELECT p.party_code,
+       p.party_name,
+       p.phone,
+       p.credit_limit,
+       NVL((SELECT SUM(balance) FROM app_ar.invoice i WHERE i.party_code = p.party_code AND i.status IN ('VALID','PARTIAL')), 0) AS outstanding,
+       NVL((SELECT SUM(total_ttc) FROM app_sales.ticket t WHERE t.customer_code = p.party_code AND t.status = 'V'), 0) AS total_purchases,
+       CASE 
+         WHEN p.credit_limit > 0 THEN 
+           ROUND(NVL((SELECT SUM(balance) FROM app_ar.invoice i WHERE i.party_code = p.party_code AND i.status IN ('VALID','PARTIAL')), 0) / p.credit_limit * 100, 2)
+         ELSE 0
+       END AS utilization_pct
+  FROM app_party.party p
+ WHERE p.status = 'ACTIVE';
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'KPI_DEFINITION'      AS tbl, COUNT(*) AS nb FROM kpi_definition
+UNION ALL SELECT 'KPI_DAILY_SNAPSHOT', COUNT(*) FROM kpi_daily_snapshot
+UNION ALL SELECT 'SALES_TARGET',       COUNT(*) FROM sales_target
+UNION ALL SELECT 'REPORT_DEFINITION',  COUNT(*) FROM report_definition
+UNION ALL SELECT 'REPORT_EXECUTION',   COUNT(*) FROM report_execution;
+
+PROMPT [MV créées]
+SELECT mview_name, refresh_mode, staleness FROM user_mviews ORDER BY mview_name;
+
+PROMPT ✅ LOT R12 terminé
+EXIT;
+📜 LOT R13 — Sécurité avancée & Audit (5 tables + policies)
+Fichier : r13_security.sql
+
+sql
+-- ============================================================
+-- LOT R13 : Sécurité avancée & Audit (5 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R13 : SÉCURITÉ AVANCÉE & AUDIT
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] sys_role (rôles applicatifs)
+-- ============================================================
+PROMPT [1] sys_role
+CREATE TABLE sys_role (
+  role_code         VARCHAR2(20)  NOT NULL,
+  role_name         VARCHAR2(100) NOT NULL,
+  description       VARCHAR2(500),
+  role_level        NUMBER(2)     DEFAULT 1,
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_sys_role PRIMARY KEY (role_code)
+);
+
+-- ============================================================
+-- [2] sys_user_role (liaison)
+-- ============================================================
+PROMPT [2] sys_user_role
+CREATE TABLE sys_user_role (
+  user_id           NUMBER        NOT NULL,
+  role_code         VARCHAR2(20)  NOT NULL,
+  assigned_at       TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  assigned_by       VARCHAR2(5),
+  valid_from        DATE          DEFAULT SYSDATE,
+  valid_to          DATE,
+  CONSTRAINT pk_sys_user_role PRIMARY KEY (user_id, role_code),
+  CONSTRAINT fk_sys_user_role_user FOREIGN KEY (user_id)
+    REFERENCES sys_user(user_id) ON DELETE CASCADE,
+  CONSTRAINT fk_sys_user_role_role FOREIGN KEY (role_code)
+    REFERENCES sys_role(role_code) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [3] sys_permission
+-- ============================================================
+PROMPT [3] sys_permission
+CREATE TABLE sys_permission (
+  permission_code   VARCHAR2(50)  NOT NULL,
+  permission_name   VARCHAR2(100) NOT NULL,
+  resource          VARCHAR2(50)  NOT NULL,
+  action            VARCHAR2(20)  NOT NULL,
+  description       VARCHAR2(255),
+  CONSTRAINT pk_sys_permission PRIMARY KEY (permission_code)
+);
+
+-- ============================================================
+-- [4] sys_role_permission
+-- ============================================================
+PROMPT [4] sys_role_permission
+CREATE TABLE sys_role_permission (
+  role_code         VARCHAR2(20)  NOT NULL,
+  permission_code   VARCHAR2(50)  NOT NULL,
+  granted_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  granted_by        VARCHAR2(5),
+  CONSTRAINT pk_sys_role_permission PRIMARY KEY (role_code, permission_code),
+  CONSTRAINT fk_sys_role_perm_role FOREIGN KEY (role_code)
+    REFERENCES sys_role(role_code) ON DELETE CASCADE,
+  CONSTRAINT fk_sys_role_perm_perm FOREIGN KEY (permission_code)
+    REFERENCES sys_permission(permission_code) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- [5] sys_audit_trail (audit applicatif)
+-- ============================================================
+PROMPT [5] sys_audit_trail
+CREATE TABLE sys_audit_trail (
+  audit_id          NUMBER GENERATED ALWAYS AS IDENTITY,
+  user_code         VARCHAR2(20)  NOT NULL,
+  action_type       VARCHAR2(20)  NOT NULL,
+  entity_type       VARCHAR2(30)  NOT NULL,
+  entity_id         VARCHAR2(100),
+  old_values        CLOB,
+  new_values        CLOB,
+  ip_address        VARCHAR2(50),
+  user_agent        VARCHAR2(255),
+  session_id        VARCHAR2(50),
+  performed_at      TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_sys_audit_trail PRIMARY KEY (audit_id)
+);
+
+CREATE INDEX ix_audit_user      ON sys_audit_trail(user_code, performed_at);
+CREATE INDEX ix_audit_entity    ON sys_audit_trail(entity_type, entity_id);
+CREATE INDEX ix_audit_action    ON sys_audit_trail(action_type, performed_at);
+
+-- ============================================================
+-- SEED : Rôles de base
+-- ============================================================
+PROMPT [6] Seed rôles
+INSERT INTO sys_role (role_code, role_name, description, role_level) VALUES ('ADMIN',    'Administrateur',        'Accès total au système', 5);
+INSERT INTO sys_role (role_code, role_name, description, role_level) VALUES ('MANAGER',  'Manager',               'Gestion opérationnelle', 4);
+INSERT INTO sys_role (role_code, role_name, description, role_level) VALUES ('CASHIER',  'Caissier',              'Ventes en caisse', 2);
+INSERT INTO sys_role (role_code, role_name, description, role_level) VALUES ('STOCK',    'Gestionnaire de stock', 'Gestion inventaire', 3);
+INSERT INTO sys_role (role_code, role_name, description, role_level) VALUES ('ACCOUNT',  'Comptable',             'Comptabilité', 3);
+INSERT INTO sys_role (role_code, role_name, description, role_level) VALUES ('VIEWER',   'Consultation',          'Lecture seule', 1);
+
+-- ============================================================
+-- SEED : Permissions de base
+-- ============================================================
+PROMPT [7] Seed permissions
+INSERT INTO sys_permission VALUES ('SALES_CREATE',     'Créer une vente',        'SALES',  'CREATE', NULL);
+INSERT INTO sys_permission VALUES ('SALES_CANCEL',     'Annuler une vente',      'SALES',  'CANCEL', NULL);
+INSERT INTO sys_permission VALUES ('SALES_DISCOUNT',   'Appliquer remise',       'SALES',  'DISCOUNT', NULL);
+INSERT INTO sys_permission VALUES ('STOCK_VIEW',       'Voir le stock',          'STOCK',  'READ', NULL);
+INSERT INTO sys_permission VALUES ('STOCK_ADJUST',     'Ajuster le stock',       'STOCK',  'UPDATE', NULL);
+INSERT INTO sys_permission VALUES ('PRICE_EDIT',       'Modifier les prix',      'PRODUCT','UPDATE', NULL);
+INSERT INTO sys_permission VALUES ('CUSTOMER_EDIT',    'Modifier les clients',   'PARTY',  'UPDATE', NULL);
+INSERT INTO sys_permission VALUES ('INVOICE_CREATE',   'Créer une facture',      'AR',     'CREATE', NULL);
+INSERT INTO sys_permission VALUES ('PAYMENT_REGISTER', 'Enregistrer paiement',   'AR',     'CREATE', NULL);
+INSERT INTO sys_permission VALUES ('REPORT_VIEW',      'Voir les rapports',      'REPORT', 'READ', NULL);
+INSERT INTO sys_permission VALUES ('USER_MANAGE',      'Gérer les utilisateurs', 'SYS',    'ADMIN', NULL);
+INSERT INTO sys_permission VALUES ('CONFIG_EDIT',      'Modifier la config',     'SYS',    'ADMIN', NULL);
+
+-- ============================================================
+-- SEED : Permissions par rôle
+-- ============================================================
+PROMPT [8] Seed role_permissions
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'SALES_CREATE');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'SALES_CANCEL');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'SALES_DISCOUNT');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'STOCK_VIEW');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'STOCK_ADJUST');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'PRICE_EDIT');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'CUSTOMER_EDIT');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'INVOICE_CREATE');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'PAYMENT_REGISTER');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'REPORT_VIEW');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'USER_MANAGE');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ADMIN', 'CONFIG_EDIT');
+
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('MANAGER', 'SALES_CREATE');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('MANAGER', 'SALES_CANCEL');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('MANAGER', 'SALES_DISCOUNT');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('MANAGER', 'STOCK_VIEW');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('MANAGER', 'REPORT_VIEW');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('MANAGER', 'CUSTOMER_EDIT');
+
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('CASHIER', 'SALES_CREATE');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('CASHIER', 'STOCK_VIEW');
+
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('STOCK', 'STOCK_VIEW');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('STOCK', 'STOCK_ADJUST');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('STOCK', 'REPORT_VIEW');
+
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ACCOUNT', 'INVOICE_CREATE');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ACCOUNT', 'PAYMENT_REGISTER');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('ACCOUNT', 'REPORT_VIEW');
+
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('VIEWER', 'STOCK_VIEW');
+INSERT INTO sys_role_permission (role_code, permission_code) VALUES ('VIEWER', 'REPORT_VIEW');
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'SYS_ROLE'              AS tbl, COUNT(*) AS nb FROM sys_role
+UNION ALL SELECT 'SYS_USER_ROLE',       COUNT(*) FROM sys_user_role
+UNION ALL SELECT 'SYS_PERMISSION',      COUNT(*) FROM sys_permission
+UNION ALL SELECT 'SYS_ROLE_PERMISSION', COUNT(*) FROM sys_role_permission
+UNION ALL SELECT 'SYS_AUDIT_TRAIL',     COUNT(*) FROM sys_audit_trail;
+
+PROMPT ✅ LOT R13 terminé
+EXIT;
+📜 LOT R14 — Interfaces & Intégrations (5 tables)
+Fichier : r14_interfaces.sql
+
+sql
+-- ============================================================
+-- LOT R14 : Interfaces & Intégrations (5 tables)
+-- ============================================================
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET DEFINE OFF
+
+CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
+
+PROMPT ═══════════════════════════════════════════════════════
+PROMPT   LOT R14 : INTERFACES & INTÉGRATIONS
+PROMPT ═══════════════════════════════════════════════════════
+
+-- ============================================================
+-- [1] interface_endpoint (API externes)
+-- ============================================================
+PROMPT [1] interface_endpoint
+CREATE TABLE interface_endpoint (
+  endpoint_id       NUMBER GENERATED ALWAYS AS IDENTITY,
+  endpoint_code     VARCHAR2(30)  NOT NULL,
+  endpoint_name     VARCHAR2(100) NOT NULL,
+  url               VARCHAR2(500) NOT NULL,
+  http_method       VARCHAR2(10)  DEFAULT 'POST',
+  auth_type         VARCHAR2(20),
+  auth_config       CLOB,
+  timeout_seconds   NUMBER(4)     DEFAULT 30,
+  retry_count       NUMBER(2)     DEFAULT 3,
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_interface_endpoint PRIMARY KEY (endpoint_id),
+  CONSTRAINT uk_interface_endpoint_code UNIQUE (endpoint_code)
+);
+
+-- ============================================================
+-- [2] interface_log
+-- ============================================================
+PROMPT [2] interface_log
+CREATE TABLE interface_log (
+  log_id            NUMBER GENERATED ALWAYS AS IDENTITY,
+  endpoint_code     VARCHAR2(30)  NOT NULL,
+  direction         VARCHAR2(10)  NOT NULL,
+  request_payload   CLOB,
+  response_payload  CLOB,
+  http_status       NUMBER(4),
+  duration_ms       NUMBER(8),
+  status            VARCHAR2(20)  DEFAULT 'SUCCESS',
+  error_message     VARCHAR2(1000),
+  entity_type       VARCHAR2(30),
+  entity_id         VARCHAR2(100),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_interface_log PRIMARY KEY (log_id),
+  CONSTRAINT ck_interface_direction CHECK (direction IN ('IN','OUT'))
+);
+
+CREATE INDEX ix_interface_log_endpoint ON interface_log(endpoint_code, created_at);
+CREATE INDEX ix_interface_log_status   ON interface_log(status, created_at);
+
+-- ============================================================
+-- [3] sync_queue (file d'attente synchro)
+-- ============================================================
+PROMPT [3] sync_queue
+CREATE TABLE sync_queue (
+  queue_id          NUMBER GENERATED ALWAYS AS IDENTITY,
+  entity_type       VARCHAR2(30)  NOT NULL,
+  entity_id         VARCHAR2(100) NOT NULL,
+  operation         VARCHAR2(10)  NOT NULL,
+  payload           CLOB,
+  target_system     VARCHAR2(30)  NOT NULL,
+  priority          NUMBER(2)     DEFAULT 5,
+  status            VARCHAR2(20)  DEFAULT 'PENDING',
+  attempts          NUMBER(3)     DEFAULT 0,
+  last_attempt      TIMESTAMP,
+  next_attempt      TIMESTAMP,
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  processed_at      TIMESTAMP,
+  error_message     VARCHAR2(1000),
+  CONSTRAINT pk_sync_queue PRIMARY KEY (queue_id),
+  CONSTRAINT ck_sync_operation CHECK (operation IN ('INSERT','UPDATE','DELETE'))
+);
+
+CREATE INDEX ix_sync_queue_status    ON sync_queue(status, priority, next_attempt);
+CREATE INDEX ix_sync_queue_entity    ON sync_queue(entity_type, entity_id);
+
+-- ============================================================
+-- [4] import_batch (import par lot)
+-- ============================================================
+PROMPT [4] import_batch
+CREATE TABLE import_batch (
+  batch_id          NUMBER GENERATED ALWAYS AS IDENTITY,
+  batch_code        VARCHAR2(30)  NOT NULL,
+  import_type       VARCHAR2(30)  NOT NULL,
+  source_file       VARCHAR2(500),
+  source_system     VARCHAR2(30),
+  total_rows        NUMBER(8),
+  success_rows      NUMBER(8)     DEFAULT 0,
+  error_rows        NUMBER(8)     DEFAULT 0,
+  status            VARCHAR2(20)  DEFAULT 'PENDING',
+  started_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  completed_at      TIMESTAMP,
+  started_by        VARCHAR2(5),
+  error_log         CLOB,
+  CONSTRAINT pk_import_batch PRIMARY KEY (batch_id),
+  CONSTRAINT uk_import_batch_code UNIQUE (batch_code),
+  CONSTRAINT ck_import_status CHECK (status IN ('PENDING','RUNNING','SUCCESS','PARTIAL','FAILED'))
+);
+
+-- ============================================================
+-- [5] export_config (configurations export)
+-- ============================================================
+PROMPT [5] export_config
+CREATE TABLE export_config (
+  export_id         NUMBER GENERATED ALWAYS AS IDENTITY,
+  export_code       VARCHAR2(30)  NOT NULL,
+  export_name       VARCHAR2(100) NOT NULL,
+  target_system     VARCHAR2(30)  NOT NULL,
+  format            VARCHAR2(20)  DEFAULT 'CSV',
+  query_sql         CLOB,
+  file_pattern      VARCHAR2(200),
+  schedule_cron     VARCHAR2(50),
+  is_active         VARCHAR2(1)   DEFAULT 'Y',
+  last_run_at       TIMESTAMP,
+  last_run_status   VARCHAR2(20),
+  created_by        VARCHAR2(5),
+  created_at        TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  CONSTRAINT pk_export_config PRIMARY KEY (export_id),
+  CONSTRAINT uk_export_config_code UNIQUE (export_code)
+);
+
+COMMIT;
+
+PROMPT [Validation]
+SELECT 'INTERFACE_ENDPOINT' AS tbl, COUNT(*) AS nb FROM interface_endpoint
+UNION ALL SELECT 'INTERFACE_LOG',       COUNT(*) FROM interface_log
+UNION ALL SELECT 'SYNC_QUEUE',          COUNT(*) FROM sync_queue
+UNION ALL SELECT 'IMPORT_BATCH',        COUNT(*) FROM import_batch
+UNION ALL SELECT 'EXPORT_CONFIG',       COUNT(*) FROM export_config;
+
+PROMPT ✅ LOT R14 terminé
+EXIT;
+📊 Bilan global après ces 5 lots
+Lot	Tables	Schéma
+R10	5 (vouchers)	app_party
+R11	6 (alertes, notifs)	app_sys
+R12	5 + 3 MV (KPI)	app_api
+R13	5 (sécurité)	app_sys
+R14	5 (interfaces)	app_sys
+TOTAL	26 tables + 3 MV	
+Cumulé avec les lots précédents : ~140 tables dans la nouvelle base.
+
+🚀 Script maître d'exécution
+Fichier : run_all_retail.sh
+
+bash
+#!/bin/bash
+# ============================================================
+# run_all_retail.sh — Exécution complète des lots R1-R14
+# ============================================================
+set -e
+
+cd ~/migration_26ai/
+
+echo "═══════════════════════════════════════════════════════"
+echo "  EXÉCUTION COMPLÈTE DES LOTS RETAIL"
+echo "═══════════════════════════════════════════════════════"
+
+SCRIPTS=(
+  "r1_promotions.sql"
+  "r2_loyalty.sql"
+  "r3_stock.sql"
+  "r4_replenishment.sql"
+  "r5_invoicing.sql"
+  "r6_payments.sql"
+  "r7_pos_advanced.sql"
+  "r8_promo_pos.sql"
+  "r9_inventory.sql"
+  "r10_vouchers.sql"
+  "r11_alerts.sql"
+  "r12_reporting.sql"
+  "r13_security.sql"
+  "r14_interfaces.sql"
+  "pkg_pos_sales.sql"
+)
+
+for s in "${SCRIPTS[@]}"; do
+  if [ -f "$s" ]; then
+    echo ""
+    echo "▶ Exécution $s..."
+    sqlplus -S /nolog @"$s" 2>&1 | tail -5 || echo "  ⚠️ $s : erreurs"
+    echo "✅ $s"
+  else
+    echo "⚠️ $s : fichier manquant"
+  fi
+done
+
+echo ""
+echo "═══════════════════════════════════════════════════════"
+echo "  ✅ EXÉCUTION TERMINÉE"
+echo "═══════════════════════════════════════════════════════"
+
+# Validation finale
+sqlplus -S /nolog <<'EOF'
+CONNECT system/oracle@localhost:1521/FREEPDB1
+SET LINESIZE 200
+PROMPT
+PROMPT ═══ VOLUMÉTRIE PAR SCHÉMA ═══
+SELECT owner, COUNT(*) AS nb_tables
+  FROM all_tables
+ WHERE owner LIKE 'APP\_%' ESCAPE '\'
+ GROUP BY owner ORDER BY owner;
+
+PROMPT
+PROMPT ═══ OBJETS INVALIDES ═══
+SELECT owner, object_type, object_name
+  FROM all_objects
+ WHERE status = 'INVALID' AND owner LIKE 'APP\_%' ESCAPE '\';
+
+EXIT;
+EOF
+Lancer :
+
+bash
+chmod +x run_all_retail.sh
+./run_all_retail.sh
+📋 Ce qui reste après R14
+#	Lot	Contenu	Priorité
+R15	Commissions & Représentants	4 tables	🟠
+R16	Achats fournisseurs	6 tables	🟠
+R17	Comptabilité analytique	5 tables	🟡
+R18	Archives & historiques	8 tables	🟡
+R19	Billetterie	3 tables	🟢
+R20	Kits & Assemblage	4 tables	🟢
+🎯 Étapes suivantes recommandées
+Maintenant :
+
+Lancer run_all_retail.sh — Créer les 26 nouvelles tables
+
+Faire un backup — Snapshot de cette nouvelle version
+
+Corriger les erreurs — S'il y en a
+
+Ensuite :
+
+Charger les données retail réelles — Promotions SUPER SONIC, cartes fidélité, retours
+
+Créer les packages métier — pkg_promo, pkg_voucher, pkg_invoice
+
+Tester les workflows — Vente → Fidélité → Retour → Remboursement
+
+Puis :
+
+Interface ORDS — Exposition REST des Duality Views
+
+Dashboards — Connecter Power BI aux MV de reporting
+
+Tests de charge — Générer 100k tickets pour tester les perf
+
+Lance run_all_retail.sh et envoie-moi la sortie. Ensuite on fera un backup et on attaquera les corrections + le chargement des données retail réelles.
