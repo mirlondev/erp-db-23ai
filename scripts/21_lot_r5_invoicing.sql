@@ -17,6 +17,13 @@
 --  * status harmonisé sur 8 statuts
 --  * CHECKs : amount_allocation cohérent, balance >= 0, etc.
 --  * Index ciblés (date, party, status, due_date pour le suivi)
+--
+-- CORRECTIONS ORACLE (vs version initiale) :
+--  * ORA-02158 : Oracle ne supporte PAS "CREATE INDEX ... WHERE ..."
+--    → remplacé par index fonctionnel avec CASE (partial-index style)
+--  * BOOLEAN ne peut pas être indexé directement en B-tree
+--    → index fonctionnel CASE WHEN is_blocked THEN 1 END
+--  * DBMS_STATS.GATHER_SCHEMA_STATS pour peupler num_rows
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
@@ -29,6 +36,40 @@ PROMPT ════════════════════════�
 PROMPT   LOT R5 : FACTURATION & AVOIRS (7 tables dans app_ar)
 PROMPT ══════════════════════════════════════════════════════════
 
+-- ============================================================
+-- NETTOYAGE : drop des objets s'ils existent (idempotence)
+-- ============================================================
+PROMPT
+PROMPT ═══ Nettoyage préalable (idempotence) ═══
+DECLARE
+  PROCEDURE drop_if_exists(p_type VARCHAR2, p_name VARCHAR2) IS
+  BEGIN
+    EXECUTE IMMEDIATE 'DROP ' || p_type || ' ' || p_name;
+    DBMS_OUTPUT.PUT_LINE('  DROP ' || p_type || ' ' || p_name);
+  EXCEPTION
+    WHEN OTHERS THEN NULL;  -- n'existe pas, ok
+  END;
+BEGIN
+  -- Tables (cascade sur les FK)
+  drop_if_exists('TABLE', 'payment_allocation');
+  drop_if_exists('TABLE', 'invoice_payment_link');
+  drop_if_exists('TABLE', 'dunning_log');
+  drop_if_exists('TABLE', 'aging_balance');
+  drop_if_exists('TABLE', 'customer_statement');
+  drop_if_exists('TABLE', 'cash_register_session');
+  drop_if_exists('TABLE', 'payment_method_ref');
+  drop_if_exists('TABLE', 'customer_credit');
+  drop_if_exists('TABLE', 'payment');
+  drop_if_exists('TABLE', 'credit_note_line');
+  drop_if_exists('TABLE', 'credit_note');
+  drop_if_exists('TABLE', 'invoice_line');
+  drop_if_exists('TABLE', 'invoice');
+END;
+/
+
+-- ============================================================
+-- [1/7] invoice — entête facture client
+-- ============================================================
 PROMPT
 PROMPT [1/7] invoice  (← CP_FACTURE) — entête facture client
 CREATE TABLE invoice (
@@ -52,9 +93,9 @@ CREATE TABLE invoice (
   total_ttc            NUMBER(16,4)  DEFAULT 0,
   total_paid           NUMBER(16,4)  DEFAULT 0,
   balance              NUMBER(16,4)  DEFAULT 0,
-  status               VARCHAR2(20)  DEFAULT 'DRAFT',     -- DRAFT | VALID | PARTIAL | PAID | OVERDUE | CANCELLED
+  status               VARCHAR2(20)  DEFAULT 'DRAFT',
   document_ref         VARCHAR2(50),
-  source_doc_id        NUMBER,                          -- FK logique vers app_doc.doc_header
+  source_doc_id        NUMBER,
   source_ticket_term   VARCHAR2(12),
   source_ticket_no     NUMBER(8),
   memo                 VARCHAR2(2000),
@@ -74,8 +115,19 @@ CREATE INDEX ix_invoice_date         ON invoice(invoice_date);
 CREATE INDEX ix_invoice_party        ON invoice(party_code);
 CREATE INDEX ix_invoice_status       ON invoice(status);
 CREATE INDEX ix_invoice_due          ON invoice(due_date);
-CREATE INDEX ix_invoice_overdue      ON invoice(status, due_date) WHERE status IN ('VALID','PARTIAL','OVERDUE');
 
+-- ⚠️ ORACLE ne supporte PAS "CREATE INDEX ... WHERE ..." (ORA-02158)
+-- Émulation d'un index partiel via index fonctionnel CASE.
+-- L'index ne stocke QUE les lignes où status IN ('VALID','PARTIAL','OVERDUE').
+PROMPT   → ix_invoice_overdue (index fonctionnel, émulation partial-index)
+CREATE INDEX ix_invoice_overdue ON invoice(
+  CASE WHEN status IN ('VALID','PARTIAL','OVERDUE') THEN status END,
+  CASE WHEN status IN ('VALID','PARTIAL','OVERDUE') THEN due_date END
+);
+
+-- ============================================================
+-- [2/7] invoice_line — lignes facture
+-- ============================================================
 PROMPT
 PROMPT [2/7] invoice_line  (← CP_FACTURE_RUBR_CPT) — lignes facture
 CREATE TABLE invoice_line (
@@ -101,6 +153,9 @@ CREATE TABLE invoice_line (
 
 CREATE INDEX ix_invoice_line_prod    ON invoice_line(product_code);
 
+-- ============================================================
+-- [3/7] credit_note — avoirs client
+-- ============================================================
 PROMPT
 PROMPT [3/7] credit_note  — avoirs client
 CREATE TABLE credit_note (
@@ -110,15 +165,15 @@ CREATE TABLE credit_note (
   company_code         VARCHAR2(12)  NOT NULL,
   party_code           VARCHAR2(32)  NOT NULL,
   party_name           VARCHAR2(120),
-  source_invoice_id    NUMBER,                          -- facture d'origine
+  source_invoice_id    NUMBER,
   currency_code        VARCHAR2(12)  DEFAULT 'XOF',
   exchange_rate        NUMBER(10,5)  DEFAULT 1,
   total_ht             NUMBER(16,4)  DEFAULT 0,
   total_tax            NUMBER(16,4)  DEFAULT 0,
   total_ttc            NUMBER(16,4)  DEFAULT 0,
-  status               VARCHAR2(20)  DEFAULT 'DRAFT',  -- DRAFT | VALID | APPLIED | CANCELLED
-  reason               VARCHAR2(255),                  -- motif : retour / erreur / litige / etc.
-  applied_to_invoice   NUMBER,                          -- si APPLIED, facture compensée
+  status               VARCHAR2(20)  DEFAULT 'DRAFT',
+  reason               VARCHAR2(255),
+  applied_to_invoice   NUMBER,
   memo                 VARCHAR2(2000),
   created_by           VARCHAR2(20),
   created_at           TIMESTAMP     DEFAULT SYSTIMESTAMP NOT NULL,
@@ -135,6 +190,9 @@ CREATE INDEX ix_credit_note_party    ON credit_note(party_code);
 CREATE INDEX ix_credit_note_invoice  ON credit_note(source_invoice_id);
 CREATE INDEX ix_credit_note_status   ON credit_note(status);
 
+-- ============================================================
+-- [4/7] credit_note_line — lignes d'avoir
+-- ============================================================
 PROMPT
 PROMPT [4/7] credit_note_line  — lignes d'avoir
 CREATE TABLE credit_note_line (
@@ -147,7 +205,7 @@ CREATE TABLE credit_note_line (
   amount               NUMBER(16,4),
   tax_rate             NUMBER(5,2),
   tax_amount           NUMBER(16,4),
-  source_invoice_line_no NUMBER(5),                    -- ligne de facture d'origine
+  source_invoice_line_no NUMBER(5),
   CONSTRAINT pk_credit_note_line     PRIMARY KEY (credit_note_id, line_no),
   CONSTRAINT fk_credit_note_line_hdr FOREIGN KEY (credit_note_id)
     REFERENCES credit_note(credit_note_id) ON DELETE CASCADE,
@@ -156,6 +214,9 @@ CREATE TABLE credit_note_line (
 
 CREATE INDEX ix_credit_note_line_prod ON credit_note_line(product_code);
 
+-- ============================================================
+-- [5/7] payment — règlements client
+-- ============================================================
 PROMPT
 PROMPT [5/7] payment  — règlements client
 CREATE TABLE payment (
@@ -165,14 +226,14 @@ CREATE TABLE payment (
   company_code         VARCHAR2(12)  NOT NULL,
   party_code           VARCHAR2(32)  NOT NULL,
   party_name           VARCHAR2(120),
-  payment_method       VARCHAR2(12)  NOT NULL,          -- CASH | CHECK | BANK | CARD | MOBILE | OTHER
-  reference            VARCHAR2(80),                   -- chèque n°, virement ref
+  payment_method       VARCHAR2(12)  NOT NULL,
+  reference            VARCHAR2(80),
   bank_code            VARCHAR2(20),
   currency_code        VARCHAR2(12)  DEFAULT 'XOF',
   exchange_rate        NUMBER(10,5)  DEFAULT 1,
   amount               NUMBER(16,4)  NOT NULL,
-  amount_allocated     NUMBER(16,4)  DEFAULT 0,        -- somme déjà lettrée sur factures
-  status               VARCHAR2(20)  DEFAULT 'VALID',   -- DRAFT | VALID | CANCELLED
+  amount_allocated     NUMBER(16,4)  DEFAULT 0,
+  status               VARCHAR2(20)  DEFAULT 'VALID',
   memo                 VARCHAR2(255),
   created_by           VARCHAR2(20),
   created_at           TIMESTAMP     DEFAULT SYSTIMESTAMP NOT NULL,
@@ -188,13 +249,16 @@ CREATE INDEX ix_payment_party        ON payment(party_code);
 CREATE INDEX ix_payment_method       ON payment(payment_method);
 CREATE INDEX ix_payment_status       ON payment(status);
 
+-- ============================================================
+-- [6/7] payment_allocation — lettrage paiement/facture
+-- ============================================================
 PROMPT
 PROMPT [6/7] payment_allocation  (← GCRGLE + GCRGLD) — lettrage paiement/facture
 CREATE TABLE payment_allocation (
   allocation_id        NUMBER GENERATED ALWAYS AS IDENTITY,
   payment_id           NUMBER        NOT NULL,
-  invoice_id           NUMBER,                          -- nullable pour acomptes non lettrés
-  document_type        VARCHAR2(20)  NOT NULL,          -- INVOICE | CREDIT_NOTE | ADVANCE
+  invoice_id           NUMBER,
+  document_type        VARCHAR2(20)  NOT NULL,
   document_ref         VARCHAR2(50),
   amount_applied       NUMBER(16,4)  NOT NULL,
   allocation_date      DATE          DEFAULT SYSDATE,
@@ -212,6 +276,9 @@ CREATE INDEX ix_palloc_payment       ON payment_allocation(payment_id);
 CREATE INDEX ix_palloc_invoice       ON payment_allocation(invoice_id);
 CREATE INDEX ix_palloc_date          ON payment_allocation(allocation_date);
 
+-- ============================================================
+-- [7/7] customer_credit — encours client
+-- ============================================================
 PROMPT
 PROMPT [7/7] customer_credit  — encours client
 CREATE TABLE customer_credit (
@@ -219,8 +286,8 @@ CREATE TABLE customer_credit (
   company_code         VARCHAR2(12)  NOT NULL,
   credit_limit         NUMBER(16,4)  DEFAULT 0,
   credit_days          NUMBER(3)     DEFAULT 30,
-  current_balance      NUMBER(16,4)  DEFAULT 0,         -- factures non payées - acomptes
-  overdue_balance      NUMBER(16,4)  DEFAULT 0,         -- balance échue
+  current_balance      NUMBER(16,4)  DEFAULT 0,
+  overdue_balance      NUMBER(16,4)  DEFAULT 0,
   last_invoice_date    DATE,
   last_payment_date    DATE,
   is_blocked           BOOLEAN       DEFAULT FALSE,
@@ -233,8 +300,32 @@ CREATE TABLE customer_credit (
 );
 
 CREATE INDEX ix_customer_credit_company ON customer_credit(company_code);
-CREATE INDEX ix_customer_credit_blocked ON customer_credit(is_blocked);
 
+-- ⚠️ BOOLEAN ne peut PAS être indexé directement en B-tree Oracle
+-- Index fonctionnel : stocke 1 pour TRUE, NULL sinon (émulation partial-index).
+PROMPT   → ix_customer_credit_blocked (index fonctionnel sur BOOLEAN)
+CREATE INDEX ix_customer_credit_blocked ON customer_credit(
+  CASE WHEN is_blocked THEN 1 ELSE NULL END
+);
+
+-- ============================================================
+-- Statistiques (pour peupler num_rows)
+-- ============================================================
+PROMPT
+PROMPT ═══ Collecte des statistiques (num_rows) ═══
+BEGIN
+  DBMS_STATS.GATHER_SCHEMA_STATS(
+    ownname          => 'APP_AR',
+    estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE,
+    cascade          => TRUE
+  );
+  DBMS_OUTPUT.PUT_LINE('  Statistiques collectées.');
+END;
+/
+
+-- ============================================================
+-- Privilèges croisés (fait en tant que SYSTEM)
+-- ============================================================
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
 CONNECT system/oracle@localhost:1521/FREEPDB1
@@ -263,18 +354,41 @@ GRANT SELECT ON app_ar.payment             TO app_api;
 GRANT SELECT ON app_ar.payment_allocation  TO app_api;
 GRANT SELECT ON app_ar.customer_credit     TO app_api;
 
+-- ============================================================
+-- VALIDATION FINALE
+-- ============================================================
 PROMPT
 PROMPT ═══ Validation — Tables créées ═══
 CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
+
 SELECT table_name, num_rows
   FROM user_tables
+ WHERE table_name IN ('INVOICE','INVOICE_LINE','CREDIT_NOTE','CREDIT_NOTE_LINE',
+                      'PAYMENT','PAYMENT_ALLOCATION','CUSTOMER_CREDIT')
  ORDER BY table_name;
 
 PROMPT
 PROMPT [Validation] Contraintes
-SELECT constraint_name, constraint_type, status
+SELECT table_name, constraint_name, constraint_type, status
   FROM user_constraints
+ WHERE table_name IN ('INVOICE','INVOICE_LINE','CREDIT_NOTE','CREDIT_NOTE_LINE',
+                      'PAYMENT','PAYMENT_ALLOCATION','CUSTOMER_CREDIT')
  ORDER BY table_name, constraint_name;
+
+PROMPT
+PROMPT [Validation] Index (dont fonctionnels)
+SELECT table_name, index_name, status, funcidx_status
+  FROM user_indexes
+ WHERE table_name IN ('INVOICE','INVOICE_LINE','CREDIT_NOTE','CREDIT_NOTE_LINE',
+                      'PAYMENT','PAYMENT_ALLOCATION','CUSTOMER_CREDIT')
+ ORDER BY table_name, index_name;
+
+PROMPT
+PROMPT [Validation] Expressions des index fonctionnels
+SELECT index_name, column_expression
+  FROM user_ind_expressions
+ WHERE index_name IN ('IX_INVOICE_OVERDUE','IX_CUSTOMER_CREDIT_BLOCKED')
+ ORDER BY index_name, column_position;
 
 PROMPT
 PROMPT [Validation] Objets invalides (doit être vide)
