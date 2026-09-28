@@ -1,0 +1,60 @@
+#!/bin/bash
+# ============================================================
+# run_all_with_seeds.sh
+# Pipeline complet : DDL → validation → reset → seeds → validation seed
+# Usage : ./run_all_with_seeds.sh
+# ============================================================
+set -e
+
+CONN="system/oracle@localhost:1521/FREEPDB1"
+SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+SEEDS_DIR="${SCRIPTS_DIR}/../seed_data"
+
+echo ""
+echo "════════════════════════════════════════════════════════════"
+echo "  PIPELINE COMPLET — Schéma + Seeds + Validation"
+echo "════════════════════════════════════════════════════════════"
+
+# 1. Déploiement DDL complet
+echo ""
+echo "▶ Étape 1/3 : Déploiement DDL (00 → 17)"
+bash "${SCRIPTS_DIR}/run_all.sh"
+
+# 2. Reset + Seeds
+echo ""
+echo "▶ Étape 2/3 : Reset et Seeds"
+for seed in \
+  S00_reset.sql \
+  S01_seed_app_sys.sql \
+  S02_seed_app_org.sql \
+  S03_seed_app_product.sql \
+  S04_seed_app_party.sql \
+  S05_seed_app_inv.sql \
+  S06_seed_app_gl.sql \
+  S07_seed_app_pos_sales.sql \
+  S08_seed_app_cash.sql \
+  S09_seed_lot_r1_promotions.sql
+do
+    echo ""
+    echo "▶ Seed : $seed"
+    echo "───────────────────────────────────────────────────────────"
+    sqlplus -S "$CONN" <<EOF
+@${SEEDS_DIR}/${seed}
+EXIT
+EOF
+    echo "✅ $seed terminé"
+done
+
+# 3. Validation finale post-seed
+echo ""
+echo "▶ Étape 3/3 : Validation post-seed"
+echo "───────────────────────────────────────────────────────────"
+sqlplus -S "$CONN" <<EOF
+@${SEEDS_DIR}/validate_seed.sql
+EXIT
+EOF
+
+echo ""
+echo "════════════════════════════════════════════════════════════"
+echo "  ✅ PIPELINE COMPLET TERMINÉ"
+echo "════════════════════════════════════════════════════════════"

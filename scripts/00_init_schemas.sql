@@ -71,25 +71,9 @@ BEGIN
 END;
 /
 
-PROMPT/home/odema/Bureau/OracleDBA/migration_26ai/scripts/00_init_schemas.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/01_app_sys.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/02_app_org.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/03_app_product.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/04_app_party.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/05_app_inv.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/06_app_doc.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/07_app_pos.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/08_app_sales.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/09_app_gl.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/10_app_cash.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/11_app_hist.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/12_app_api.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/13_triggers.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/14_packages.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/15_mviews.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/16_jobs.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/99_validation.sql
-/home/odema/Bureau/OracleDBA/migration_26ai/scripts/run_all.sh
+-- (Fin de la phase d'attribution des privileges)
+
+PROMPT
 PROMPT [4] Validation — Schémas créés
 SELECT username, 
        default_tablespace, 
