@@ -65,7 +65,7 @@ cd scripts
 | 1B   | Entêtes document complémentaires |   6    | app_doc         | ✅            |
 | 1C-1G | Proforma, expéditions, factures |  24    | app_doc/ship/ar | ⏸️ reporté    |
 | **R1**  | **Promotions & Remises**     |  **8** | **app_product** | **✅ ici**    |
-| R2   | Fidélité client                  |   7    | app_party       | ⏳ planifié   |
+| **R2**  | **Fidélité client**          |  **7** | **app_party**   | **✅ ici**    |
 | R3   | Stock avancé                     |   8    | app_inv         | ⏳ planifié   |
 | R4   | Réappro & transferts             |   6    | app_inv         | ⏳ planifié   |
 | R5   | Facturation & avoirs             |   7    | app_doc         | ⏳ planifié   |
@@ -79,7 +79,7 @@ cd scripts
 | R13  | Sécurité avancée & audit         |   5    | app_sys         | ⏳ planifié   |
 | R14  | Interfaces & intégrations        |   5    | app_api         | ⏳ planifié   |
 
-> Couverture actuelle : ~38 tables modernes / 391 legacy ≈ 10 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
+> Couverture actuelle : ~45 tables modernes / 391 legacy ≈ 12 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
 
 ## Décisions techniques notables
 

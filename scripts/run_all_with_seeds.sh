@@ -33,7 +33,8 @@ for seed in \
   S06_seed_app_gl.sql \
   S07_seed_app_pos_sales.sql \
   S08_seed_app_cash.sql \
-  S09_seed_lot_r1_promotions.sql
+  S09_seed_lot_r1_promotions.sql \
+  S10_seed_lot_r2_loyalty.sql
 do
     echo ""
     echo "▶ Seed : $seed"

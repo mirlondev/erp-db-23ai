@@ -27,7 +27,8 @@ for script in \
   14_packages.sql \
   15_mviews.sql \
   16_jobs.sql \
-  17_lot_r1_promotions.sql
+  17_lot_r1_promotions.sql \
+  18_lot_r2_loyalty.sql
 do
     echo ""
     echo "▶ Exécution : $script"
