@@ -36,7 +36,8 @@ for script in \
   23_lot_r7_pos_advanced.sql \
   24_lot_r8_promo_pos.sql \
   25_lot_r9_inventory_count.sql \
-  26_lot_r10_vouchers.sql
+  26_lot_r10_vouchers.sql \
+  27_lot_r11_alerts.sql
 do
     echo ""
     echo "▶ Exécution : $script"
