@@ -71,7 +71,7 @@ cd scripts
 | **R4**  | **Réappro & Transferts**      |  **6** | **app_inv**     | **✅ ici**    |
 | **R5**  | **Facturation & Avoirs**       |  **7** | **app_ar (NEW)** | **✅ ici**   |
 | **R6**  | **Règlements clients avancés**  |  **6** | **app_ar**      | **✅ ici**    |
-| R7   | POS : retours, remises ligne     |   4    | app_sales       | ⏳ planifié   |
+| **R7**  | **POS : retours, remises ligne** | **5**  | **app_sales**   | **✅ ici**    |
 | R8   | Promotions POS avancé            |   4    | app_sales       | ⏳ planifié   |
 | R9   | Inventaire physique              |   3    | app_inv         | ⏳ planifié   |
 | R10  | Cartes cadeaux / bons d'achat    |   5    | app_party       | ⏳ planifié   |

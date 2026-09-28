@@ -127,6 +127,9 @@ UNION ALL SELECT 'app_pos.pos_session',      COUNT(*) FROM app_pos.pos_session
 UNION ALL SELECT 'app_sales.ticket',         COUNT(*) FROM app_sales.ticket
 UNION ALL SELECT 'app_sales.ticket_line',    COUNT(*) FROM app_sales.ticket_line
 UNION ALL SELECT 'app_sales.ticket_payment', COUNT(*) FROM app_sales.ticket_payment
+UNION ALL SELECT 'app_sales.ticket_return',  COUNT(*) FROM app_sales.ticket_return
+UNION ALL SELECT 'app_sales.ticket_discount',COUNT(*) FROM app_sales.ticket_discount
+UNION ALL SELECT 'app_sales.pos_cash_closure', COUNT(*) FROM app_sales.pos_cash_closure
 UNION ALL SELECT 'app_gl.gl_entry',          COUNT(*) FROM app_gl.gl_entry
 UNION ALL SELECT 'app_gl.gl_entry_line',     COUNT(*) FROM app_gl.gl_entry_line
 UNION ALL SELECT 'app_cash.cash_register',   COUNT(*) FROM app_cash.cash_register
