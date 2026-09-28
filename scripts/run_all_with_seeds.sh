@@ -49,7 +49,8 @@ for seed in \
   S22_seed_lot_r14_interfaces.sql \
   S23_seed_transfer_stock.sql \
   S24_seed_immobilisations.sql \
-  S25_seed_declarations_fiscales.sql
+  S25_seed_declarations_fiscales.sql \
+  S26_seed_payroll.sql
 do
     echo ""
     echo "▶ Seed : $seed"

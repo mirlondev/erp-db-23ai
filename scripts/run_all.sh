@@ -57,7 +57,8 @@ for script in \
   44_pkg_transfer_stock_body.sql \
   45_lot1g_invoicing.sql \
   46_ohada_immobilisations.sql \
-  47_ohada_declarations.sql
+  47_ohada_declarations.sql \
+  48_app_hr.sql
 do
     echo ""
     echo "▶ Exécution : $script"

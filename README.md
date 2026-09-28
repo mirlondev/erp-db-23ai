@@ -93,6 +93,7 @@ cd scripts
 | 1G   | Factures & Règlements (Lot 1G)  |   5    | app_ar          | **✅**       |
 | OHADA-IMM | Immobilisations + amortissements | 5 | app_gl | **✅** |
 | OHADA-TAX | Déclarations TVA/IR/IS | 5 | app_gl | **✅** |
+| HR | **Module RH + Paie** | 5 | **app_hr** | **✅** |
 
 > Couverture actuelle : **~110 tables modernes / 391 legacy ≈ 28 %**. Le modèle structure est en place. **R1-R14 ✅ COMPLETS** — voir procédure.txt pour les évolutions futures (Lot 1C-1G, etc.).
 
