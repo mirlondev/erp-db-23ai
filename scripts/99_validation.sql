@@ -117,6 +117,10 @@ UNION ALL SELECT 'app_ar.invoice',           COUNT(*) FROM app_ar.invoice
 UNION ALL SELECT 'app_ar.payment',           COUNT(*) FROM app_ar.payment
 UNION ALL SELECT 'app_ar.credit_note',       COUNT(*) FROM app_ar.credit_note
 UNION ALL SELECT 'app_ar.customer_credit',   COUNT(*) FROM app_ar.customer_credit
+UNION ALL SELECT 'app_ar.payment_method_ref',  COUNT(*) FROM app_ar.payment_method_ref
+UNION ALL SELECT 'app_ar.cash_register_session', COUNT(*) FROM app_ar.cash_register_session
+UNION ALL SELECT 'app_ar.aging_balance',      COUNT(*) FROM app_ar.aging_balance
+UNION ALL SELECT 'app_ar.dunning_log',        COUNT(*) FROM app_ar.dunning_log
 UNION ALL SELECT 'app_doc.doc_line',         COUNT(*) FROM app_doc.doc_line
 UNION ALL SELECT 'app_pos.pos_terminal',     COUNT(*) FROM app_pos.pos_terminal
 UNION ALL SELECT 'app_pos.pos_session',      COUNT(*) FROM app_pos.pos_session
