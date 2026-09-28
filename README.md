@@ -78,9 +78,9 @@ cd scripts
 | **R11** | **Alertes & Notifications**     |  **6** | **app_sys**     | **✅ ici**    |
 | **R12** | **KPI & Reporting + 3 MV**     |  **5** | **app_api**     | **✅ ici**    |
 | **R13** | **Sécurité avancée & Audit**   |  **5** | **app_sys**     | **✅ ici**    |
-| R14  | Interfaces & intégrations        |   5    | app_api         | ⏳ planifié   |
+| **R14** | **Interfaces & Intégrations**  |  **5** | **app_sys**     | **✅ ici**    |
 
-> Couverture actuelle : ~105 tables modernes / 391 legacy ≈ 27 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
+> Couverture actuelle : **~110 tables modernes / 391 legacy ≈ 28 %**. Le modèle structure est en place. **R1-R14 ✅ COMPLETS** — voir procédure.txt pour les évolutions futures (Lot 1C-1G, etc.).
 
 ## Décisions techniques notables
 
