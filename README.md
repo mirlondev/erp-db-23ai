@@ -77,10 +77,10 @@ cd scripts
 | **R10** | **Cartes cadeaux / bons**      |  **5** | **app_party**   | **✅ ici**    |
 | **R11** | **Alertes & Notifications**     |  **6** | **app_sys**     | **✅ ici**    |
 | **R12** | **KPI & Reporting + 3 MV**     |  **5** | **app_api**     | **✅ ici**    |
-| R13  | Sécurité avancée & audit         |   5    | app_sys         | ⏳ planifié   |
+| **R13** | **Sécurité avancée & Audit**   |  **5** | **app_sys**     | **✅ ici**    |
 | R14  | Interfaces & intégrations        |   5    | app_api         | ⏳ planifié   |
 
-> Couverture actuelle : ~100 tables modernes / 391 legacy ≈ 26 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
+> Couverture actuelle : ~105 tables modernes / 391 legacy ≈ 27 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
 
 ## Décisions techniques notables
 
