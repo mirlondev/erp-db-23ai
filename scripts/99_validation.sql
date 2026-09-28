@@ -114,6 +114,8 @@ UNION ALL SELECT 'app_inv.inv_status_ref',     COUNT(*) FROM app_inv.inv_status_
 UNION ALL SELECT 'app_inv.transfer_header',    COUNT(*) FROM app_inv.transfer_header
 UNION ALL SELECT 'app_inv.purchase_order_header', COUNT(*) FROM app_inv.purchase_order_header
 UNION ALL SELECT 'app_inv.stock_valuation',    COUNT(*) FROM app_inv.stock_valuation
+UNION ALL SELECT 'app_inv.inventory_count_zone',COUNT(*) FROM app_inv.inventory_count_zone
+UNION ALL SELECT 'app_inv.inventory_adjustment',COUNT(*) FROM app_inv.inventory_adjustment
 UNION ALL SELECT 'app_doc.doc_header',       COUNT(*) FROM app_doc.doc_header
 UNION ALL SELECT 'app_ar.invoice',           COUNT(*) FROM app_ar.invoice
 UNION ALL SELECT 'app_ar.payment',           COUNT(*) FROM app_ar.payment
