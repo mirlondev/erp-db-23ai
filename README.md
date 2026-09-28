@@ -27,6 +27,7 @@ Migration d'un ERP classique **Oracle 11g** (391 tables, 6 schémas) vers **Orac
 | `app_cash`    | Caisses & mouvements                                                |
 | `app_hist`    | Schéma d'archivage (cold storage)                                    |
 | `app_api`     | Vues exposées (Duality + classiques JSON)                           |
+| `app_ar`      | **Accounts Receivable** — factures, avoirs, règlements (R5)         |
 
 ## Démarrage rapide
 
@@ -68,7 +69,7 @@ cd scripts
 | **R2**  | **Fidélité client**          |  **7** | **app_party**   | **✅ ici**    |
 | **R3**  | **Stock avancé**             |  **7** | **app_inv**     | **✅ ici**    |
 | **R4**  | **Réappro & Transferts**      |  **6** | **app_inv**     | **✅ ici**    |
-| R5   | Facturation & avoirs             |   7    | app_doc         | ⏳ planifié   |
+| **R5**  | **Facturation & Avoirs**       |  **7** | **app_ar (NEW)** | **✅ ici**   |
 | R6   | Règlements clients avancés       |   6    | app_cash        | ⏳ planifié   |
 | R7   | POS : retours, remises ligne     |   4    | app_sales       | ⏳ planifié   |
 | R8   | Promotions POS avancé            |   4    | app_sales       | ⏳ planifié   |
@@ -79,7 +80,7 @@ cd scripts
 | R13  | Sécurité avancée & audit         |   5    | app_sys         | ⏳ planifié   |
 | R14  | Interfaces & intégrations        |   5    | app_api         | ⏳ planifié   |
 
-> Couverture actuelle : ~58 tables modernes / 391 legacy ≈ 15 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
+> Couverture actuelle : ~65 tables modernes / 391 legacy ≈ 17 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
 
 ## Décisions techniques notables
 

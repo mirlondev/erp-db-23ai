@@ -24,6 +24,12 @@ SELECT username, default_tablespace, account_status
  ORDER BY username;
 
 PROMPT
+PROMPT [2b] Schéma app_ar créé
+SELECT username, account_status, default_tablespace
+  FROM dba_users
+ WHERE username = 'APP_AR';
+
+PROMPT
 PROMPT [3] Nombre de tables par schéma
 SELECT owner, COUNT(*) AS nb_tables
   FROM dba_tables
@@ -107,6 +113,10 @@ UNION ALL SELECT 'app_inv.transfer_header',    COUNT(*) FROM app_inv.transfer_he
 UNION ALL SELECT 'app_inv.purchase_order_header', COUNT(*) FROM app_inv.purchase_order_header
 UNION ALL SELECT 'app_inv.stock_valuation',    COUNT(*) FROM app_inv.stock_valuation
 UNION ALL SELECT 'app_doc.doc_header',       COUNT(*) FROM app_doc.doc_header
+UNION ALL SELECT 'app_ar.invoice',           COUNT(*) FROM app_ar.invoice
+UNION ALL SELECT 'app_ar.payment',           COUNT(*) FROM app_ar.payment
+UNION ALL SELECT 'app_ar.credit_note',       COUNT(*) FROM app_ar.credit_note
+UNION ALL SELECT 'app_ar.customer_credit',   COUNT(*) FROM app_ar.customer_credit
 UNION ALL SELECT 'app_doc.doc_line',         COUNT(*) FROM app_doc.doc_line
 UNION ALL SELECT 'app_pos.pos_terminal',     COUNT(*) FROM app_pos.pos_terminal
 UNION ALL SELECT 'app_pos.pos_session',      COUNT(*) FROM app_pos.pos_session
