@@ -74,13 +74,13 @@ cd scripts
 | **R7**  | **POS : retours, remises ligne** | **5**  | **app_sales**   | **✅ ici**    |
 | **R8**  | **Promotions POS avancé**       |  **5** | **app_product** | **✅ ici**    |
 | **R9**  | **Inventaire physique complet**  | **3**  | **app_inv**     | **✅ ici**    |
-| R10  | Cartes cadeaux / bons d'achat    |   5    | app_party       | ⏳ planifié   |
+| **R10** | **Cartes cadeaux / bons**      |  **5** | **app_party**   | **✅ ici**    |
 | R11  | Alertes & notifications          |   6    | app_sys         | ⏳ planifié   |
 | R12  | KPI & reporting MV               |   5    | app_api         | ⏳ planifié   |
 | R13  | Sécurité avancée & audit         |   5    | app_sys         | ⏳ planifié   |
 | R14  | Interfaces & intégrations        |   5    | app_api         | ⏳ planifié   |
 
-> Couverture actuelle : ~84 tables modernes / 391 legacy ≈ 22 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
+> Couverture actuelle : ~89 tables modernes / 391 legacy ≈ 23 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
 
 ## Décisions techniques notables
 

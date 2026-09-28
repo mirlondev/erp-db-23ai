@@ -107,6 +107,8 @@ UNION ALL SELECT 'app_product.loyalty_status_config',COUNT(*) FROM app_product.l
 UNION ALL SELECT 'app_party.party',          COUNT(*) FROM app_party.party
 UNION ALL SELECT 'app_party.loyalty_card',     COUNT(*) FROM app_party.loyalty_card
 UNION ALL SELECT 'app_party.loyalty_operation',COUNT(*) FROM app_party.loyalty_operation
+UNION ALL SELECT 'app_party.voucher_master',   COUNT(*) FROM app_party.voucher_master
+UNION ALL SELECT 'app_party.voucher_transaction', COUNT(*) FROM app_party.voucher_transaction
 UNION ALL SELECT 'app_inv.inv_stock',        COUNT(*) FROM app_inv.inv_stock
 UNION ALL SELECT 'app_inv.inv_product_lot',   COUNT(*) FROM app_inv.inv_product_lot
 UNION ALL SELECT 'app_inv.inv_avg_cost',       COUNT(*) FROM app_inv.inv_avg_cost
