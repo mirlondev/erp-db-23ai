@@ -48,7 +48,11 @@ for script in \
   35_lot1ab_doc_complement.sql \
   36_lot1cd_costs_doc_commercial.sql \
   37_lot1e_expeditions.sql \
-  38_ohada_skeleton.sql
+  38_ohada_skeleton.sql \
+  39_lot1f_purchase.sql \
+  40_pkg_doc.sql \
+  41_pkg_doc_body.sql \
+  42_etl_legacy_to_modern.sql
 do
     echo ""
     echo "▶ Exécution : $script"

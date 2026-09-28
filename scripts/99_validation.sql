@@ -128,6 +128,9 @@ UNION ALL SELECT 'app_ar.cash_register_session', COUNT(*) FROM app_ar.cash_regis
 UNION ALL SELECT 'app_ar.aging_balance',      COUNT(*) FROM app_ar.aging_balance
 UNION ALL SELECT 'app_ar.dunning_log',        COUNT(*) FROM app_ar.dunning_log
 UNION ALL SELECT 'app_doc.doc_line',         COUNT(*) FROM app_doc.doc_line
+UNION ALL SELECT 'app_doc.doc_imputation',   COUNT(*) FROM app_doc.doc_imputation
+UNION ALL SELECT 'app_doc.doc_signature',     COUNT(*) FROM app_doc.doc_signature
+UNION ALL SELECT 'app_purchase.purchase_request',COUNT(*) FROM app_purchase.purchase_request
 UNION ALL SELECT 'app_pos.pos_terminal',     COUNT(*) FROM app_pos.pos_terminal
 UNION ALL SELECT 'app_pos.pos_session',      COUNT(*) FROM app_pos.pos_session
 UNION ALL SELECT 'app_sales.ticket',         COUNT(*) FROM app_sales.ticket
