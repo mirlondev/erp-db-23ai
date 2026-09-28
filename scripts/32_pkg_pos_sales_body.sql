@@ -33,7 +33,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_pos_sales AS
      WHERE terminal_id = p_terminal_id;
 
     -- Calcul points gagnés (1% du CA prévisionnel par défaut — sera ajusté après lignes)
-    SELECT NVL(SUM(amount), 0)
+    SELECT NVL(SUM(quantity * unit_price), 0)
       INTO v_amount
       FROM ticket_line
      WHERE terminal_id = p_terminal_id

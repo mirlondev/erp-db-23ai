@@ -96,10 +96,11 @@ CREATE OR REPLACE PACKAGE pkg_etl_legacy AS
   );
 
   -- Vérification mapping colonne-à-colonne (rapporte colonnes manquantes)
-  PROCEDURE verify_mapping(
-    p_source_table IN VARCHAR2,
-    p_target_table IN VARCHAR2
-  );
+  PROCEDURE verify_mapping(p_source_table IN VARCHAR2, p_target_table IN VARCHAR2) IS
+  BEGIN
+    -- Squelette : à implémenter avec requêtes sur user_tab_columns via DB_LINK
+    log_step('VERIFY_MAPPING', p_source_table || ' -> ' || p_target_table);
+  END verify_mapping;
 
   -- Migration complète par lot (lots R1-R14 + 1A-1F)
   PROCEDURE migrate_lot(

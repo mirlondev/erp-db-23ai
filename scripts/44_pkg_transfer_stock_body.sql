@@ -71,13 +71,12 @@ CREATE OR REPLACE PACKAGE BODY pkg_transfer_stock AS
       FROM transfer_header
      WHERE transfer_number LIKE 'TR-' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '-%';
 
-    -- Insertion entête
-    INSERT INTO transfer_header (
+  INSERT INTO transfer_header (
       transfer_number, transfer_date, source_warehouse, target_warehouse,
-      company_code, status, total_qty, created_by, validated_by
+      status, total_qty, created_by, validated_by
     ) VALUES (
       v_transfer_number, SYSDATE, p_source_code, p_target_code,
-      p_company_code, 'DRAFT', 0, p_user_code, NULL
+      'DRAFT', 0, p_user_code, NULL
     ) RETURNING transfer_id INTO v_transfer_id;
 
     -- Note : on pourrait stocker source_type/target_type dans la table

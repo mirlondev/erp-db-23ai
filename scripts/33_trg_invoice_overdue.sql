@@ -1,69 +1,93 @@
 -- ============================================================
 -- SCRIPT 33 : Trigger trg_invoice_overdue + extensions
 -- ============================================================
--- 1. Trigger auto-update statut facture en retard
--- 2. Trigger audit syst sur modifications customer_credit
--- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET DEFINE OFF
 
 -- =====================================================
--- Trigger 1 : Auto-update statut OVERDUE des factures
+-- Droits croisés
 -- =====================================================
 CONNECT system/oracle@localhost:1521/FREEPDB1
 
-GRANT SELECT, UPDATE ON app_ar.invoice TO app_ar;
-GRANT SELECT ON app_party.party TO app_ar;
+-- (déjà accordés par le script 21 mais on reste idempotent)
+BEGIN EXECUTE IMMEDIATE 'GRANT SELECT, UPDATE ON app_ar.invoice TO app_ar'; EXCEPTION WHEN OTHERS THEN NULL; END;
+/
+BEGIN EXECUTE IMMEDIATE 'GRANT SELECT ON app_party.party TO app_ar';         EXCEPTION WHEN OTHERS THEN NULL; END;
+/
 
+-- =====================================================
+-- Trigger : auto-update statut OVERDUE
+-- =====================================================
 CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   TRIGGER trg_invoice_overdue
 PROMPT ══════════════════════════════════════════════════════════
 
-BEGIN EXECUTE IMMEDIATE 'DROP TRIGGER trg_invoice_overdue';
-  EXCEPTION WHEN OTHERS THEN
-    -- defensive : ne plante pas si trigger inexistant (ORA-0408)
-    IF SQLCODE NOT IN (-0408, -0407, -02443, -00942) THEN RAISE; END IF;
+-- Drop tolérant : peu importe le code d'erreur, on continue
+BEGIN
+  EXECUTE IMMEDIATE 'DROP TRIGGER trg_invoice_overdue';
+  DBMS_OUTPUT.PUT_LINE('  → Ancien trigger supprimé');
+EXCEPTION WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE('  → Pas de trigger existant, on continue (' || SQLCODE || ')');
 END;
 /
 
 CREATE OR REPLACE TRIGGER trg_invoice_overdue
-BEFORE INSERT OR UPDATE OF due_date, total_paid ON invoice
+BEFORE INSERT OR UPDATE OF due_date, total_paid, total_ttc ON invoice
 FOR EACH ROW
 DECLARE
   v_days_overdue NUMBER := 0;
 BEGIN
-  -- Calcul jours de retard
-  IF :NEW.due_date IS NOT NULL AND :NEW.status IN ('VALID','PARTIAL') THEN
-    v_days_overdue := GREATEST(0, TRUNC(SYSDATE) - TRUNC(:NEW.due_date));
+  -- 1) Calcul du balance TOUJOURS
+  :NEW.balance := NVL(:NEW.total_ttc, 0) - NVL(:NEW.total_paid, 0);
 
-    -- Marquage OVERDUE si > 0 jours et pas soldée
-    IF v_days_overdue > 0 AND NVL(:NEW.total_paid, 0) < :NEW.total_ttc THEN
-      :NEW.status := 'OVERDUE';
-    END IF;
+  -- 2) Si soldé → statut PAID (sauf si annulé)
+  IF NVL(:NEW.total_paid, 0) >= NVL(:NEW.total_ttc, 0)
+     AND NVL(:NEW.total_ttc, 0) > 0
+     AND :NEW.status NOT IN ('CANCELLED','DRAFT') THEN
+    :NEW.status := 'PAID';
+    RETURN;
   END IF;
 
-  -- Calcul automatique du balance
-  :NEW.balance := NVL(:NEW.total_ttc, 0) - NVL(:NEW.total_paid, 0);
+  -- 3) Sinon, calcul du retard
+  IF :NEW.due_date IS NOT NULL
+     AND :NEW.status IN ('VALID','PARTIAL','OVERDUE','PAID') THEN
+    v_days_overdue := GREATEST(0, TRUNC(SYSDATE) - TRUNC(:NEW.due_date));
+
+    IF v_days_overdue > 0 AND NVL(:NEW.total_paid, 0) < :NEW.total_ttc THEN
+      :NEW.status := 'OVERDUE';
+    ELSIF v_days_overdue = 0
+          AND :NEW.status = 'OVERDUE'
+          AND NVL(:NEW.total_paid, 0) > 0 THEN
+      :NEW.status := 'PARTIAL';
+    END IF;
+  END IF;
 END;
 /
 
 PROMPT ✓ trg_invoice_overdue créé
 
--- Test : simuler un update
+-- =====================================================
+-- Test
+-- =====================================================
 UPDATE invoice
    SET due_date = SYSDATE - 10
- WHERE invoice_number = 'FA-2026-003';  -- déjà en retard (CLI003)
+ WHERE invoice_number = 'FA-2026-003';
 
 COMMIT;
 
 PROMPT
-PROMPT Vérification : invoice FA-2026-003 doit être OVERDUE
+PROMPT Vérification : FA-2026-003 doit être OVERDUE
 SELECT invoice_number, status, total_ttc, total_paid, balance
   FROM invoice
  WHERE invoice_number = 'FA-2026-003';
 
+PROMPT
+PROMPT État du trigger
+SELECT trigger_name, status
+  FROM user_triggers
+ WHERE trigger_name = 'TRG_INVOICE_OVERDUE';
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   ✅ TRIGGER trg_invoice_overdue INSTALLÉ

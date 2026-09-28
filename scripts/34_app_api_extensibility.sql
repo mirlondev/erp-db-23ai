@@ -1,42 +1,78 @@
 -- ============================================================
--- SCRIPT 34 : Vues JSON + Duality Views + Dashboard (FINAL)
+-- SCRIPT 34 : Vues JSON + Duality Views + Dashboard (CORRIGÉ)
+-- ============================================================
+-- Corrections vs version précédente :
+--   * dv_ticket utilise les VRAIES colonnes de ticket/ticket_line
+--     (USER_CODE au lieu de CASHIER_CODE, pas de TOTAL_TAX)
+--   * dv_payment est bien créée (elle avait été remplacée par erreur)
+--   * GRANTs individuels (pas de boucle PL/SQL avec "owner" réservé)
+--   * Tests de validation complets
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
+SET PAGESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
 SET SQLBLANKLINES ON
 
+-- ============================================================
+-- PHASE 1 : Privilèges cross-schéma (en SYSTEM)
+-- ============================================================
 CONNECT system/oracle@localhost:1521/FREEPDB1
 
--- Privileges
+PROMPT ==============================================================
+PROMPT   PHASE 1 : Attribution des privilèges
+PROMPT ==============================================================
+
+-- app_ar → app_api
 GRANT SELECT ON app_ar.invoice          TO app_api;
 GRANT SELECT ON app_ar.invoice_line     TO app_api;
 GRANT SELECT ON app_ar.payment          TO app_api;
 GRANT SELECT ON app_ar.credit_note      TO app_api;
 GRANT SELECT ON app_ar.customer_credit  TO app_api;
+
+-- app_inv → app_api
 GRANT SELECT ON app_inv.inv_stock       TO app_api;
 GRANT SELECT ON app_inv.inv_product_lot TO app_api;
-GRANT SELECT ON app_party.loyalty_card  TO app_api;
-GRANT SELECT ON app_party.loyalty_operation TO app_api;
-GRANT SELECT ON app_product.promo_header TO app_api;
-GRANT SELECT ON app_sys.alert_instance  TO app_api;
-GRANT SELECT ON app_sys.interface_log   TO app_api;
 
+-- app_party → app_api
+GRANT SELECT ON app_party.loyalty_card      TO app_api;
+GRANT SELECT ON app_party.loyalty_operation TO app_api;
+
+-- app_product → app_api
+GRANT SELECT ON app_product.promo_header TO app_api;
+
+-- app_sys → app_api
+GRANT SELECT ON app_sys.alert_instance TO app_api;
+GRANT SELECT ON app_sys.interface_log  TO app_api;
+
+-- app_sales → app_api (pour dv_ticket)
+GRANT SELECT ON app_sales.ticket      TO app_api;
+GRANT SELECT ON app_sales.ticket_line TO app_api;
+
+PROMPT Privilèges accordés.
+
+-- ============================================================
+-- PHASE 2 : Création des objets dans app_api
+-- ============================================================
 CONNECT app_api/AppApi#2026@localhost:1521/FREEPDB1
 
--- Synonymes pour Duality View simple
-CREATE OR REPLACE SYNONYM payment_hdr FOR app_ar.payment;
+PROMPT
+PROMPT ==============================================================
+PROMPT   PHASE 2 : Vues JSON + Duality Views + Dashboard
+PROMPT ==============================================================
 
-PROMPT ==============================================================
-PROMPT   VUES JSON + DUALITY VIEW + DASHBOARD
-PROMPT ==============================================================
+-- Synonymes (nécessaires pour les Duality Views)
+CREATE OR REPLACE SYNONYM payment_hdr FOR app_ar.payment;
+CREATE OR REPLACE SYNONYM ticket      FOR app_sales.ticket;
+CREATE OR REPLACE SYNONYM ticket_line FOR app_sales.ticket_line;
+
+PROMPT Synonymes créés.
 
 WHENEVER SQLERROR CONTINUE
 
 -- ============================================================
--- [1] v_invoice_json - Vue JSON classique (relation maitre-detail)
--- Pattern identique a v_ticket_json (12_app_api.sql) qui fonctionne
+-- [1] v_invoice_json — Vue JSON facture + lignes
 -- ============================================================
 PROMPT
 PROMPT [1] Vue JSON : v_invoice_json
@@ -77,15 +113,21 @@ SELECT JSON_OBJECT(
   FROM app_ar.invoice i;
 
 -- ============================================================
--- [2] dv_payment - Duality View (fonctionne deja)
+-- [2a] dv_payment — Duality View paiements
+-- Colonnes réelles confirmées : PAYMENT_ID, PAYMENT_NUMBER,
+-- PAYMENT_DATE, COMPANY_CODE, PARTY_CODE, PARTY_NAME,
+-- PAYMENT_METHOD, REFERENCE, BANK_CODE, CURRENCY_CODE,
+-- EXCHANGE_RATE, AMOUNT, AMOUNT_ALLOCATED, STATUS, MEMO,
+-- CREATED_BY, CREATED_AT
 -- ============================================================
 PROMPT
-PROMPT [2] Duality View : dv_payment
+PROMPT [2a] Duality View : dv_payment
 CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW dv_payment AS
   SELECT JSON {
     '_id'        : p.payment_id,
     'number'     : p.payment_number,
     'date'       : p.payment_date,
+    'company'    : p.company_code,
     'partyCode'  : p.party_code,
     'partyName'  : p.party_name,
     'method'     : p.payment_method,
@@ -99,7 +141,58 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW dv_payment AS
   FROM payment_hdr p;
 
 -- ============================================================
--- [3] v_customer_credit_json (PK composite)
+-- [2b] dv_ticket — Duality View tickets
+-- Colonnes TICKET confirmées :
+--   TERMINAL_ID, TICKET_NO, TICKET_DATE, SESSION_NO, INVOICE_NO,
+--   CUSTOMER_CODE, CUSTOMER_NAME, USER_CODE, TOTAL_HT, TOTAL_TTC,
+--   CASH_RECEIVED, OTHER_RECEIVED, CHANGE_GIVEN, STATUS
+-- Colonnes TICKET_LINE confirmées :
+--   TERMINAL_ID, TICKET_NO, LINE_NO, PRODUCT_CODE, DESCRIPTION,
+--   QUANTITY, UNIT_PRICE, UNIT_PRICE_HT, DISCOUNT_RATE, TAX_RATE
+-- ============================================================
+-- ============================================================
+-- [2b] dv_ticket — Duality View tickets (PK composite)
+-- La table TICKET a une PK composite : (TERMINAL_ID, TICKET_NO)
+-- → Le bloc '_id' doit inclure TOUS les composants de la PK.
+-- ============================================================
+PROMPT
+PROMPT [2b] Duality View : dv_ticket
+CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW dv_ticket AS
+  SELECT JSON {
+    '_id' : {
+      'terminal' : t.terminal_id,
+      'ticketNo' : t.ticket_no
+    },
+    'session'      : t.session_no,
+    'date'         : t.ticket_date,
+    'customer'     : t.customer_code,
+    'customerName' : t.customer_name,
+    'cashier'      : t.user_code,
+    'totalHT'      : t.total_ht,
+    'totalTTC'     : t.total_ttc,
+    'cashReceived' : t.cash_received,
+    'changeGiven'  : t.change_given,
+    'status'       : t.status,
+    'lines'        : [
+      SELECT JSON {
+        'lineNo'      : l.line_no,
+        'product'     : l.product_code,
+        'description' : l.description,
+        'quantity'    : l.quantity,
+        'unitPrice'   : l.unit_price,
+        'unitPriceHT' : l.unit_price_ht,
+        'discount'    : l.discount_rate,
+        'taxRate'     : l.tax_rate
+      }
+      FROM ticket_line l
+      WHERE l.terminal_id = t.terminal_id
+        AND l.ticket_no   = t.ticket_no
+    ]
+  }
+  FROM ticket t;
+
+-- ============================================================
+-- [3] v_customer_credit_json — Vue JSON encours client
 -- ============================================================
 PROMPT
 PROMPT [3] Vue JSON : v_customer_credit_json
@@ -120,7 +213,7 @@ SELECT JSON_OBJECT(
   FROM app_ar.customer_credit cc;
 
 -- ============================================================
--- [4] v_dashboard_executive
+-- [4] v_dashboard_executive — Tableau de bord KPI
 -- ============================================================
 PROMPT
 PROMPT [4] Vue : v_dashboard_executive
@@ -191,7 +284,7 @@ FROM v_sales_today s, v_sales_mtd m, v_invoice i,
      v_stock st, v_loyalty l, v_alerts a, v_interfaces n;
 
 -- ============================================================
--- [5] v_top_kpi_dashboard
+-- [5] v_top_kpi_dashboard — KPI synthétiques
 -- ============================================================
 PROMPT
 PROMPT [5] Vue : v_top_kpi_dashboard
@@ -208,15 +301,18 @@ UNION ALL SELECT 'Alertes critiques', 'COUNT', alerts_critical,                0
 
 WHENEVER SQLERROR EXIT FAILURE
 
+-- ============================================================
+-- VALIDATION
+-- ============================================================
 PROMPT
-PROMPT === Validation ===
+PROMPT ══════════════════════════════════════════════════════════
+PROMPT   Validation — Objets créés
+PROMPT ══════════════════════════════════════════════════════════
 SELECT object_name, object_type, status
   FROM user_objects
- WHERE object_name IN ('DV_PAYMENT',
-                       'V_INVOICE_JSON',
-                       'V_CUSTOMER_CREDIT_JSON',
-                       'V_DASHBOARD_EXECUTIVE',
-                       'V_TOP_KPI_DASHBOARD')
+ WHERE object_name IN ('DV_PAYMENT', 'DV_TICKET',
+                       'V_INVOICE_JSON', 'V_CUSTOMER_CREDIT_JSON',
+                       'V_DASHBOARD_EXECUTIVE', 'V_TOP_KPI_DASHBOARD')
  ORDER BY object_type, object_name;
 
 PROMPT
@@ -226,20 +322,30 @@ SELECT tickets_today, revenue_today, avg_ticket_today,
   FROM v_dashboard_executive;
 
 PROMPT
-PROMPT Test v_invoice_json (premiere facture)
+PROMPT Test v_invoice_json
 SELECT JSON_SERIALIZE(data PRETTY)
   FROM v_invoice_json
  FETCH FIRST 1 ROW ONLY;
 
 PROMPT
-PROMPT Test dv_payment
+PROMPT Test dv_payment (3 premiers)
 SELECT JSON_VALUE(data, '$._id')    AS id,
        JSON_VALUE(data, '$.number') AS num,
        JSON_VALUE(data, '$.amount') AS amount
   FROM dv_payment
  FETCH FIRST 3 ROWS ONLY;
 
-PROMPT ==============================================================
-PROMPT   VUES JSON + DV_PAYMENT + DASHBOARD INSTALLES
-PROMPT ==============================================================
+PROMPT
+PROMPT Test dv_ticket (3 premiers)
+SELECT JSON_VALUE(data, '$._id')      AS id,
+       JSON_VALUE(data, '$.terminal') AS terminal,
+       JSON_VALUE(data, '$.totalTTC') AS total_ttc,
+       JSON_VALUE(data, '$.cashier')  AS cashier
+  FROM dv_ticket
+ FETCH FIRST 3 ROWS ONLY;
+
+PROMPT
+PROMPT ══════════════════════════════════════════════════════════
+PROMPT   ✅ SCRIPT 34 TERMINÉ
+PROMPT ══════════════════════════════════════════════════════════
 EXIT;
