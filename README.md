@@ -80,7 +80,7 @@ cd scripts
 | R13  | Sécurité avancée & audit         |   5    | app_sys         | ⏳ planifié   |
 | R14  | Interfaces & intégrations        |   5    | app_api         | ⏳ planifié   |
 
-> Couverture actuelle : ~71 tables modernes / 391 legacy ≈ 18 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
+> Couverture actuelle : ~76 tables modernes / 391 legacy ≈ 19 %. Le modèle structure est en place, il reste à dérouler les lots suivants.
 
 ## Décisions techniques notables
 
