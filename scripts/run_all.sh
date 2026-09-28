@@ -52,7 +52,10 @@ for script in \
   39_lot1f_purchase.sql \
   40_pkg_doc.sql \
   41_pkg_doc_body.sql \
-  42_etl_legacy_to_modern.sql
+  42_etl_legacy_to_modern.sql \
+  43_pkg_transfer_stock.sql \
+  44_pkg_transfer_stock_body.sql \
+  45_lot1g_invoicing.sql
 do
     echo ""
     echo "▶ Exécution : $script"

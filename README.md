@@ -89,6 +89,8 @@ cd scripts
 | 1F   | Demandes de prix (app_purchase)  |   4    | à créer         | ⏸️ reporté  |
 | 1G   | Factures & Règlements (app_ar)   |   5    | app_ar (R5)     | ⏸️ couvert par R5 |
 | OHADA | **Squelette module comptable**   |   8    | app_gl          | **✅**       |
+| TRANS | **Package transfers stocks**   |   -    | app_inv         | **✅ ici**    |
+| 1G   | Factures & Règlements (Lot 1G)  |   5    | app_ar          | **✅**       |
 
 > Couverture actuelle : **~110 tables modernes / 391 legacy ≈ 28 %**. Le modèle structure est en place. **R1-R14 ✅ COMPLETS** — voir procédure.txt pour les évolutions futures (Lot 1C-1G, etc.).
 
