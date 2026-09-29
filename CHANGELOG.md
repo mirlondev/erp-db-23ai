@@ -202,3 +202,12 @@
 3. **Tests utPLSQL** : couverture packages PL/SQL
 4. **CI/CD GitHub Actions** : run_all_with_seeds.sh
 5. **Monitoring 23ai** : vues V$SQL + alertes
+
+## 2026-09-29 — Couche UI APEX 26.1 (amorce) + push fix compat WS
+- Push `fix/ws-compat-fetch-failures` et `main` (commit 3c88dde : ORA-00942/01408/01749/00955, idempotence 53/54/56).
+- Nouveau dossier `apex/` :
+  - `README_APEX_26_1.md` : plan complet UI APEX 26.1 (prérequis APEX/ORDS, apps 100–500, règles de coexistence avec les WS legacy TT_*).
+  - `setup/01_apex_workspace.sql` : workspace REGAL (idempotent, APP_API + schémas modules).
+  - `setup/02_ords_enable_parsers.sql` : activation ORDS via ORDS_METADATA.ENABLE_ORDS (fallback CLI si ORDS absent).
+  - `setup/03_apex_auth_setup.sql` : pkg_apex_auth (auth sur app_sys.sys_user, rôles sys_user_role, sites via sys_user_access, audit sys_audit_trail, grant DBMS_CRYPTO).
+  - `apps/import_app.sql`, `SPEC_app100_pos.md`, `SPEC_app500_admin.md`.
