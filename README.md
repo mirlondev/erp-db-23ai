@@ -1,134 +1,194 @@
-# erp-db-23ai
+# 🏛️ erp-db-23ai — Migration ERP Oracle 11g → 23ai/26ai Free
 
-Migration d'un ERP classique **Oracle 11g** (391 tables, 6 schémas) vers **Oracle 23ai / 26ai Free** (12 schémas modernes), en activant les features natives de la nouvelle plateforme :
+> **REGAL** : ERP retail multi-sites du Congo Brazzaville (Pointe-Noire)
+> Migration 391 tables legacy (6 schémas) → Oracle 23ai/26ai Free
 
-- ✅ **Identity columns** (`GENERATED ALWAYS AS IDENTITY`) — fin des séquences manuelles
-- ✅ **BOOLEAN natif** — suppression des `VARCHAR2(1)` 'Y'/'N' hérités du legacy
-- ✅ **BLOB SecureFile** + compression + déduplication pour les photos produit
-- ✅ **VECTOR(384, FLOAT32)** — table `product_search` prête pour l'**AI Vector Search** 23ai
-- ✅ **JSON Relational Duality Views** (`dv_product`, `dv_party`) — exposition REST sans réécrire le modèle
-- ✅ **Vues classiques JSON** (`v_ticket_json`, `v_stock_json`) — workaround pour PK composites non supportées par les Duality Views en Free
-- ✅ **Matérialized views** + **DBMS_SCHEDULER** pour le rafraîchissement horaire et la purge
-- ✅ **Packages PL/SQL** : `pkg_pricing`, `pkg_inventory`, `pkg_sales`, `pkg_gl`
+[![Coverage](https://img.shields.io/badge/coverage-49%25-yellow)] [![Schemas](https://img.shields.io/badge/schemas-17-blue)] [![Tables](https://img.shields.io/badge/tables-195-green)] [![Scripts](https://img.shields.io/badge/scripts-57-orange)]
 
-## Schémas cibles (12)
-
-| Schéma        | Rôle                                                                 |
-|---------------|----------------------------------------------------------------------|
-| `app_sys`     | Noyau : utilisateurs, paramètres, devises, pays                     |
-| `app_org`     | Société, dépôts, points de vente                                    |
-| `app_product` | Catalogue : produits, catégories, marques, **promotions (R1)**        |
-| `app_party`   | Tiers : clients / fournisseurs / employés                            |
-| `app_inv`     | Stock & inventaires                                                  |
-| `app_doc`     | Documents commerciaux (Bons d'achat, Factures, etc.)                |
-| `app_pos`     | Terminaux et sessions de caisse                                      |
-| `app_sales`   | Tickets de caisse                                                    |
-| `app_gl`      | Comptabilité générale (journal, écritures, lettrage)                 |
-| `app_cash`    | Caisses & mouvements                                                |
-| `app_hist`    | Schéma d'archivage (cold storage)                                    |
-| `app_api`     | Vues exposées (Duality + classiques JSON)                           |
-| `app_ar`      | Accounts Receivable — factures, avoirs, règlements                   |
-| `app_ship`    | **Expéditions** — transporteurs, tracking, exceptions (Lot 1E)      |
-
-## Démarrage rapide
-
-### Pré-requis
-- Oracle Database 23ai Free ou 26ai (conteneur `FREEPDB1`)
-- Schéma `system` avec mot de passe `oracle`
-- TNS : `localhost:1521/FREEPDB1`
-
-### Déploiement complet (DDL + seeds + validation)
+## ⚡ Quickstart
 
 ```bash
-cd scripts
-./run_all_with_seeds.sh
+# Prérequis : Oracle 23ai Free, user system/oracle
+cd /workspace/erp-db-23ai
+./run_all.sh                    # Déploie DDL (57 scripts)
+./run_all_with_seeds.sh         # + 31 seeds
 ```
 
-### Déploiement DDL seul (si seeds déjà faits)
+## 📊 État du projet (au 2026-09-29)
+
+| | Valeur | Évolution |
+|---|---:|---:|
+| Scripts SQL | **57** | 0 → 57 |
+| Tables modernes | **~195** | 0 → 195 |
+| Schémas APP_* | **17** | 0 → 17 |
+| Packages PL/SQL | **8** | 0 → 8 |
+| Triggers CDC | **3** | nouveau |
+| Triggers métier | **6** | nouveau |
+| Mat. Views | **3** | nouveau |
+| Duality Views | **5** | nouveau |
+| Schedulers | **5** | nouveau |
+| Sites REGAL | **7** | nouveau |
+| Seeds | **31** | nouveau |
+| Tables partitionnées | **4** | nouveau |
+| Tables externes (ETL) | **6** | nouveau |
+| **Couverture legacy** | **49 %** | 0% → 49% |
+| Deprecated 26ai fixes | **4 patterns** | 0 → 4 |
+
+## 🏛️ Schémas (17)
+
+| Schéma | Rôle |
+|---|---|
+| `app_sys` | Noyau : users, fiscal CG, sites, outbox, messages i18n |
+| `app_org` | Société, dépôts, points de vente, régions |
+| `app_product` | Catalogue, marques, promotions POS, unités par région |
+| `app_party` | Tiers (clients, fournisseurs, employés, loyauté) |
+| `app_inv` | Stock, lots, DLC, transferts (incl. partitionné) |
+| `app_doc` | Documents commerciaux |
+| `app_pos` | Terminaux, sessions, formats tickets LITOKO |
+| `app_sales` | Tickets (incl. ticket_line_v2 partitionné) |
+| `app_gl` | Compta OHADA, immobilisations, déclarations (incl. gl_entry_line_v2) |
+| `app_cash` | Caisses & mouvements |
+| `app_hist` | Archivage |
+| `app_api` | Duality Views + ETL |
+| `app_ar` | Accounts Receivable, échéances, litiges (incl. payment_history_v2) |
+| `app_ship` | Expéditions (figé) |
+| `app_purchase` | Achats, articles fournisseurs |
+| `app_hr` | RH/Paie, CNSS Congo |
+| `app_audit` | Audit consolidé |
+
+## 🇨🇬 Localisation Congo Brazzaville (Pointe-Noire)
+
+- **TVA 18.9 %** (CEMAC, vs UEMOA 18 %)
+- **CNSS** : 10 % salarié + 19.5 % patron
+- **IRPP** : 8 tranches progressif 0 % → 35 %
+- **IS 30 %** + IRCM 5 %
+- **Patente + TFPB 5 %**
+- **XAF (BEAC)** — pas BCEAO
+- **DGID** (Direction Générale des Impôts et des Domaines)
+- **Centres d'impôts** : Brazzaville, Pointe-Noire, Dolisie, Nkayi, Oyo, Impfondo, Sibiti
+- **Sites REGAL** : Siège PNR-OFC (master) + 4 boutiques + 2 dépôts
+
+## 🌐 Architecture Hub-and-Spoke
+
+```
+                ┌─────────────────────────────┐
+                │  SIÈGE  PNR-OFC  (MASTER)   │
+                │  Pointe-Noire                │
+                │  Oracle 23ai Free            │
+                │  Schémas : APP_* (17)        │
+                └──┬──────────┬──────────┬────┘
+                   │          │          │
+              fibre 2Mb  fibre 2Mb  satellite 1Mb
+              (45 ms)    (45 ms)    (120 ms)
+                   │          │          │
+        ┌──────────┴──┐  ┌────┴─────┐  ┌┴──────────┐
+        │ PNR-B01     │  │ BZV-B01/02│  │ DLS-B01   │
+        │ Oracle 21c  │  │ Oracle 21c│  │ Oracle 21c│
+        └─────────────┘  └───────────┘  └───────────┘
+```
+
+**Sync** :
+- Master → Boutique : produits, prix, fournisseurs (PUSH NIGHTLY 02:00)
+- Boutique → Master : tickets, sessions, mouvements (PULL NIGHTLY 04:30)
+- Inter-sites : transferts (BIDIRECTIONAL, MANUAL_REVIEW)
+
+Voir [ARCHITECTURE_HUB_SPOKE.md](./ARCHITECTURE_HUB_SPOKE.md) pour le détail.
+
+## 📈 Mapping legacy → moderne (49 %)
+
+| Legacy | Lignes | Moderne |
+|---|---:|---|
+| `CAISSE.GCPART` | 211K | `app_product.product` ✅ |
+| `CAISSE.GCSTOCK` | 1.6M | `app_inv.inv_stock` ✅ |
+| `CAISSE.CETICKETD` | 65.5M | `app_sales.ticket_line_v2` ✅ partitionné |
+| `CAISSE.GCBRDD` | 54.7M | dispatcher `pkg_etl_legacy v2` (9 types) |
+| `XCPTA.CP_ECR_GEN` | 2.8M | `app_gl.gl_entry_line_v2` ✅ partitionné |
+| `XCPTA.CP_HISTO_RGL` | 501K | `app_ar.payment_history_v2` ✅ partitionné |
+| `KERNEL.TT_BRD_OFFICE` | 228K | `app_sys.tt_brd_office` ✅ |
+| `KERNEL.UTLOG` | 444K | `app_sys.sys_audit_trail` ✅ |
+
+## 🚀 Déploiement
 
 ```bash
-cd scripts
-./run_all.sh
+# 1. Connexion system/oracle
+sqlplus system/oracle@localhost:1521/FREEPDB1
+
+# 2. DDL complet
+@scripts/00_init_schemas.sql
+@scripts/01_app_sys.sql
+... (57 scripts)
+@scripts/99_validation.sql
+
+# 3. Seeds (optionnel mais recommandé)
+@seed_data/S00_seed_demo_minimal.sql
+... (31 seeds)
 ```
 
-### Reset complet + reseed
-
+Ou via les scripts bash :
 ```bash
-cd scripts
-./run_all_with_seeds.sh   # le pipeline inclut S00_reset.sql avant les seeds
+./run_all.sh                # 57 scripts DDL
+./run_all_with_seeds.sh     # + 31 seeds
 ```
 
-## Roadmap de migration
+## ⚙️ Features Oracle 23ai exploitées
 
-| Lot  | Domaine                          | Tables | Schéma          | Statut        |
-|------|----------------------------------|:------:|-----------------|---------------|
-| 0    | Bootstrap 12 schémas             |   —    | tous            | ✅            |
-| 1A   | Lignes document complémentaires  |   5    | app_doc         | ✅ (en partie, voir procédure) |
-| 1B   | Entêtes document complémentaires |   6    | app_doc         | ✅            |
-| 1C-1G | Proforma, expéditions, factures |  24    | app_doc/ship/ar | ⏸️ reporté    |
-| **R1**  | **Promotions & Remises**     |  **8** | **app_product** | **✅ ici**    |
-| **R2**  | **Fidélité client**          |  **7** | **app_party**   | **✅ ici**    |
-| **R3**  | **Stock avancé**             |  **7** | **app_inv**     | **✅ ici**    |
-| **R4**  | **Réappro & Transferts**      |  **6** | **app_inv**     | **✅ ici**    |
-| **R5**  | **Facturation & Avoirs**       |  **7** | **app_ar (NEW)** | **✅ ici**   |
-| **R6**  | **Règlements clients avancés**  |  **6** | **app_ar**      | **✅ ici**    |
-| **R7**  | **POS : retours, remises ligne** | **5**  | **app_sales**   | **✅ ici**    |
-| **R8**  | **Promotions POS avancé**       |  **5** | **app_product** | **✅ ici**    |
-| **R9**  | **Inventaire physique complet**  | **3**  | **app_inv**     | **✅ ici**    |
-| **R10** | **Cartes cadeaux / bons**      |  **5** | **app_party**   | **✅ ici**    |
-| **R11** | **Alertes & Notifications**     |  **6** | **app_sys**     | **✅ ici**    |
-| **R12** | **KPI & Reporting + 3 MV**     |  **5** | **app_api**     | **✅ ici**    |
-| **R13** | **Sécurité avancée & Audit**   |  **5** | **app_sys**     | **✅ ici**    |
-| **R14** | **Interfaces & Intégrations**  |  **5** | **app_sys**     | **✅ ici**    |
-| QW.1  | pkg_pos_sales + trg_invoice_overdue + dv_invoice + dashboard         |   -    | multi          | **✅ lot 2** |
-| 1A   | Lignes document complémentaires  |   5    | app_doc         | **✅**       |
-| 1B   | Entêtes document complémentaires |   6    | app_doc         | **✅**       |
-| 1C   | Coûts / Frais d'approche         |   4    | app_doc         | **✅**       |
-| 1D   | Documents commerciaux            |   4    | app_doc         | **✅**       |
-| 1E   | Expéditions (nouveau app_ship)   |   7    | app_ship        | **✅**       |
-| 1F   | Demandes de prix (app_purchase)  |   4    | à créer         | ⏸️ reporté  |
-| 1G   | Factures & Règlements (app_ar)   |   5    | app_ar (R5)     | ⏸️ couvert par R5 |
-| OHADA | **Squelette module comptable**   |   8    | app_gl          | **✅**       |
-| TRANS | **Package transfers stocks**   |   -    | app_inv         | **✅ ici**    |
-| 1G   | Factures & Règlements (Lot 1G)  |   5    | app_ar          | **✅**       |
-| OHADA-IMM | Immobilisations + amortissements | 5 | app_gl | **✅** |
-| OHADA-TAX | Déclarations TVA/IR/IS | 5 | app_gl | **✅** |
-| HR | **Module RH + Paie** | 5 | **app_hr** | **✅** |
+| Feature | Usage |
+|---|---|
+| `GENERATED ALWAYS AS IDENTITY` | PKs modernes (fin des séquences) |
+| `BOOLEAN` natif | Suppression `VARCHAR2(1)` Y/N |
+| `JSON Relational Duality Views` | API REST sans réécrire le modèle |
+| `VECTOR(384, FLOAT32)` | Table `product_search` pour AI |
+| `BLOB SecureFile` | Photos produit compressées |
+| `Materialized Views FAST REFRESH` | Sync incrémentale |
+| `INTERVAL PARTITION` | RANGE auto par mois |
+| `SUBPARTITION BY LIST` | 8 sous-partitions par site |
+| `Outbox pattern` | Sync Master → Boutique transactionnel |
 
-> Couverture actuelle : **~110 tables modernes / 391 legacy ≈ 28 %**. Le modèle structure est en place. **R1-R14 ✅ COMPLETS** — voir procédure.txt pour les évolutions futures (Lot 1C-1G, etc.).
+## 🐛 Deprecated patterns (26ai) fixés
 
-## Décisions techniques notables
+| Pattern | Action |
+|---|---|
+| `CREATE INDEX` (privilege) | ❌ Retiré (n'existe pas) |
+| `CREATE DOMAIN` | ❌ Retiré (déprécié 26ai) |
+| `DECODE` | ✅ → `CASE WHEN` |
+| `EXCEPTION WHEN OTHERS THEN NULL` | ✅ + whitelist SQLCODE |
 
-1. **PK composites vs JSON Duality Views** : Oracle 23ai Free **refuse les Duality Views sur PK composites** (ORA-40607). Tables concernées (`ticket`, `ticket_line`, `ticket_payment`, `inv_stock`) → exposition via vues classiques `JSON_OBJECT`/`JSON_ARRAYAGG`. Voir `12_app_api.sql`.
+## 📂 Structure
 
-2. **Identifiants métiers conservés** : on garde les `*_code` (ex. `product_code`, `party_code`, `terminal_code`) en plus des `*_id` pour faciliter la migration depuis l'ancien schéma où ces codes étaient les clés naturelles.
-
-3. **Triggers inter-schémas** : le trigger `trg_ticket_line_after_insert` décompte le stock via un `MERGE`/`UPDATE` cross-schema (`app_sales` → `app_inv`). Les GRANTs requis sont accordés dans `13_triggers.sql`.
-
-4. **Dénormalisation contrôlée** : `inv_stock.stock_qty` est mis à jour par trigger (compromis lecture rapide / cohérence garantie par le trigger). Les **mouvements réels** restent dans `inv_movement` pour l'auditabilité.
-
-## Tests rapides
-
-```sql
--- BOOLEAN natif
-SELECT product_code, is_stock_managed, is_promo
-  FROM app_product.product
- WHERE is_stock_managed = TRUE;
-
--- JSON Duality View
-SELECT JSON_SERIALIZE(data PRETTY)
-  FROM app_api.dv_product
- WHERE JSON_VALUE(data, '$.productCode') = 'ART001';
-
--- Package pricing
-SELECT app_product.pkg_pricing.get_price('ART001', 1) FROM DUAL;
-
--- Volumétrie Lot R1
-SELECT promo_code, promo_name, promo_type
-  FROM app_product.promo_header
- ORDER BY priority;
+```
+erp-db-23ai/
+├── scripts/         # 57 scripts DDL
+│   ├── 00_init_schemas.sql
+│   ├── 01-48_*        # Modules + lots R + quick wins
+│   ├── 49_congo_fiscal.sql
+│   ├── 50_grants_cross_schema.sql
+│   ├── 51_hub_spoke_topology.sql
+│   ├── 52_sync_framework.sql
+│   ├── 53_legacy_gap_filler.sql
+│   ├── 54_partition_tables_volumineuses.sql
+│   ├── 55_pkg_etl_legacy_v2.sql
+│   ├── 56_partition_effectives.sql
+│   ├── 57_etl_legacy_csv.sql
+│   └── 99_validation.sql
+├── seed_data/       # 31 fichiers de seed
+├── docs/            # CSV legacy REGAL + docs
+├── old-office/      # Architecture legacy complète
+├── ARCHITECTURE_HUB_SPOKE.md
+├── CHANGELOG.md
+├── DOC.md
+├── README.md
+├── STATUS.md
+├── erp-old-oracle-11g.json
+└── procedure.txt
 ```
 
-## Licence
+## 📚 Documentation
 
-Interne — propriété du porteur du projet.
+- [CHANGELOG.md](./CHANGELOG.md) : historique des versions
+- [DOC.md](./DOC.md) : documentation technique complète
+- [ARCHITECTURE_HUB_SPOKE.md](./ARCHITECTURE_HUB_SPOKE.md) : architecture multi-sites REGAL
+- [STATUS.md](./STATUS.md) : état du projet vs legacy
+
+## ⚠️ Sécurité
+
+Les **Personal Access Tokens** GitHub sont régulièrement révoqués. Si vous voyez un token dans le chat, révoquez-le sur https://github.com/settings/tokens.

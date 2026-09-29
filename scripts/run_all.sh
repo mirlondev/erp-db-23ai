@@ -65,7 +65,9 @@ for script in \
   52_sync_framework.sql \
   53_legacy_gap_filler.sql \
   54_partition_tables_volumineuses.sql \
-  55_pkg_etl_legacy_v2.sql
+  55_pkg_etl_legacy_v2.sql \
+  56_partition_effectives.sql \
+  57_etl_legacy_csv.sql
 do
     echo ""
     echo "▶ Exécution : $script"
