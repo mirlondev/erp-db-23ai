@@ -1,0 +1,211 @@
+{
+  "country_code": "cg",
+  "name": "Star Foods - Plan Comptable SYSCOHADA Grande Distribution",
+  "tree": {
+    "1-Comptes de Ressources Durables": {
+      "account_number": "1",
+      "root_type": "Equity",
+      "10-Capital": { "account_number": "10", "Capital Social": { "account_number": "101" } },
+      "12-Report à Nouveau": { "account_number": "12", "Report à Nouveau Créditeur": { "account_number": "121" }, "Report à Nouveau Débiteur": { "account_number": "129" } },
+      "13-Résultat Net": { "account_number": "13", "Résultat Net: Bénéfice": { "account_number": "131" }, "Résultat Net: Perte": { "account_number": "139" } }
+    },
+    "2-Comptes d'Actif Immobilisé": {
+      "account_number": "2",
+      "root_type": "Asset",
+      "21-Immobilisations Incorporelles": {
+        "account_number": "21",
+        "Logiciels POS et ERP": { "account_number": "2131", "account_type": "Fixed Asset" },
+        "Sites E-commerce": { "account_number": "2132", "account_type": "Fixed Asset" }
+      },
+      "23-Bâtiments et Agencements": {
+        "account_number": "23",
+        "Aménagements de Magasins (Rayonnages, Caisses)": { "account_number": "2341", "account_type": "Fixed Asset" },
+        "Chambres Froides et Installations Frigorifiques": { "account_number": "2342", "account_type": "Fixed Asset" }
+      },
+      "24-Matériel et Mobilier": {
+        "account_number": "24",
+        "Matériel Commercial (Caddies, Paniers, Scanners)": { "account_number": "2413", "account_type": "Fixed Asset" },
+        "Matériel Informatique (PC, Serveurs, TPE)": { "account_number": "2442", "account_type": "Fixed Asset" },
+        "Véhicules de Livraison et Camions": { "account_number": "2451", "account_type": "Fixed Asset" }
+      },
+      "28-Amortissements": {
+        "account_number": "28",
+        "Amortissements du Matériel Commercial et Informatique": { "account_number": "2841", "account_type": "Accumulated Depreciation" },
+        "Amortissements des Véhicules": { "account_number": "2845", "account_type": "Accumulated Depreciation" }
+      }
+    },
+    "3-Comptes de Stocks": {
+      "account_number": "3",
+      "root_type": "Asset",
+      "31-Stocks de Marchandises (Supermarché)": {
+        "account_number": "31",
+        "Stock Boissons (Alcoolisées, Sodas, Eaux)": { "account_number": "311", "account_type": "Stock" },
+        "Stock Alimentation (Secs, Conserves, Épicerie)": { "account_number": "312", "account_type": "Stock" },
+        "Stock Produits Frais et Chambres Froides": { "account_number": "313", "account_type": "Stock" },
+        "Stock Hygiène, Entretien et Divers": { "account_number": "314", "account_type": "Stock" }
+      },
+      "38-Stocks en Transit et Consignation": {
+        "account_number": "38",
+        "Stock de Marchandises en Transit (Import/Douane)": { "account_number": "381", "account_type": "Stock" },
+        "Emballages et Consignes (Palettes, Bouteilles consignées)": { "account_number": "387", "account_type": "Stock" }
+      },
+      "603-Variation des Stocks (COGS)": {
+        "account_number": "603",
+        "Variation des Stocks de Marchandises": { "account_number": "6031", "account_type": "Cost of Goods Sold", "root_type": "Expense" }
+      }
+    },
+    "4-Comptes de Tiers (ACTIF)": {
+      "root_type": "Asset",
+      "41-Clients et Comptes Rattachés": {
+        "account_number": "41",
+        "411-Clients": {
+          "account_number": "411",
+          "Clients Détaillants (POS / Caisse)": { "account_number": "4111", "account_type": "Receivable" },
+          "Clients Grossistes / Créditeurs": { "account_number": "4112", "account_type": "Receivable" },
+          "Clients - Cartes Cadeaux et Acomptes": { "account_number": "4118", "account_type": "Receivable" }
+        }
+      },
+      "44-État et Collectivités (ACTIF - TVA Déductible)": {
+        "account_number": "44",
+        "445-TVA Récupérable": {
+          "account_number": "445",
+          "TVA Déductible sur Achats (18%)": { "account_number": "4452", "account_type": "Tax" },
+          "TVA Déductible sur Import/Douane": { "account_number": "4453", "account_type": "Tax" }
+        }
+      }
+    },
+    "4-Comptes de Tiers (PASSIF)": {
+      "root_type": "Liability",
+      "40-Fournisseurs": {
+        "account_number": "40",
+        "401-Fournisseurs Dettes en Compte": {
+          "account_number": "401",
+          "Fournisseurs de Marchandises (Local)": { "account_number": "4011", "account_type": "Payable" },
+          "Fournisseurs de Marchandises (Import/Étranger)": { "account_number": "4012", "account_type": "Payable" },
+          "Transporteurs et Transitaires (Douane)": { "account_number": "4013", "account_type": "Payable" }
+        },
+        "408-Fournisseurs Factures Non Parvenues": {
+          "account_number": "408",
+          "Marchandises Réçues Non Facturées (MRNF)": { "account_number": "4081", "account_type": "Stock Received But Not Billed" }
+        }
+      },
+      "44-État et Collectivités (PASSIF - TVA Collectée)": {
+        "account_number": "44",
+        "443-TVA Facturée (Collectée)": {
+          "account_number": "443",
+          "TVA Collectée sur Ventes (18%)": { "account_number": "4431", "account_type": "Tax" },
+          "TVA Collectée sur Produits de 1ère Nécessité (10%)": { "account_number": "4432", "account_type": "Tax" }
+        },
+        "444-TVA Due ou Crédit de TVA": {
+          "account_number": "444",
+          "État - TVA Net à Payer": { "account_number": "4441", "account_type": "Tax" },
+          "État - Crédit de TVA à Reporter": { "account_number": "4449", "account_type": "Tax" }
+        }
+      },
+      "42/43-Personnel et CNSS": {
+        "account_number": "42",
+        "Personnel - Rémunérations dues": { "account_number": "422", "account_type": "Payable" },
+        "CNSS et Organismes Sociaux": { "account_number": "431", "account_type": "Payable" }
+      }
+    },
+    "5-Comptes de Trésorerie (Le Cœur du POS et Paiements)": {
+      "account_number": "5",
+      "root_type": "Asset",
+      "51-Valeurs à Encaisser (Transit Paiements)": {
+        "account_number": "51",
+        "Chèques et Effets à Encaisser": { "account_number": "513", "account_type": "Bank" },
+        "TPE et Cartes Bancaires en Cours de Règlement": { "account_number": "515", "account_type": "Bank" },
+        "Mobile Money en Transit (Airtel/MTN vers Banque)": { "account_number": "518", "account_type": "Bank" }
+      },
+      "52-Banques Locales et Devises": {
+        "account_number": "52",
+        "BGF - XAF (Compte Courant)": { "account_number": "5211", "account_type": "Bank" },
+        "Ecobank - XAF": { "account_number": "5212", "account_type": "Bank" },
+        "Banque en Devises (USD/EUR)": { "account_number": "5215", "account_type": "Bank" }
+      },
+      "55-Monnaie Électronique (Marchand)": {
+        "account_number": "55",
+        "Airtel Money Marchand (Porte-monnaie)": { "account_number": "551", "account_type": "Bank" },
+        "MTN Mobile Money Marchand": { "account_number": "552", "account_type": "Bank" }
+      },
+      "57-Caisses des Magasins et Dépôts": {
+        "account_number": "57",
+        "571-Caisse Siège Social": {
+          "account_number": "571",
+          "Caisse Principale (Siège)": { "account_number": "5711", "account_type": "Cash" }
+        },
+        "572-Caisses Succursales et Magasins": {
+          "account_number": "572",
+          "Caisse Magasin PNR (Pointe-Noire)": { "account_number": "5721", "account_type": "Cash" },
+          "Caisse Magasin BZV (Brazzaville)": { "account_number": "5722", "account_type": "Cash" },
+          "Caisse Magasin Dolisie": { "account_number": "5723", "account_type": "Cash" },
+          "Caisse Dépôt Central / Entrepôt": { "account_number": "5729", "account_type": "Cash" }
+        }
+      },
+      "58-Virements Internes et Ajustements": {
+        "account_number": "58",
+        "Virement de Fonds Caisse vers Banque": { "account_number": "5851", "account_type": "Cash" },
+        "Transfert de Stock/Fonds entre Magasins": { "account_number": "5852", "account_type": "Cash" },
+        "Arrondis de Caisse (POS)": { "account_number": "588", "account_type": "Round Off" }
+      }
+    },
+    "6-Comptes de Charges": {
+      "account_number": "6",
+      "root_type": "Expense",
+      "60-Achats et Approvisionnements": {
+        "account_number": "60",
+        "601-Achats de Marchandises": {
+          "account_number": "601",
+          "Achats Marchandises (Fournisseurs Locaux)": { "account_number": "6011", "account_type": "Expense Account" },
+          "Achats Marchandises (Import / Étranger)": { "account_number": "6012", "account_type": "Expense Account" },
+          "Frais d'Approvisionnement, Douane et Transit (Landed Cost)": { "account_number": "6015", "account_type": "Expense Account" }
+        },
+        "604-Achats d'Emballages et Fournitures": {
+          "account_number": "604",
+          "Achats de Sacs, Cartons et Emballages Perdus": { "account_number": "6046", "account_type": "Expense Account" }
+        }
+      },
+      "62-Services Extérieurs (Magasins)": {
+        "account_number": "62",
+        "Locations et Charges Locatives (Loyers Magasins)": { "account_number": "6222", "account_type": "Expense Account" },
+        "Entretien et Réparation (Matériel Commercial et Frigos)": { "account_number": "6242", "account_type": "Expense Account" },
+        "Primes d'Assurance (Multirisques Magasins, Camions)": { "account_number": "6251", "account_type": "Expense Account" }
+      },
+      "63-Autres Services Extérieurs": {
+        "account_number": "63",
+        "Commissions sur TPE et Cartes Bancaires": { "account_number": "6315", "account_type": "Expense Account" },
+        "Commissions et Frais Mobile Money (Airtel/MTN)": { "account_number": "6317", "account_type": "Expense Account" },
+        "Publicité, Catalogues et Promotions Magasin": { "account_number": "6271", "account_type": "Expense Account" }
+      },
+      "65-Autres Charges (Pertes et Casse)": {
+        "account_number": "65",
+        "Démarquage Inconnu, Vols et Casse Magasin": { "account_number": "6588", "account_type": "Expense Account" },
+        "Pertes sur Créances Clients (Impayés Grossistes)": { "account_number": "6511", "account_type": "Expense Account" }
+      },
+      "66-Charges de Personnel": {
+        "account_number": "66",
+        "Salaires et Primes du Personnel (Caissiers, Magasiniers)": { "account_number": "6611", "account_type": "Expense Account" },
+        "Charges Sociales Patronales (CNSS)": { "account_number": "6641", "account_type": "Expense Account" }
+      }
+    },
+    "7-Comptes de Produits": {
+      "account_number": "7",
+      "root_type": "Income",
+      "70-Ventes et Produits": {
+        "account_number": "70",
+        "701-Ventes de Marchandises": {
+          "account_number": "701",
+          "Ventes de Marchandises - Détail (POS Supermarché)": { "account_number": "7011", "account_type": "Income Account" },
+          "Ventes de Marchandises - Gros / Demi-Gros": { "account_number": "7012", "account_type": "Income Account" },
+          "Ventes en Ligne et Livraisons à Domicile": { "account_number": "7015", "account_type": "Income Account" },
+          "Rabais, Remises et Ristournes Accordés (Promotions POS)": { "account_number": "7019", "account_type": "Income Account" }
+        },
+        "707-Produits Accessoires": {
+          "account_number": "707",
+          "Vente de Sacs, Cartons et Emballages": { "account_number": "7071", "account_type": "Income Account" },
+          "Consignes et Emballages Récupérés": { "account_number": "7074", "account_type": "Income Account" }
+        }
+      }
+    }
+  }
+}
