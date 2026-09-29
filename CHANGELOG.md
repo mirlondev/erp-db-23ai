@@ -16,7 +16,7 @@
 | Duality Views | 0 | **5** | +5 |
 | Schedulers | 0 | **5** | +5 |
 | Sites REGAL | 0 | **7** | +7 |
-| Seeds | 0 | **31** | +31 |
+| Seeds | 0 | **40** | +40 |
 | Couverture legacy | 0% | **49%** | +49% |
 
 ## 📜 Historique détaillé

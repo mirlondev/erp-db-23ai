@@ -28,7 +28,7 @@ cd /workspace/erp-db-23ai
 | Duality Views | **5** | nouveau |
 | Schedulers | **5** | nouveau |
 | Sites REGAL | **7** | nouveau |
-| Seeds | **31** | nouveau |
+| Seeds | **40** | nouveau |
 | Tables partitionnées | **4** | nouveau |
 | Tables externes (ETL) | **6** | nouveau |
 | **Couverture legacy** | **49 %** | 0% → 49% |
