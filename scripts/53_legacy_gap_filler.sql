@@ -40,8 +40,9 @@ BEGIN
 END;
 /
 
+-- GRANT ... TO self n'est pas autorise en Oracle (ORA-01749).
+-- L'objet APP_PRODUCT.PRODUCT appartient deja a APP_PRODUCT : pas de grant necessaire.
 GRANT SELECT, INSERT ON app_inv.inv_product_lot TO app_product;
-GRANT SELECT ON app_product.product TO app_product;
 GRANT REFERENCES ON app_party.party TO app_purchase;
 GRANT REFERENCES ON app_org.org_warehouse TO app_pos;
 

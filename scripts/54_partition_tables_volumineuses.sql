@@ -20,6 +20,11 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
+-- Comme run_all.sh passe par un heredoc sqlplus avec WHENEVER SQLERROR EXIT,
+-- on force le meme comportement en execution manuelle : un echec doit remonter
+-- un code de sortie non nul (sinon le pipeline WS croit que le script est OK).
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR  EXIT FAILURE
 
 CONNECT system/oracle@localhost:1521/FREEPDB1
 
@@ -65,26 +70,78 @@ END;
 
 PROMPT
 PROMPT [3] app_ar.payment_history — 501K rows → RANGE par mois
--- Déjà créé dans script 53, on ajoute juste les index partitionnés
-CREATE INDEX ix_payment_history_month ON app_ar.payment_history(history_year, history_month, paid_at)
-  TABLESPACE USERS;
+-- Compatibilité WS : payment_history est créée par le script 53 (gap-filler).
+-- Si 53 n'a pas tourné (ou a échoué), on saute cette étape au lieu de casser
+-- tout le run_all.sh avec ORA-00942.
+DECLARE
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count
+    FROM all_tables
+   WHERE owner = 'APP_AR' AND table_name = 'PAYMENT_HISTORY';
+  IF v_count = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('  [skip] app_ar.payment_history absente (script 53 non execute) — index non cree.');
+    RETURN;
+  END IF;
+  SELECT COUNT(*) INTO v_count
+    FROM all_indexes
+   WHERE owner = 'APP_AR' AND index_name = 'IX_PAYMENT_HISTORY_MONTH';
+  IF v_count > 0 THEN
+    DBMS_OUTPUT.PUT_LINE('  [skip] ix_payment_history_month deja present.');
+    RETURN;
+  END IF;
+  EXECUTE IMMEDIATE
+    'CREATE INDEX app_ar.ix_payment_history_month
+       ON app_ar.payment_history(history_year, history_month, paid_at)';
+  DBMS_OUTPUT.PUT_LINE('  ✅ ix_payment_history_month cree');
+END;
+/
 
 PROMPT
 PROMPT [4] app_sys.outbox_event — events CDC → INDEX sur pending partitionné
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
--- Index composite partitionné pour les requêtes du hub
-CREATE INDEX ix_outbox_event_dispatched
-  ON outbox_event(status, created_at)
-  TABLESPACE USERS;
+-- Compatibilité WS : l'index composite (status, created_at) existe déjà sous
+-- le nom ix_outbox_event_status (créé par le script 52). On ne recrée pas le
+-- même plan de colonnes (ORA-01408) ; on vérifie juste sa présence.
+DECLARE
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count
+    FROM user_indexes
+   WHERE index_name = 'IX_OUTBOX_EVENT_STATUS';
+  IF v_count > 0 THEN
+    DBMS_OUTPUT.PUT_LINE('  [ok] ix_outbox_event_status (status, created_at) deja present — utile dispatcher CDC.');
+  ELSE
+    EXECUTE IMMEDIATE
+      'CREATE INDEX ix_outbox_event_status ON outbox_event(status, created_at)';
+    DBMS_OUTPUT.PUT_LINE('  ✅ ix_outbox_event_status cree (script 52 incomplet ?)');
+  END IF;
+END;
+/
 
 PROMPT
 PROMPT [5] Materialized Views pré-calculées pour reports consolidés
 -- MV : ventes consolidées tous sites (legacy : XAPP_BI/Discoverer)
 -- Sera créée via script dédié
-CREATE MATERIALIZED VIEW LOG ON outbox_event
-  WITH ROWID, SEQUENCE (event_id, status, created_at)
-  INCLUDING NEW VALUES;
+-- Idempotent WS : le MV log peut déjà exister si 54 a été relancé.
+DECLARE
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count
+    FROM user_mview_logs
+   WHERE log_table = 'MLOG$_OUTBOX_EVENT';
+  IF v_count > 0 THEN
+    DBMS_OUTPUT.PUT_LINE('  [skip] MV log outbox_event deja present.');
+    RETURN;
+  END IF;
+  EXECUTE IMMEDIATE
+    'CREATE MATERIALIZED VIEW LOG ON outbox_event
+       WITH ROWID, SEQUENCE (event_id, status, created_at)
+       INCLUDING NEW VALUES';
+  DBMS_OUTPUT.PUT_LINE('  ✅ MLOG$_OUTBOX_EVENT cree');
+END;
+/
 
 -- Helper : fonction qui calcule la volumétrie prévue
 PROMPT
@@ -120,7 +177,10 @@ UNION ALL SELECT 'outbox_event (events)',        500000, app_sys.fn_predict_grow
 
 PROMPT
 PROMPT ══════════════════════════════════════════════════════════
-PROMPT   ✅ PARTITIONNEMENT + INDEX OPTIMISÉS
+PROMPT   ✅ PARTITIONNEMENT + INDEX OPTIMISÉS (idempotent, WS-safe)
+PROMPT   - Étape 3 : skip propre si app_ar.payment_history absente (ORA-00942 évité)
+PROMPT   - Étape 4 : réutilise ix_outbox_event_status (ORA-01408 évité)
+PROMPT   - Étape 5 : MV log créé seulement si absent (re-run OK)
 PROMPT   - Index composite partitionné sur payment_history
 PROMPT   - MV Log sur outbox_event pour refresh FAST
 PROMPT   - fn_predict_growth() : projection volumétrie 5 ans

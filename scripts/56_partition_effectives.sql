@@ -30,15 +30,24 @@ PROMPT ════════════════════════�
 -- =================================================================
 -- 1) app_sales.ticket_line — partitionné par mois + site
 -- =================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON app_sales.ticket_v2 TO app_sales;
-GRANT SELECT, INSERT, UPDATE, DELETE ON app_sales.ticket_line_v2 TO app_sales;
-
+-- NB : pas de GRANT ... TO app_sales sur des objets APP_SALES (ORA-01749).
 CONNECT app_sales/AppSales#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT [1/4] app_sales.ticket_line — version partitionnée
+-- Idempotence WS : si la version partitionnee existe deja (re-execution),
+-- on la supprime avant de la recreer (sinon ORA-00955 casse le run_all.sh).
+DECLARE
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM user_tables WHERE table_name = 'TICKET_LINE_V2';
+  IF v_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP TABLE ticket_line_v2 CASCADE CONSTRAINTS PURGE';
+    DBMS_OUTPUT.PUT_LINE('  [reset] ticket_line_v2 supprimee puis recreee');
+  END IF;
+END;
+/
+
 CREATE TABLE ticket_line_v2 (
   ticket_line_id    NUMBER GENERATED ALWAYS AS IDENTITY,
   ticket_id         NUMBER        NOT NULL,
@@ -89,14 +98,24 @@ PROMPT        jusqu'à migration complète. Une vue de compatibilité est fourni
 -- =================================================================
 -- 2) app_inv.transfer_line — partitionné par mois + site
 -- =================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON app_inv.transfer_line_v2 TO app_inv;
-
+-- NB : pas de GRANT self-schema (ORA-01749).
 CONNECT app_inv/AppInv#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT [2/4] app_inv.transfer_line — version partitionnée
+-- Idempotence WS : si la version partitionnee existe deja (re-execution),
+-- on la supprime avant de la recreer (sinon ORA-00955 casse le run_all.sh).
+DECLARE
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM user_tables WHERE table_name = 'TRANSFER_LINE_V2';
+  IF v_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP TABLE transfer_line_v2 CASCADE CONSTRAINTS PURGE';
+    DBMS_OUTPUT.PUT_LINE('  [reset] transfer_line_v2 supprimee puis recreee');
+  END IF;
+END;
+/
+
 CREATE TABLE transfer_line_v2 (
   transfer_line_id  NUMBER GENERATED ALWAYS AS IDENTITY,
   transfer_id       NUMBER        NOT NULL,
@@ -135,14 +154,24 @@ CREATE INDEX ix_transfer_line_v2_p ON transfer_line_v2(product_code) LOCAL;
 -- =================================================================
 -- 3) app_gl.gl_entry_line — partitionné par an
 -- =================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON app_gl.gl_entry_line_v2 TO app_gl;
-
+-- NB : pas de GRANT self-schema (ORA-01749).
 CONNECT app_gl/AppGl#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT [3/4] app_gl.gl_entry_line — version partitionnée par exercice
+-- Idempotence WS : si la version partitionnee existe deja (re-execution),
+-- on la supprime avant de la recreer (sinon ORA-00955 casse le run_all.sh).
+DECLARE
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM user_tables WHERE table_name = 'GL_ENTRY_LINE_V2';
+  IF v_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP TABLE gl_entry_line_v2 CASCADE CONSTRAINTS PURGE';
+    DBMS_OUTPUT.PUT_LINE('  [reset] gl_entry_line_v2 supprimee puis recreee');
+  END IF;
+END;
+/
+
 CREATE TABLE gl_entry_line_v2 (
   entry_line_id     NUMBER GENERATED ALWAYS AS IDENTITY,
   entry_id          NUMBER        NOT NULL,
@@ -176,14 +205,24 @@ CREATE INDEX ix_gl_entry_line_v2_a ON gl_entry_line_v2(account_code, fiscal_year
 -- =================================================================
 -- 4) app_ar.payment_history — partitionné par mois
 -- =================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON app_ar.payment_history_v2 TO app_ar;
-
+-- NB : pas de GRANT self-schema (ORA-01749).
 CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT [4/4] app_ar.payment_history — version partitionnée par mois
+-- Idempotence WS : si la version partitionnee existe deja (re-execution),
+-- on la supprime avant de la recreer (sinon ORA-00955 casse le run_all.sh).
+DECLARE
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM user_tables WHERE table_name = 'PAYMENT_HISTORY_V2';
+  IF v_count > 0 THEN
+    EXECUTE IMMEDIATE 'DROP TABLE payment_history_v2 CASCADE CONSTRAINTS PURGE';
+    DBMS_OUTPUT.PUT_LINE('  [reset] payment_history_v2 supprimee puis recreee');
+  END IF;
+END;
+/
+
 CREATE TABLE payment_history_v2 (
   history_id        NUMBER GENERATED ALWAYS AS IDENTITY,
   payment_id        NUMBER        NOT NULL,
@@ -245,6 +284,10 @@ END fn_total_partitions;
 PROMPT
 PROMPT [6] Job de maintenance : archivage auto des vieilles partitions
 
+-- Le job drope les partitions de APP_SALES.TICKET_LINE_V2 : il doit donc
+-- etre cree dans le schema proprietaire (user_tab_partitions), pas app_sys.
+CONNECT app_sales/AppSales#2026@localhost:1521/FREEPDB1
+
 BEGIN
   BEGIN
     DBMS_SCHEDULER.DROP_JOB(job_name => 'JOB_PARTITION_MAINT');
@@ -292,29 +335,18 @@ GRANT SELECT ON app_ar.payment_history_v2       TO app_gl;
 PROMPT
 PROMPT ═══ Tests : comptage partitions ═══
 
-CONNECT app_sales/AppSales#2026@localhost:1521/FREEPDB1
-SELECT 'app_sales.ticket_line_v2'     AS table_name,
-       app_sys.fn_total_partitions('TICKET_LINE_V2')     AS partitions,
-       COUNT(*) AS rows_in_all_partitions
-  FROM ticket_line_v2
-UNION ALL
-CONNECT app_inv/AppInv#2026@localhost:1521/FREEPDB1
-SELECT 'app_inv.transfer_line_v2',
-       app_sys.fn_total_partitions('TRANSFER_LINE_V2'),
-       COUNT(*)
-  FROM app_inv.transfer_line_v2
-UNION ALL
-CONNECT app_gl/AppGl#2026@localhost:1521/FREEPDB1
-SELECT 'app_gl.gl_entry_line_v2',
-       app_sys.fn_total_partitions('GL_ENTRY_LINE_V2'),
-       COUNT(*)
-  FROM app_gl.gl_entry_line_v2
-UNION ALL
-CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
-SELECT 'app_ar.payment_history_v2',
-       app_sys.fn_total_partitions('PAYMENT_HISTORY_V2'),
-       COUNT(*)
-  FROM app_ar.payment_history_v2;
+-- NB : les CONNECT n'etaient pas valides a l'interieur d'un SELECT UNION ALL.
+-- On utilise le catalogue (system) pour compter partitions + lignes projetees.
+SELECT table_owner || '.' || table_name AS table_name,
+       COUNT(DISTINCT partition_name)   AS partitions,
+       MAX(num_rows)                    AS est_rows
+  FROM dba_tab_partitions
+ WHERE (table_owner = 'APP_SALES' AND table_name = 'TICKET_LINE_V2')
+    OR (table_owner = 'APP_INV'   AND table_name = 'TRANSFER_LINE_V2')
+    OR (table_owner = 'APP_GL'    AND table_name = 'GL_ENTRY_LINE_V2')
+    OR (table_owner = 'APP_AR'    AND table_name = 'PAYMENT_HISTORY_V2')
+ GROUP BY table_owner, table_name
+ ORDER BY 1;
 
 PROMPT
 PROMPT ═══ Plan de maintenance ═══
