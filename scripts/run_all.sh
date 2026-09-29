@@ -60,7 +60,9 @@ for script in \
   47_ohada_declarations.sql \
   48_app_hr.sql \
   49_congo_fiscal.sql \
-  50_grants_cross_schema.sql
+  50_grants_cross_schema.sql \
+  51_hub_spoke_topology.sql \
+  52_sync_framework.sql
 do
     echo ""
     echo "▶ Exécution : $script"

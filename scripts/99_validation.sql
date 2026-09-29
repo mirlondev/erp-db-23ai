@@ -153,6 +153,10 @@ UNION ALL SELECT 'app_gl.tax_declaration',   COUNT(*) FROM app_gl.tax_declaratio
 UNION ALL SELECT 'app_sys.cg_tax_center',    COUNT(*) FROM app_sys.cg_tax_center
 UNION ALL SELECT 'app_sys.cg_irpp_bracket',  COUNT(*) FROM app_sys.cg_irpp_bracket
 UNION ALL SELECT 'app_sys.cg_cnss_param',    COUNT(*) FROM app_sys.cg_cnss_param
+UNION ALL SELECT 'app_sys.site_master',      COUNT(*) FROM app_sys.site_master
+UNION ALL SELECT 'app_sys.site_link',        COUNT(*) FROM app_sys.site_link
+UNION ALL SELECT 'app_sys.site_sync_run',    COUNT(*) FROM app_sys.site_sync_run
+UNION ALL SELECT 'app_sys.outbox_event',     COUNT(*) FROM app_sys.outbox_event
 UNION ALL SELECT 'app_gl.tax_declaration_line', COUNT(*) FROM app_gl.tax_declaration_line
 UNION ALL SELECT 'app_gl.tax_payment',       COUNT(*) FROM app_gl.tax_payment
 UNION ALL SELECT 'app_gl.tax_credit',        COUNT(*) FROM app_gl.tax_credit
