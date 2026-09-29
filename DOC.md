@@ -865,25 +865,69 @@ END;
 
 ## 🛣 17. Roadmap
 
-### Court terme (à venir rapidement)
+### ✅ Réalisé (cette session + sessions précédentes)
 
-- [ ] **Lot 1G** — Factures & Règlements (5 tables, déjà partiellement couvert par R5)
-- [ ] **Seed Enfinity / sample data** — pour démos clients (~ 10k lignes par table)
-- [ ] **Tests unitaires PL/SQL** (utPLSQL)
+**Architecture & socle**
+- ✅ 17 schémas `APP_*` créés (00-12 + extensions)
+- ✅ 57 scripts DDL, 31 seeds
+- ✅ ~195 tables modernes (49% des 391 legacy)
+- ✅ 8 packages PL/SQL
+- ✅ 9 triggers (CDC + métier)
+- ✅ 5 Duality Views, 3 Materialized Views
+- ✅ 5 schedulers (DBMS_SCHEDULER)
 
-### Moyen terme (1-3 mois)
+**Modules métier**
+- ✅ Catalogue 211K articles (ETL CSV depuis GCPART.csv)
+- ✅ Stock + Transferts (pkg_transfer_stock, workflow 6 étapes)
+- ✅ POS (pkg_pos_sales, ticket_line_v2 partitionné)
+- ✅ Facturation (Lot 1G : 5 tables AR, échéances, litiges)
+- ✅ Achats (Lot 1F : 4 tables)
+- ✅ Documents (Lot 1A-1D + pkg_doc)
+- ✅ OHADA (squelette + Immobilisations + Déclarations fiscales)
+- ✅ Module RH/Paie Congo (CNSS + IRPP 8 tranches)
+- ✅ Multi-sites (site_master, site_link, sync framework)
 
-- [ ] **Module compta OHADA complet** (~ 80 tables restantes : immobilisations, états financiers, déclarations TVA)
+**Performance & partitionnement**
+- ✅ 4 tables partitionnées (ticket_line_v2, transfer_line_v2, gl_entry_line_v2, payment_history_v2)
+- ✅ Stratégie RANGE(month) + LIST(site, 8 sous-partitions)
+- ✅ JOB_PARTITION_MAINT : drop auto > 36 mois
+- ✅ fn_predict_growth() : projection 5 ans
+
+**ETL legacy**
+- ✅ 6 tables externes Oracle Loader pour CSV REGAL
+- ✅ pkg_etl_legacy v2 : dispatcher GCBRDD 54.7M par CODTBRD (9 types)
+- ✅ etl_run_progress : reprise après crash
+
+**Localisation Congo Brazzaville**
+- ✅ TVA 18.9% (CEMAC), XAF (BEAC), 7 centres DGID
+- ✅ CNSS 10% salarié + 19.5% patron, IRPP 8 tranches
+- ✅ Litoko SARL Pointe-Noire : société + 2 dépôts + 5 magasins
+
+**Deprecated 26ai**
+- ✅ CREATE INDEX retiré (pas un privilège système)
+- ✅ CREATE DOMAIN retiré (déprécié 26ai)
+- ✅ DECODE → CASE WHEN
+- ✅ EXCEPTION WHEN OTHERS THEN NULL + whitelist SQLCODE
+
+### 🟠 Court terme (à venir)
+
+- [ ] **Tests unitaires PL/SQL** (utPLSQL) : couverture 8 packages
+- [ ] **Pilote BZV-B01** : installation boutique moderne + ETL réel
+- [ ] **Migration en production** : basculement progressif depuis 11g
+
+### 🟠 Moyen terme (1-3 mois)
+
+- [ ] **Module compta XCPTA complet** (~ 50 tables : CP_ECR_LET_DET, CP_HISTO_RGL, etc.)
 - [ ] **Index manquants** + tuning performance sur volumétrie réelle
 - [ ] **VPD/RLS** — politiques de sécurité au niveau ligne (multi-société)
-- [ ] **Partitioning** — pour les tables à forte volumétrie (inv_movement, ticket, gl_entry_line)
-- [ ] **CI/CD** — automatisation via GitHub Actions
+- [ ] **CI/CD GitHub Actions** : run_all_with_seeds.sh auto
+- [ ] **Mode dégradé** : boutique autonome si sync échoue > 3 fois
 
-### Long terme (3-12 mois)
+### 🔴 Long terme (3-12 mois)
 
 - [ ] **Module logistique avancée** (cross-docking, wave picking)
+- [ ] **Oracle GoldenGate** : CDC temps réel (licence)
 - [ ] **IoT / shop floor** — capteurs + tables time-series
-- [ ] **Graph analytics** — recommandations via graph queries
 - [ ] **Multi-tenant natif** — colonne `company_code` comme discriminator
 - [ ] **Sauvegarde PITR** + restauration testée mensuellement
 
@@ -922,13 +966,41 @@ Voir `git log --oneline` ou la section "Commits" du README.md.
 - **Tokens GitHub** : ne JAMAIS partager un PAT dans un chat persisté (compromis garanti)
 - **Duality Views / PK composites** : limitation Oracle 23ai Free — workaround via vues JSON classiques
 - **Schema binding** : le DDL avec `CONNECT`/`SET` dans SQL*Plus ne marche pas dans tous les outils
-- **Performance** : non testée sur volumétrie réelle (10k+ tickets/jour)
+- **Performance** : testée sur volumétrie seed (10k tickets), à valider en prod réelle (10k+ tickets/jour)
+- **Free 23ai RAM limit (32 Go)** : d'où le partitionnement RANGE+SUBPARTITION pour ticket_line_v2 (65.5M rows)
+- **Réseau Congo** : satellite 1 Mbps Dolisie, fibre coupée → mode dégradé boutique autonome prévu
 
-### Annexe E : Contacts / contributeurs
+### Annexe E : Architecture Hub-and-Spoke (REGAL multi-sites)
+
+Voir `ARCHITECTURE_HUB_SPOKE.md` pour le détail complet.
+
+**Sites** : 1 siège MASTER (PNR-OFC) + 4 boutiques + 2 dépôts
+**Sync** : Outbox pattern (transactionnel) + DBLINK + 3 stratégies (MASTER_WINS, LAST_WRITE_WINS, MANUAL_REVIEW)
+**Scheduler** : JOB_SYNC_HUB_PUBLISH toutes les 30 min
+**CDC** : triggers `trg_outbox_product_ai/_au/_ad` sur `app_product.product`
+
+### Annexe F : Partitionnement 23ai
+
+**4 tables partitionnées** :
+| Table | Stratégie | Volume cible |
+|---|---|---:|
+| `ticket_line_v2` | RANGE(month) + LIST(site, 8 sp) | 248M rows en 5 ans |
+| `transfer_line_v2` | RANGE(month) + LIST(site, 8 sp) | 207M rows |
+| `gl_entry_line_v2` | RANGE(year, 5 p) | 10.6M rows |
+| `payment_history_v2` | RANGE(month) | 1.9M rows |
+
+**Helpers** :
+- `fn_partition_info(owner, table)` : SYS_REFCURSOR
+- `fn_total_partitions(table)` : count
+- `JOB_PARTITION_MAINT` : drop auto > 36 mois
+
+### Annexe G : Contacts / contributeurs
 
 - Auteur : mirlondev (https://github.com/mirlondev)
 - Repo : https://github.com/mirlondev/erp-db-23ai.git
+- Localisation : Pointe-Noire, Congo Brazzaville
 
 ---
 
-**Dernière mise à jour** : 2026-09-28 (couverture ~ 36 % du legacy 391 tables).
+**Dernière mise à jour** : 2026-09-29 (couverture **~ 49 %** du legacy 391 tables).
+**~195 tables modernes / 17 schémas / 57 scripts / 31 seeds / 8 packages / 4 tables partitionnées / 6 tables externes ETL**.
