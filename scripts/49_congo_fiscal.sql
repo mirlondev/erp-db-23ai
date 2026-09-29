@@ -3,10 +3,11 @@
 -- ============================================================
 -- Adapté aux structures réelles :
 --   * sys_country  : (COUNTRY_CODE, COUNTRY_NAME) seulement
---   * sys_currency : structure vérifiée dynamiquement
---   * tax_form_type: (form_code, form_label, form_type, frequency,
---                     jurisdiction, base_amount, rate, legal_basis, due_day)
+--   * sys_currency : (CURRENCY_CODE, CURRENCY_NAME, IS_FIXED_RATE, DECIMAL_PLACES)
+--   * Toutes les tables fiscales créées dans app_sys (pas app_gl) pour éviter
+--     les problèmes de droits cross-schema
 -- ============================================================
+
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
@@ -24,10 +25,9 @@ PROMPT [1/8] Inscription du Congo Brazzaville dans sys_country
 DECLARE
   v_count NUMBER;
 BEGIN
-  SELECT COUNT(*) INTO v_count FROM sys_country WHERE country_code = 'CG';
+  SELECT COUNT(*) INTO v_count FROM app_sys.sys_country WHERE country_code = 'CG';
   IF v_count = 0 THEN
-    -- Table sys_country n'a QUE 2 colonnes : COUNTRY_CODE + COUNTRY_NAME
-    INSERT INTO sys_country (country_code, country_name)
+    INSERT INTO app_sys.sys_country (country_code, country_name)
     VALUES ('CG', 'République du Congo');
     DBMS_OUTPUT.PUT_LINE('  -> CG inséré.');
   ELSE
@@ -40,17 +40,13 @@ END;
 -- ═══ 2. Devise : XAF (BEAC) ═══
 PROMPT
 PROMPT [2/8] Devise XAF (BEAC) — franc CFA d'Afrique Centrale
--- ═══ 2. Devise : XAF (BEAC) ═══
-PROMPT
-PROMPT [2/8] Devise XAF (BEAC) — franc CFA d'Afrique Centrale
 DECLARE
   v_count NUMBER;
 BEGIN
-  SELECT COUNT(*) INTO v_count FROM sys_currency WHERE currency_code = 'XAF';
+  SELECT COUNT(*) INTO v_count FROM app_sys.sys_currency WHERE currency_code = 'XAF';
 
   IF v_count = 0 THEN
-    -- Structure réelle : (CURRENCY_CODE, CURRENCY_NAME, IS_FIXED_RATE, DECIMAL_PLACES)
-    INSERT INTO sys_currency (
+    INSERT INTO app_sys.sys_currency (
       currency_code, currency_name, is_fixed_rate, decimal_places
     ) VALUES (
       'XAF', 'Franc CFA (BEAC)', TRUE, 0
@@ -66,23 +62,21 @@ EXCEPTION
     RAISE;
 END;
 /
+
 -- ═══ 3. Villes & centres des impôts du Congo ═══
 PROMPT
 PROMPT [3/8] Centres des impôts du Congo
 
-DECLARE
-  PROCEDURE d(p_t VARCHAR2, p_n VARCHAR2) IS
-  BEGIN
-    EXECUTE IMMEDIATE 'DROP '||p_t||' '||p_n||' CASCADE CONSTRAINTS';
-    DBMS_OUTPUT.PUT_LINE('  DROP '||p_t||' '||p_n);
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
 BEGIN
-  d('TABLE','cg_tax_center');
+  EXECUTE IMMEDIATE 'DROP TABLE app_sys.cg_tax_center CASCADE CONSTRAINTS';
+  DBMS_OUTPUT.PUT_LINE('  DROP TABLE app_sys.cg_tax_center');
+EXCEPTION 
+  WHEN OTHERS THEN 
+    NULL;
 END;
 /
 
-CREATE TABLE cg_tax_center (
+CREATE TABLE app_sys.cg_tax_center (
   center_id          NUMBER GENERATED ALWAYS AS IDENTITY,
   center_code        VARCHAR2(10)  NOT NULL,
   center_name        VARCHAR2(80)  NOT NULL,
@@ -96,26 +90,56 @@ CREATE TABLE cg_tax_center (
   CONSTRAINT uk_cg_tax_center_code   UNIQUE (center_code)
 );
 
-INSERT INTO cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
+INSERT INTO app_sys.cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
   ('CG-BZV', 'Centre des Impôts de Brazzaville',  'Brazzaville',  'Pool',         '+242 05 555 0101', 'cdi-bzv@dgid.cg');
-INSERT INTO cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
+INSERT INTO app_sys.cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
   ('CG-PNR', 'Centre des Impôts de Pointe-Noire', 'Pointe-Noire', 'Pointe-Noire', '+242 05 555 0202', 'cdi-pnr@dgid.cg');
-INSERT INTO cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
+INSERT INTO app_sys.cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
   ('CG-DLS', 'Centre des Impôts de Dolisie',      'Dolisie',      'Niari',        '+242 05 555 0303', 'cdi-dls@dgid.cg');
-INSERT INTO cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
+INSERT INTO app_sys.cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
   ('CG-NKY', 'Centre des Impôts de Nkayi',        'Nkayi',        'Bouenza',      '+242 05 555 0404', 'cdi-nky@dgid.cg');
-INSERT INTO cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
+INSERT INTO app_sys.cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
   ('CG-OYO', 'Centre des Impôts d''Oyo',          'Oyo',          'Cuvette',      '+242 05 555 0505', 'cdi-oyo@dgid.cg');
-INSERT INTO cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
+INSERT INTO app_sys.cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
   ('CG-IMP', 'Centre des Impôts d''Impfondo',     'Impfondo',     'Likouala',     '+242 05 555 0606', 'cdi-imp@dgid.cg');
-INSERT INTO cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
+INSERT INTO app_sys.cg_tax_center (center_code, center_name, city, department, phone, email) VALUES
   ('CG-SIB', 'Centre des Impôts de Sibiti',       'Sibiti',       'Lékoumou',     '+242 05 555 0707', 'cdi-sib@dgid.cg');
 COMMIT;
-DBMS_OUTPUT.PUT_LINE('  -> 7 centres des impôts CG insérés.');
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('  -> 7 centres des impôts CG insérés.');
+END;
+/
 
 -- ═══ 4. Taux applicables au Congo ═══
 PROMPT
 PROMPT [4/8] Taux TVA / IS / IRCM / Patente / TFPB Congo
+
+-- Création de la table dans app_sys (pas app_gl) pour éviter les problèmes de droits
+BEGIN
+  EXECUTE IMMEDIATE 'CREATE TABLE app_sys.tax_form_type (
+    form_id       NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    form_code     VARCHAR2(50) NOT NULL UNIQUE,
+    form_label    VARCHAR2(200) NOT NULL,
+    form_type     VARCHAR2(20),
+    frequency     VARCHAR2(20),
+    jurisdiction  VARCHAR2(10),
+    base_amount   NUMBER(16,2) DEFAULT 0,
+    rate          NUMBER(5,4),
+    legal_basis   VARCHAR2(500),
+    due_day       NUMBER(2)
+  )';
+  DBMS_OUTPUT.PUT_LINE('  → Table app_sys.tax_form_type créée.');
+EXCEPTION
+  WHEN OTHERS THEN
+    IF SQLCODE = -955 THEN
+      DBMS_OUTPUT.PUT_LINE('  → Table app_sys.tax_form_type existe déjà.');
+    ELSE
+      RAISE;
+    END IF;
+END;
+/
+
 DECLARE
   v_count NUMBER;
 
@@ -130,10 +154,10 @@ DECLARE
   ) IS
     v_cnt NUMBER;
   BEGIN
-    SELECT COUNT(*) INTO v_cnt FROM app_gl.tax_form_type
+    SELECT COUNT(*) INTO v_cnt FROM app_sys.tax_form_type
      WHERE form_code = p_code AND jurisdiction = 'CG';
     IF v_cnt = 0 THEN
-      INSERT INTO app_gl.tax_form_type (
+      INSERT INTO app_sys.tax_form_type (
         form_code, form_label, form_type, frequency, jurisdiction,
         base_amount, rate, legal_basis, due_day
       ) VALUES (
@@ -186,19 +210,16 @@ END;
 PROMPT
 PROMPT [5/8] Barème IRPP Congo (8 tranches 0%-35%)
 
-DECLARE
-  PROCEDURE d(p_t VARCHAR2, p_n VARCHAR2) IS
-  BEGIN
-    EXECUTE IMMEDIATE 'DROP '||p_t||' '||p_n||' CASCADE CONSTRAINTS';
-    DBMS_OUTPUT.PUT_LINE('  DROP '||p_t||' '||p_n);
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
 BEGIN
-  d('TABLE','cg_irpp_bracket');
+  EXECUTE IMMEDIATE 'DROP TABLE app_sys.cg_irpp_bracket CASCADE CONSTRAINTS';
+  DBMS_OUTPUT.PUT_LINE('  DROP TABLE app_sys.cg_irpp_bracket');
+EXCEPTION 
+  WHEN OTHERS THEN 
+    NULL;
 END;
 /
 
-CREATE TABLE cg_irpp_bracket (
+CREATE TABLE app_sys.cg_irpp_bracket (
   bracket_id        NUMBER GENERATED ALWAYS AS IDENTITY,
   bracket_order     NUMBER(1)     NOT NULL,
   income_min_xaf    NUMBER(16,2)  NOT NULL,
@@ -208,34 +229,35 @@ CREATE TABLE cg_irpp_bracket (
   CONSTRAINT uk_cg_irpp_bracket_ord  UNIQUE (bracket_order)
 );
 
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (1,          0,    464000, 0.0000);
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (2,     464000,   1000000, 0.0500);
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (3,    1000000,   2000000, 0.1000);
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (4,    2000000,   4000000, 0.1500);
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (5,    4000000,   8000000, 0.2000);
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (6,    8000000,  16000000, 0.2500);
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (7,   16000000,  32000000, 0.3000);
-INSERT INTO cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (8,   32000000,      NULL, 0.3500);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (1,          0,    464000, 0.0000);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (2,     464000,   1000000, 0.0500);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (3,    1000000,   2000000, 0.1000);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (4,    2000000,   4000000, 0.1500);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (5,    4000000,   8000000, 0.2000);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (6,    8000000,  16000000, 0.2500);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (7,   16000000,  32000000, 0.3000);
+INSERT INTO app_sys.cg_irpp_bracket (bracket_order, income_min_xaf, income_max_xaf, rate) VALUES (8,   32000000,      NULL, 0.3500);
 COMMIT;
-DBMS_OUTPUT.PUT_LINE('  -> Barème IRPP Congo chargé (8 tranches).');
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('  -> Barème IRPP Congo chargé (8 tranches).');
+END;
+/
 
 -- ═══ 6. Cotisations sociales CNSS Congo ═══
 PROMPT
 PROMPT [6/8] CNSS Congo - barème des cotisations
 
-DECLARE
-  PROCEDURE d(p_t VARCHAR2, p_n VARCHAR2) IS
-  BEGIN
-    EXECUTE IMMEDIATE 'DROP '||p_t||' '||p_n||' CASCADE CONSTRAINTS';
-    DBMS_OUTPUT.PUT_LINE('  DROP '||p_t||' '||p_n);
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
 BEGIN
-  d('TABLE','cg_cnss_param');
+  EXECUTE IMMEDIATE 'DROP TABLE app_sys.cg_cnss_param CASCADE CONSTRAINTS';
+  DBMS_OUTPUT.PUT_LINE('  DROP TABLE app_sys.cg_cnss_param');
+EXCEPTION 
+  WHEN OTHERS THEN 
+    NULL;
 END;
 /
 
-CREATE TABLE cg_cnss_param (
+CREATE TABLE app_sys.cg_cnss_param (
   param_id          NUMBER GENERATED ALWAYS AS IDENTITY,
   param_code        VARCHAR2(20)  NOT NULL,
   param_label       VARCHAR2(80)  NOT NULL,
@@ -248,21 +270,26 @@ CREATE TABLE cg_cnss_param (
   CONSTRAINT uk_cg_cnss_param_cd UNIQUE (param_code)
 );
 
-INSERT INTO cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
+INSERT INTO app_sys.cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
   ('CNSS-PREST',    'CNSS Prestations familiales', 0.0400, 0.1000, 1200000, 'Code Sécurité Sociale CG art. 92');
-INSERT INTO cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
+INSERT INTO app_sys.cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
   ('CNSS-RETRAITE', 'CNSS Pension vieillesse',     0.0400, 0.0500, 1200000, 'Code Sécurité Sociale CG art. 89');
-INSERT INTO cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
+INSERT INTO app_sys.cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
   ('CNSS-AT',       'CNSS Accidents du travail',   0.0000, 0.0250, 1200000, 'Code Sécurité Sociale CG art. 95');
-INSERT INTO cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
+INSERT INTO app_sys.cg_cnss_param (param_code, param_label, rate_employee, rate_employer, ceiling_xaf, legal_basis) VALUES
   ('CSC-CAMU',      'CSC + CAMU (mutuelle santé)', 0.0200, 0.0200,  600000, 'Loi 2017-22 - Centre de Santé Communautaire');
 COMMIT;
-DBMS_OUTPUT.PUT_LINE('  -> Barème CNSS Congo chargé.');
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('  -> Barème CNSS Congo chargé.');
+END;
+/
 
 -- ═══ 7. Fonction calcul IRPP Congo ═══
 PROMPT
 PROMPT [7/8] Fonction PL/SQL de calcul IRPP Congo
-CREATE OR REPLACE FUNCTION fn_cg_irpp(
+
+CREATE OR REPLACE FUNCTION app_sys.fn_cg_irpp(
   p_annual_income    IN NUMBER,
   p_dependents       IN NUMBER DEFAULT 0
 ) RETURN NUMBER IS
@@ -280,7 +307,7 @@ BEGIN
 
   FOR r IN (
     SELECT income_min_xaf, income_max_xaf, rate
-      FROM cg_irpp_bracket
+      FROM app_sys.cg_irpp_bracket
      ORDER BY bracket_order
   ) LOOP
     EXIT WHEN v_remaining <= 0;
@@ -299,25 +326,31 @@ BEGIN
   RETURN ROUND(v_total_irpp, 2);
 END fn_cg_irpp;
 /
-PROMPT  -> fn_cg_irpp installée.
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('  -> fn_cg_irpp installée.');
+END;
+/
 
 -- ═══ 8. Tests ═══
 PROMPT
 PROMPT [8/8] Tests de calcul IRPP Congo
-SELECT 'Salarié 2M XAF/an (1 enfant)'            AS cas, fn_cg_irpp(2000000, 1)   AS irpp_du FROM dual
-UNION ALL SELECT 'Salarié 5M XAF/an (3 enfants)',    fn_cg_irpp(5000000, 3)   FROM dual
-UNION ALL SELECT 'Salarié 12M XAF/an (5 enfants)',   fn_cg_irpp(12000000, 5)  FROM dual
-UNION ALL SELECT 'Salarié 50M XAF/an (sans enfant)', fn_cg_irpp(50000000, 0)  FROM dual
-UNION ALL SELECT 'Salarié 400K XAF/an (1 enfant)',   fn_cg_irpp(400000, 1)    FROM dual;
+
+SELECT 'Salarié 2M XAF/an (1 enfant)'            AS cas, app_sys.fn_cg_irpp(2000000, 1)   AS irpp_du FROM dual
+UNION ALL SELECT 'Salarié 5M XAF/an (3 enfants)',    app_sys.fn_cg_irpp(5000000, 3)   FROM dual
+UNION ALL SELECT 'Salarié 12M XAF/an (5 enfants)',   app_sys.fn_cg_irpp(12000000, 5)  FROM dual
+UNION ALL SELECT 'Salarié 50M XAF/an (sans enfant)', app_sys.fn_cg_irpp(50000000, 0)  FROM dual
+UNION ALL SELECT 'Salarié 400K XAF/an (1 enfant)',   app_sys.fn_cg_irpp(400000, 1)    FROM dual;
 
 PROMPT
 PROMPT ═══ Volumétrie ═══
-SELECT 'SYS_COUNTRY (CG)' AS tbl, COUNT(*) AS nb FROM sys_country WHERE country_code='CG'
-UNION ALL SELECT 'SYS_CURRENCY (XAF)',     COUNT(*) FROM sys_currency WHERE currency_code='XAF'
-UNION ALL SELECT 'CG_TAX_CENTER',          COUNT(*) FROM cg_tax_center
-UNION ALL SELECT 'CG_IRPP_BRACKET',        COUNT(*) FROM cg_irpp_bracket
-UNION ALL SELECT 'CG_CNSS_PARAM',          COUNT(*) FROM cg_cnss_param
-UNION ALL SELECT 'TAX_FORM_TYPE (CG)',     COUNT(*) FROM app_gl.tax_form_type WHERE jurisdiction='CG'
+
+SELECT 'SYS_COUNTRY (CG)' AS tbl, COUNT(*) AS nb FROM app_sys.sys_country WHERE country_code='CG'
+UNION ALL SELECT 'SYS_CURRENCY (XAF)',     COUNT(*) FROM app_sys.sys_currency WHERE currency_code='XAF'
+UNION ALL SELECT 'CG_TAX_CENTER',          COUNT(*) FROM app_sys.cg_tax_center
+UNION ALL SELECT 'CG_IRPP_BRACKET',        COUNT(*) FROM app_sys.cg_irpp_bracket
+UNION ALL SELECT 'CG_CNSS_PARAM',          COUNT(*) FROM app_sys.cg_cnss_param
+UNION ALL SELECT 'TAX_FORM_TYPE (CG)',     COUNT(*) FROM app_sys.tax_form_type WHERE jurisdiction='CG'
  ORDER BY tbl;
 
 PROMPT

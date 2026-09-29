@@ -24,7 +24,7 @@ PROMPT ════════════════════════�
 -- ═══ 1. Table Outbox ═══
 PROMPT
 PROMPT [1] outbox_event — journal des changements à synchroniser
-CREATE TABLE outbox_event (
+CREATE TABLE IF NOT EXISTS outbox_event (
   event_id            NUMBER GENERATED ALWAYS AS IDENTITY,
   -- Source du changement
   object_owner        VARCHAR2(30)  NOT NULL,
@@ -50,9 +50,10 @@ CREATE TABLE outbox_event (
   CONSTRAINT ck_outbox_event_status         CHECK (status IN ('PENDING','IN_FLIGHT','DONE','FAILED','CANCELLED'))
 );
 
-CREATE INDEX ix_outbox_event_status     ON outbox_event(status, created_at);
-CREATE INDEX ix_outbox_event_object     ON outbox_event(object_owner, object_name, primary_key_value);
-CREATE INDEX ix_outbox_event_pending    ON outbox_event(created_at) WHERE status = 'PENDING';
+CREATE INDEX IF NOT EXISTS ix_outbox_event_status     ON outbox_event(status, created_at);
+CREATE INDEX IF NOT EXISTS ix_outbox_event_object     ON outbox_event(object_owner, object_name, primary_key_value);
+-- Oracle does not support partial indexes; ix_outbox_event_status already
+-- indexes status + created_at for pending-event scans.
 
 -- Vues par table source
 PROMPT
@@ -247,12 +248,18 @@ END pkg_sync_hub;
 -- ═══ 3. Trigger CDC sur app_product.product ═══
 PROMPT
 PROMPT [3] Triggers CDC — capture auto des changements produit
+PROMPT    Prérequis : scripts/03_app_product.sql doit avoir créé PRODUCT.
+-- Le schéma propriétaire crée ses triggers; il faut un EXECUTE direct
+-- sur le package (les rôles ne sont pas pris en compte à la compilation).
+GRANT EXECUTE ON pkg_sync_hub TO app_product;
+CONNECT app_product/AppProduct#2026@localhost:1521/FREEPDB1
+
 CREATE OR REPLACE TRIGGER trg_outbox_product_ai
 AFTER INSERT ON app_product.product FOR EACH ROW
 DECLARE
   v_site_code VARCHAR2(10) := 'PNR-OFC';
 BEGIN
-  pkg_sync_hub.emit_event(
+  app_sys.pkg_sync_hub.emit_event(
     p_object_owner     => 'APP_PRODUCT',
     p_object_name      => 'PRODUCT',
     p_pk_value         => :NEW.product_code,
@@ -261,10 +268,11 @@ BEGIN
        'product_code' VALUE :NEW.product_code,
        'product_name' VALUE :NEW.product_name,
        'standard_price' VALUE :NEW.standard_price,
-       'category' VALUE :NEW.category
+       'category_id' VALUE :NEW.category_id,
+       'subcategory_id' VALUE :NEW.subcategory_id
      ),
     p_site_code_origin => v_site_code,
-    p_company_code     => :NEW.company_code
+    p_company_code     => NULL
   );
 END;
 /
@@ -274,7 +282,7 @@ AFTER UPDATE ON app_product.product FOR EACH ROW
 DECLARE
   v_site_code VARCHAR2(10) := 'PNR-OFC';
 BEGIN
-  pkg_sync_hub.emit_event(
+  app_sys.pkg_sync_hub.emit_event(
     p_object_owner     => 'APP_PRODUCT',
     p_object_name      => 'PRODUCT',
     p_pk_value         => :NEW.product_code,
@@ -290,7 +298,7 @@ BEGIN
        'standard_price' VALUE :OLD.standard_price
      ),
     p_site_code_origin => v_site_code,
-    p_company_code     => :NEW.company_code
+    p_company_code     => NULL
   );
 END;
 /
@@ -300,7 +308,7 @@ AFTER DELETE ON app_product.product FOR EACH ROW
 DECLARE
   v_site_code VARCHAR2(10) := 'PNR-OFC';
 BEGIN
-  pkg_sync_hub.emit_event(
+  app_sys.pkg_sync_hub.emit_event(
     p_object_owner     => 'APP_PRODUCT',
     p_object_name      => 'PRODUCT',
     p_pk_value         => :OLD.product_code,
@@ -418,10 +426,19 @@ END;
 
 PROMPT
 PROMPT ═══ Validation ═══
-SELECT object_name, object_type, status
-  FROM user_objects
- WHERE object_name IN ('PKG_SYNC_HUB','PKG_SYNC_BOUTIQUE','TRG_OUTBOX_PRODUCT_AI')
- ORDER BY object_name;
+SELECT owner, object_name, object_type, status
+  FROM all_objects
+ WHERE owner IN ('APP_SYS','APP_PRODUCT')
+   AND object_name IN ('PKG_SYNC_HUB','PKG_SYNC_BOUTIQUE','TRG_OUTBOX_PRODUCT_AI',
+                       'TRG_OUTBOX_PRODUCT_AU','TRG_OUTBOX_PRODUCT_AD')
+ ORDER BY owner, object_name;
+
+SELECT owner, name, type, line, position, text
+  FROM all_errors
+ WHERE owner IN ('APP_SYS','APP_PRODUCT')
+   AND name IN ('PKG_SYNC_HUB','PKG_SYNC_BOUTIQUE','TRG_OUTBOX_PRODUCT_AI',
+                'TRG_OUTBOX_PRODUCT_AU','TRG_OUTBOX_PRODUCT_AD')
+ ORDER BY owner, name, sequence;
 
 SELECT table_name, num_rows FROM user_tables WHERE table_name = 'OUTBOX_EVENT';
 

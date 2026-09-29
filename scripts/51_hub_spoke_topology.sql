@@ -8,23 +8,59 @@
 --   - Sync manuelle via dumps quotidiens (réseau Congo instable)
 --
 -- Tables créées (6) :
---   site_master           : registre des sites (siège + boutiques + dépots)
+--   site_master           : registre des sites (siège + boutiques + depots)
 --   site_link             : topologie réseau (liens entre sites + latence)
 --   site_database         : métadonnées des bases de données par site
 --   site_sync_schedule    : planification des syncs (cron quotidien)
 --   site_sync_run         : exécution d'une sync (log + durée)
 --   site_sync_conflict    : conflits détectés lors de la sync (à résoudre)
+--
+-- NB : script idempotent — les objets existants sont supprimés puis
+--      recréés à chaque exécution (évite ORA-00955).
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
+WHENEVER SQLERROR CONTINUE
 
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   TOPOLOGIE HUB-AND-SPOKE REGAL (6 tables)
 PROMPT ══════════════════════════════════════════════════════════
+
+-- ------------------------------------------------------------
+-- Nettoyage (ordre inverse des dépendances) → idempotence
+-- Exécuté via PL/SQL : les DROP dynamiques ignorent ORA-00942
+-- (objet inexistant au premier lancement) sans polluer la sortie.
+-- ------------------------------------------------------------
+PROMPT
+PROMPT [0/6] Nettoyage des objets existants (script idempotent)…
+BEGIN
+  BEGIN
+    EXECUTE IMMEDIATE 'DROP VIEW v_site_sync_status';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN RAISE; END IF;
+  END;
+  FOR t IN (SELECT table_name FROM user_tables
+             WHERE table_name IN ('SITE_SYNC_CONFLICT','SITE_SYNC_RUN',
+                                  'SITE_SYNC_SCHEDULE','SITE_DATABASE',
+                                  'SITE_LINK','SITE_MASTER')
+             ORDER BY CASE table_name
+                        WHEN 'SITE_SYNC_CONFLICT' THEN 1
+                        WHEN 'SITE_SYNC_RUN' THEN 2
+                        WHEN 'SITE_SYNC_SCHEDULE' THEN 3
+                        WHEN 'SITE_DATABASE' THEN 4
+                        WHEN 'SITE_LINK' THEN 5
+                        WHEN 'SITE_MASTER' THEN 6
+                      END)
+  LOOP
+    EXECUTE IMMEDIATE 'DROP TABLE ' || t.table_name || ' PURGE';
+  END LOOP;
+END;
+/
 
 PROMPT
 PROMPT [1/6] site_master  — Référentiel des sites
@@ -195,26 +231,35 @@ CREATE TABLE site_sync_conflict (
   CONSTRAINT ck_site_sync_conflict_res      CHECK (resolution IN ('PENDING','RESOLVED','IGNORED','AUTO_MERGED'))
 );
 
-CREATE INDEX ix_site_sync_conflict_pending  ON site_sync_conflict(resolution) WHERE resolution = 'PENDING';
+-- Index standard (pas de clause WHERE sur table non partitionnée en 23ai Free)
+CREATE INDEX ix_site_sync_conflict_res      ON site_sync_conflict(resolution);
+CREATE INDEX ix_site_sync_conflict_run      ON site_sync_conflict(run_id);
+CREATE INDEX ix_site_sync_conflict_detect   ON site_sync_conflict(detection_at DESC);
+
 
 -- Vue récapitulative : dernière sync par site
+-- NB : pas d'ORDER BY dans une vue — trier à la requête.
+-- NB : aliases renommés (nb_ok/nb_ko/...) et lignes volontairement courtes :
+--      l'ancien alignement long + alias provoquait ORA-00923 sur ce client SQL*Plus.
 PROMPT
 PROMPT [Vue pratique] v_site_sync_status
 CREATE OR REPLACE VIEW v_site_sync_status AS
-SELECT sm.site_code, sm.site_name, sm.site_type, sm.city,
-       COUNT(sr.run_id)                                                    AS total_runs,
-       SUM(CASE WHEN sr.status = 'SUCCESS'  THEN 1 ELSE 0 END)             AS successful,
-       SUM(CASE WHEN sr.status = 'FAILED'   THEN 1 ELSE 0 END)             AS failed,
-       SUM(CASE WHEN sr.status = 'PARTIAL'  THEN 1 ELSE 0 END)             AS partial,
-       MAX(sr.started_at)                                                   AS last_run_at,
-       ROUND(AVG(sr.duration_sec), 0)                                       AS avg_duration_sec,
-       SUM(NVL(sr.rows_inserted, 0))                                        AS total_rows_inserted,
-       SUM(NVL(sr.rows_in_conflict, 0))                                     AS total_conflicts
-  FROM site_master sm
-  LEFT JOIN site_sync_run sr
-    ON (sr.source_site_id = sm.site_id OR sr.target_site_id = sm.site_id)
- GROUP BY sm.site_code, sm.site_name, sm.site_type, sm.city
- ORDER BY sm.site_type, sm.site_code;
+SELECT sm.site_code,
+       sm.site_name,
+       sm.site_type,
+       sm.city,
+       COUNT(sr.run_id) AS nb_runs,
+       SUM(CASE WHEN sr.status = 'SUCCESS' THEN 1 ELSE 0 END) AS nb_ok,
+       SUM(CASE WHEN sr.status = 'FAILED' THEN 1 ELSE 0 END) AS nb_ko,
+       SUM(CASE WHEN sr.status = 'PARTIAL' THEN 1 ELSE 0 END) AS nb_partial,
+       MAX(sr.started_at) AS last_run_at,
+       ROUND(AVG(sr.duration_sec), 0) AS avg_duration_sec,
+       SUM(NVL(sr.rows_inserted, 0)) AS total_rows_inserted,
+       SUM(NVL(sr.rows_in_conflict, 0)) AS total_conflicts
+FROM site_master sm
+LEFT JOIN site_sync_run sr
+ON (sr.source_site_id = sm.site_id OR sr.target_site_id = sm.site_id)
+GROUP BY sm.site_code, sm.site_name, sm.site_type, sm.city;
 
 -- Privilèges
 CONNECT system/oracle@localhost:1521/FREEPDB1
@@ -225,6 +270,7 @@ GRANT SELECT, INSERT, UPDATE ON app_sys.site_database       TO app_api;
 GRANT SELECT, INSERT, UPDATE ON app_sys.site_sync_schedule  TO app_api;
 GRANT SELECT, INSERT, UPDATE ON app_sys.site_sync_run       TO app_api;
 GRANT SELECT, INSERT, UPDATE ON app_sys.site_sync_conflict  TO app_api;
+GRANT SELECT ON app_sys.v_site_sync_status                  TO app_api;
 
 PROMPT
 PROMPT ═══ Validation ═══
@@ -233,6 +279,10 @@ SELECT table_name, num_rows
   FROM user_tables
  WHERE table_name LIKE 'SITE\_%' ESCAPE '\'
  ORDER BY table_name;
+
+-- La vue doit être présente et querytable (0 ligne attendu : tables vides)
+SELECT COUNT(*) AS vue_ok FROM user_views WHERE view_name = 'V_SITE_SYNC_STATUS';
+SELECT * FROM v_site_sync_status;
 
 PROMPT
 PROMPT ══════════════════════════════════════════════════════════

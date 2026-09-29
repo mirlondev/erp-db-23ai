@@ -21,7 +21,7 @@ SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
 
-CONNECT system/oracle@1521/FREEPDB1
+CONNECT system/oracle@localhost:1521/FREEPDB1
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   PARTITIONNEMENT 23ai — Tables volumineuses REGAL

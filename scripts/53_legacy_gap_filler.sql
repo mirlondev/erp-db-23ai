@@ -19,11 +19,31 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 CONNECT system/oracle@localhost:1521/FREEPDB1
 
+-- Fail before creating anything when the cross-schema FK targets are absent.
+DECLARE
+  v_party_count NUMBER;
+  v_warehouse_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_party_count
+    FROM all_tables WHERE owner = 'APP_PARTY' AND table_name = 'PARTY';
+  SELECT COUNT(*) INTO v_warehouse_count
+    FROM all_tables WHERE owner = 'APP_ORG' AND table_name = 'ORG_WAREHOUSE';
+
+  IF v_party_count = 0 OR v_warehouse_count = 0 THEN
+    RAISE_APPLICATION_ERROR(-20053,
+      'Prerequisites missing: run scripts/02_app_org.sql and scripts/04_app_party.sql before script 53.');
+  END IF;
+END;
+/
+
 GRANT SELECT, INSERT ON app_inv.inv_product_lot TO app_product;
 GRANT SELECT ON app_product.product TO app_product;
+GRANT REFERENCES ON app_party.party TO app_purchase;
+GRANT REFERENCES ON app_org.org_warehouse TO app_pos;
 
 -- =================================================================
 -- 1) KERNEL.TT_* : Tables de transfert Master → Satellite
@@ -37,7 +57,7 @@ PROMPT ════════════════════════�
 -- TT = Temporary Transfer (file d'attente Master → Boutiques)
 PROMPT
 PROMPT [1/10] TT_BRD_OFFICE — Transferts bordereaux Office (228K rows)
-CREATE TABLE tt_brd_office (
+CREATE TABLE IF NOT EXISTS tt_brd_office (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   source_site_code     VARCHAR2(10)  NOT NULL,                 -- 'PNR-OFC'
   target_site_code     VARCHAR2(10)  NOT NULL,                 -- 'BZV-B01'
@@ -52,11 +72,11 @@ CREATE TABLE tt_brd_office (
   CONSTRAINT pk_tt_brd_office      PRIMARY KEY (tt_id),
   CONSTRAINT ck_tt_brd_office_st   CHECK (transfer_state IN ('PENDING','SENT','ACKED','ERROR','CANCELLED'))
 );
-CREATE INDEX ix_tt_brd_office_target ON tt_brd_office(target_site_code, transfer_state);
+CREATE INDEX IF NOT EXISTS ix_tt_brd_office_target ON tt_brd_office(target_site_code, transfer_state);
 
 PROMPT
 PROMPT [2/10] TT_BRDD — Transferts lignes (1.8K rows)
-CREATE TABLE tt_brdd (
+CREATE TABLE IF NOT EXISTS tt_brdd (
   tt_brdd_id           NUMBER GENERATED ALWAYS AS IDENTITY,
   tt_brd_id            NUMBER        NOT NULL,
   numlig               NUMBER(6)     NOT NULL,
@@ -72,7 +92,7 @@ CREATE TABLE tt_brdd (
 
 PROMPT
 PROMPT [3/10] TT_BRDE — Transferts entêtes (288 rows)
-CREATE TABLE tt_brde (
+CREATE TABLE IF NOT EXISTS tt_brde (
   tt_brde_id           NUMBER GENERATED ALWAYS AS IDENTITY,
   tt_brd_id            NUMBER        NOT NULL,
   datbrd               DATE          NOT NULL,
@@ -87,7 +107,7 @@ CREATE TABLE tt_brde (
 
 PROMPT
 PROMPT [4/10] TT_LUM — Transferts LUM (lookup-mappings, 19.8K)
-CREATE TABLE tt_lum (
+CREATE TABLE IF NOT EXISTS tt_lum (
   tt_lum_id            NUMBER GENERATED ALWAYS AS IDENTITY,
   source_table         VARCHAR2(30)  NOT NULL,
   source_code          VARCHAR2(80)  NOT NULL,
@@ -102,7 +122,7 @@ CREATE TABLE tt_lum (
 
 PROMPT
 PROMPT [5/10] TT_GCPPAR — Transferts paramètres GCP (1.5K)
-CREATE TABLE tt_gcppar (
+CREATE TABLE IF NOT EXISTS tt_gcppar (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   codpar               VARCHAR2(40)  NOT NULL,
   valpar               VARCHAR2(200),
@@ -115,7 +135,7 @@ CREATE TABLE tt_gcppar (
 
 PROMPT
 PROMPT [6/10] TT_CAIPPAR — Transferts paramètres caisse (160)
-CREATE TABLE tt_caippar (
+CREATE TABLE IF NOT EXISTS tt_caippar (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   codpar               VARCHAR2(40)  NOT NULL,
   valpar               VARCHAR2(200),
@@ -129,7 +149,7 @@ PROMPT
 PROMPT [7/10] TT_ECR — Transferts écritures (1)
 PROMPT [8/10] TT_ECR_GEN — Transferts écritures générales (155)
 PROMPT [9/10] TT_ECR_LET — Transferts écritures lettrées (154)
-CREATE TABLE tt_ecr (
+CREATE TABLE IF NOT EXISTS tt_ecr (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   no_jou               VARCHAR2(10)  NOT NULL,
   no_edi               NUMBER(8)     NOT NULL,
@@ -139,7 +159,7 @@ CREATE TABLE tt_ecr (
   CONSTRAINT pk_tt_ecr             PRIMARY KEY (tt_id)
 );
 
-CREATE TABLE tt_ecr_gen (
+CREATE TABLE IF NOT EXISTS tt_ecr_gen (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   tt_ecr_id            NUMBER        NOT NULL,
   codabr               VARCHAR2(20)  NOT NULL,
@@ -150,7 +170,7 @@ CREATE TABLE tt_ecr_gen (
     REFERENCES tt_ecr(tt_id) ON DELETE CASCADE
 );
 
-CREATE TABLE tt_ecr_let (
+CREATE TABLE IF NOT EXISTS tt_ecr_let (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   tt_ecr_id            NUMBER        NOT NULL,
   codlet               VARCHAR2(20)  NOT NULL,
@@ -161,7 +181,7 @@ CREATE TABLE tt_ecr_let (
 
 PROMPT
 PROMPT [10/10] TT_GCPUNI_COEFF, TT_RTAX, TT_TLOC — Transferts coeff/taxes/loc
-CREATE TABLE tt_gcpuni_coeff (
+CREATE TABLE IF NOT EXISTS tt_gcpuni_coeff (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   codart               VARCHAR2(80)  NOT NULL,
   unit_src             VARCHAR2(12),
@@ -171,7 +191,7 @@ CREATE TABLE tt_gcpuni_coeff (
   CONSTRAINT pk_tt_gcpuni_coeff    PRIMARY KEY (tt_id)
 );
 
-CREATE TABLE tt_rtax (
+CREATE TABLE IF NOT EXISTS tt_rtax (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   codrtax              VARCHAR2(12)  NOT NULL,
   taux                 NUMBER(7,4),
@@ -179,7 +199,7 @@ CREATE TABLE tt_rtax (
   CONSTRAINT pk_tt_rtax            PRIMARY KEY (tt_id)
 );
 
-CREATE TABLE tt_tloc (
+CREATE TABLE IF NOT EXISTS tt_tloc (
   tt_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   codloc               VARCHAR2(12)  NOT NULL,
   libloc               VARCHAR2(80),
@@ -194,7 +214,7 @@ CONNECT app_purchase/AppPurchase#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT ═══ CAISSE.GCPFRNART — Articles fournisseurs (821 rows) ═══
-CREATE TABLE supplier_product (
+CREATE TABLE IF NOT EXISTS supplier_product (
   supplier_product_id   NUMBER GENERATED ALWAYS AS IDENTITY,
   supplier_code         VARCHAR2(32)  NOT NULL,
   product_code          VARCHAR2(80)  NOT NULL,
@@ -212,7 +232,7 @@ CREATE TABLE supplier_product (
   CONSTRAINT fk_supplier_product_s FOREIGN KEY (supplier_code)
     REFERENCES app_party.party(party_code)
 );
-CREATE INDEX ix_supplier_product_p ON supplier_product(product_code);
+CREATE INDEX IF NOT EXISTS ix_supplier_product_p ON supplier_product(product_code);
 
 -- =================================================================
 -- 3) CAISSE.GCPART_UNITE_REG — Unités par région
@@ -221,7 +241,7 @@ CONNECT app_product/AppProduct#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT ═══ CAISSE.GCPART_UNITE_REG — Unités par région (26K rows) ═══
-CREATE TABLE product_unit_region (
+CREATE TABLE IF NOT EXISTS product_unit_region (
   product_unit_region_id NUMBER GENERATED ALWAYS AS IDENTITY,
   product_code            VARCHAR2(80)  NOT NULL,
   unit_code               VARCHAR2(12)  NOT NULL,
@@ -241,7 +261,7 @@ CONNECT app_pos/AppPos#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT ═══ CAISSE.GCFORMATS + GCFORMATS_ZONES — Formats tickets ═══
-CREATE TABLE pos_format (
+CREATE TABLE IF NOT EXISTS pos_format (
   format_id              NUMBER GENERATED ALWAYS AS IDENTITY,
   format_code            VARCHAR2(20)  NOT NULL,
   format_name            VARCHAR2(120) NOT NULL,
@@ -252,7 +272,7 @@ CREATE TABLE pos_format (
   CONSTRAINT uk_pos_format_code        UNIQUE (format_code)
 );
 
-CREATE TABLE pos_format_zone (
+CREATE TABLE IF NOT EXISTS pos_format_zone (
   zone_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   format_id              NUMBER        NOT NULL,
   zone_code              VARCHAR2(20)  NOT NULL,               -- HEADER, BODY, FOOTER, BARCODE...
@@ -270,7 +290,7 @@ CREATE TABLE pos_format_zone (
 -- =================================================================
 PROMPT
 PROMPT ═══ CAISSE.GCPDEP_AUTH_PC — Autorisations PC par dépôt ═══
-CREATE TABLE warehouse_pc_auth (
+CREATE TABLE IF NOT EXISTS warehouse_pc_auth (
   auth_id                NUMBER GENERATED ALWAYS AS IDENTITY,
   warehouse_code         VARCHAR2(5)   NOT NULL,
   pc_name                VARCHAR2(40)  NOT NULL,
@@ -292,7 +312,7 @@ CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT ═══ XCPTA.CP_HISTO_RGL — Historique règlements (501K rows) ═══
-CREATE TABLE payment_history (
+CREATE TABLE IF NOT EXISTS payment_history (
   history_id             NUMBER GENERATED ALWAYS AS IDENTITY,
   payment_id             NUMBER        NOT NULL,
   party_code             VARCHAR2(32)  NOT NULL,
@@ -313,8 +333,8 @@ CREATE TABLE payment_history (
 
 -- Table partitionnée par mois (compression mensuelle)
 -- Note : la création se fait en tablespace dédié en production
-CREATE INDEX ix_payment_history_party  ON payment_history(party_code, paid_at);
-CREATE INDEX ix_payment_history_invoice ON payment_history(invoice_id);
+CREATE INDEX IF NOT EXISTS ix_payment_history_party  ON payment_history(party_code, paid_at);
+CREATE INDEX IF NOT EXISTS ix_payment_history_invoice ON payment_history(invoice_id);
 
 -- =================================================================
 -- 7) KERNEL.UTMSG/UTMSG_LANGUE — Messages i18n
@@ -323,7 +343,7 @@ CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
 PROMPT
 PROMPT ═══ KERNEL.UTMSG + UTMSG_LANGUE — Messages i18n (8.3K rows) ═══
-CREATE TABLE sys_message (
+CREATE TABLE IF NOT EXISTS sys_message (
   message_id             NUMBER GENERATED ALWAYS AS IDENTITY,
   message_key            VARCHAR2(80)  NOT NULL,                -- 'CASH.BON.SIGNATURE'
   default_text           VARCHAR2(500) NOT NULL,
@@ -333,7 +353,7 @@ CREATE TABLE sys_message (
   CONSTRAINT uk_sys_message_key        UNIQUE (message_key)
 );
 
-CREATE TABLE sys_message_lang (
+CREATE TABLE IF NOT EXISTS sys_message_lang (
   message_id             NUMBER        NOT NULL,
   lang_code              VARCHAR2(5)   NOT NULL,                -- 'fr', 'en', 'ln' (lingala)
   translated_text        VARCHAR2(500) NOT NULL,
@@ -347,7 +367,7 @@ CREATE TABLE sys_message_lang (
 -- =================================================================
 PROMPT
 PROMPT ═══ KERNEL.UTOUTPUT — Outputs ═══
-CREATE TABLE sys_output (
+CREATE TABLE IF NOT EXISTS sys_output (
   output_id              NUMBER GENERATED ALWAYS AS IDENTITY,
   output_type            VARCHAR2(20)  NOT NULL,               -- PRINT | FILE | MAIL | DISPLAY
   user_code              VARCHAR2(20)  NOT NULL,
@@ -419,7 +439,7 @@ SELECT owner, table_name, num_rows
 
 PROMPT
 PROMPT ══════════════════════════════════════════════════════════
-PROMPT   ✅ GAP-FILLER LEGACY : 22 tables critiques ajoutées
+PROMPT   ✅ GAP-FILLER LEGACY : 21 tables critiques + 1 vue ajoutées
 PROMPT   - 12 tables TT_* (sync Master → Boutique, dont 228K rows TT_BRD_OFFICE)
 PROMPT   - 1 supplier_product (821 rows articles fournisseurs)
 PROMPT   - 1 product_unit_region (26K rows unités par région)
