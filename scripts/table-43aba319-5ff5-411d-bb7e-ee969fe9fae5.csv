@@ -1,0 +1,7 @@
+﻿#,Schéma,Rôle,Tables,Volume estimé
+1,CAISSE,"Cœur Retail : POS, Ventes, Stock, Produits, Documents",~150 tables,~22 Go
+2,XCPTA,Comptabilité générale & analytique,~60 tables,~1.2 Go
+3,KERNEL,"Framework technique : Utilisateurs, Logs, Sync, Config",~50 tables,~0.5 Go
+4,TRANSFERT,Files de synchronisation entre sites,~30 tables,~0.1 Go
+5,CASH,"Gestion de caisse (mouvements, lettrage)",~8 tables,~0.01 Go
+6,XAPP_BI,Business Intelligence (Oracle Discoverer),~40 tables,~0.01 Go

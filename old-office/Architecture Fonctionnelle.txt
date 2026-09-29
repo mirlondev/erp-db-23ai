@@ -1,0 +1,776 @@
+ Architecture Fonctionnelle du Système ERP "REGAL" (Oracle 11g)
+Basée sur l'analyse complète du fichier d'export expdp_regal_full.log (~31 Go, 391 tables, 6 schémas métiers).
+📋 Vue d'ensemble
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                         ARCHITECTURE MULTI-SITES RETAIL                              │
+│                                                                                     │
+│   ┌─────────────────────────────────────────────────────────────────────────────┐   │
+│   │                        OFFICE (Siège Central)                                │   │
+│   │   Base de données Oracle 11g - Schéma XAPP (utilisateur connecté)          │   │
+│   │   Rôle : Master Data, Comptabilité, Consolidation, BI                      │   │
+│   └──────────────────────────────────┬──────────────────────────────────────────┘   │
+│                                      │                                              │
+│                    ┌─────────────────┼─────────────────┐                           │
+│                    │                 │                 │                           │
+│                    ▼                 ▼                 ▼                           │
+│   ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐            │
+│   │   BOUTIQUE 01      │ │   BOUTIQUE 02      │ │   BOUTIQUE N       │            │
+│   │   (POS / Caisse)   │ │   (POS / Caisse)   │ │   (POS / Caisse)   │            │
+│   │                    │ │                    │ │                    │            │
+│   │  - Ventes tickets  │ │  - Ventes tickets  │ │  - Ventes tickets  │            │
+│   │  - Sessions POS    │ │  - Sessions POS    │ │  - Sessions POS    │            │
+│   │  - Fidélité        │ │  - Fidélité        │ │  - Fidélité        │            │
+│   └────────┬───────────┘ └────────┬───────────┘ └────────┬───────────┘            │
+│            │                      │                      │                         │
+│            └──────────────────────┼──────────────────────┘                         │
+│                                   │                                                │
+│                    ┌──────────────┼──────────────┐                                 │
+│                    ▼              ▼              ▼                                 │
+│   ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐            │
+│   │    DÉPÔT 01        │ │    DÉPÔT 02        │ │    DÉPÔT N         │            │
+│   │   (Entrepôt)       │ │   (Entrepôt)       │ │   (Entrepôt)       │            │
+│   │                    │ │                    │ │                    │            │
+│   │  - Stock physique  │ │  - Stock physique  │ │  - Stock physique  │            │
+│   │  - Inventaires     │ │  - Inventaires     │ │  - Inventaires     │            │
+│   │  - Réceptions      │ │  - Réceptions      │ │  - Réceptions      │            │
+│   │  - Expéditions     │ │  - Expéditions     │ │  - Expéditions     │            │
+│   └────────────────────┘ └────────────────────┘ └────────────────────┘            │
+│                                                                                     │
+│   ═══════════════════ SYNCHRONISATION (Schéma TRANSFERT) ═══════════════════════   │
+│   Office → Boutiques : Prix, Promotions, Catalogue, Paramètres                    │
+│   Boutiques → Office : Tickets, Sessions, Mouvements caisse                       │
+│   Dépôts → Office : Mouvements stock, Inventaires, Transferts                     │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+#
+Schéma
+Rôle
+Tables
+Volume estimé
+1
+CAISSE
+Cœur Retail : POS, Ventes, Stock, Produits, Documents
+~150 tables
+~22 Go
+2
+XCPTA
+Comptabilité générale & analytique
+~60 tables
+~1.2 Go
+3
+KERNEL
+Framework technique : Utilisateurs, Logs, Sync, Config
+~50 tables
+~0.5 Go
+4
+TRANSFERT
+Files de synchronisation entre sites
+~30 tables
+~0.1 Go
+5
+CASH
+Gestion de caisse (mouvements, lettrage)
+~8 tables
+~0.01 Go
+6
+XAPP_BI
+Business Intelligence (Oracle Discoverer)
+~40 tables
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        CATALOGUE PRODUITS                                    │
+│                                                                             │
+│  GCPART (211K articles)                                                     │
+│  ├── CODART (PK) : Code article                                            │
+│  ├── LIBART, LIBART2 : Désignations                                        │
+│  ├── TYPART : Type article                                                  │
+│  ├── CODNATA, CODFAM, CODSFAM : Classification (Nature/Famille/Sous-fam)   │
+│  ├── UNISTK, UNIACH, UNIVEN : Unités (Stock/Achat/Vente)                   │
+│  ├── TARIFSTD, TARIFPRO : Prix tarif                                       │
+│  ├── TARIFSTD_HT : Prix HT                                                 │
+│  ├── PRMP : Prix moyen pondéré                                             │
+│  ├── STKMIN, STKMAX, STKSEC : Seuils stock                                 │
+│  ├── CODBARRE : Code-barres principal                                      │
+│  ├── PROMO, PRO_DDEB, PRO_DFIN : Promo en cours                            │
+│  ├── GESLOT : Gestion par lot (O/N)                                        │
+│  ├── KIT : Article kit (O/N)                                               │
+│  ├── ETAT : État (Actif/Inactif)                                           │
+│  └── ... (57 colonnes au total)                                            │
+│                                                                             │
+│  Tables satellites :                                                        │
+│  ├── GCPART_BARRE (48K) : Codes-barres multiples                           │
+│  ├── GCPART_UNITE (110K) : Unités de conversion                            │
+│  ├── GCPART_UNITE_REG (26K) : Unités par région                            │
+│  ├── GCPART_LOT : Lots produits                                            │
+│  ├── GCPART_PHOTO : Photos articles (BLOB)                                 │
+│  ├── GCPART_COMP (9) : Composants kits                                     │
+│  ├── GCPART_EQUI : Équivalences articles                                   │
+│  ├── GCPART_MOY_CONSO : Consommation moyenne                               │
+│  ├── GCPART_REAPPRO : Paramètres réapprovisionnement                       │
+│  ├── GCPART_RVALS / GCPART_RVALS_AUTO : Réévaluations                     │
+│  ├── GCPART_PTVTE_PROMO : Promos par point de vente                        │
+│  │                                                                         │
+│  ├── GCPFAMTIE (4) : Familles articles                                    │
+│  ├── GCPSFAMTIE (126) : Sous-familles articles                            │
+│  ├── GCPNATA (1) : Natures articles                                       │
+│  ├── GCPNATT (68) : Types nature                                          │
+│  ├── GCPMARQUE (1) : Marques                                              │
+│  ├── GCPSECTACT (1) : Secteurs d'activité                                 │
+│  ├── GCPREG (3) : Régions                                                 │
+│  │                                                                         │
+│  ├── GCPTARIF (8) : Tarifs                                                │
+│  ├── GCPTARIF_ART (453K) : Prix articles par tarif                        │
+│  ├── GCPHTARIF_ART (810K) : Historique prix                               │
+│  ├── GCPTIE_PTVTE (9K) : Prix par point de vente                          │
+│  ├── GCPTIE_FORCAGE (13K) : Prix forcés                                   │
+│  ├── GCPPTVTE (108) : Points de vente                                     │
+│  ├── GCPPTVTE_DEP (291) : PV par dépôt                                    │
+│  ├── GCPPTVTE_TBRD (125) : PV par type bordereau                          │
+│  │                                                                         │
+│  ├── GCPALIER : Paliers tarifaires                                        │
+│  ├── GCPALIER_ART : Articles par palier                                   │
+│  ├── GCPALIER_QTE : Quantités par palier                                  │
+│  ├── GCPALIER_PTVTE : Paliers par PV                                      │
+│  │                                                                         │
+│  ├── GCPFRNART (821) : Articles fournisseurs                              │
+│  ├── GCPFRNART_REP : Remplacements articles                               │
+│  │                                                                         │
+│  ├── GCPDEP (92) : Dépôts/Entrepôts                                       │
+│  ├── GCPDEVISE (4) : Devises                                              │
+│  ├── GCPECH (3) : Exercices comptables                                    │
+│  ├── GCPETAB (1) : Établissements                                         │
+│  └── GCPACONIER (1) : Année comptable                                     │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                        GESTION DES STOCKS                                    │
+│                                                                             │
+│  GCSTOCK (1.6M lignes) : Stock par article × dépôt                         │
+│  ├── CODART, CODDEP : Article + Dépôt                                     │
+│  ├── QTESTOCK : Quantité en stock                                          │
+│  ├── PRMP : Prix moyen pondéré                                             │
+│  └── ...                                                                   │
+│                                                                             │
+│  GCSTOCK_WARM (32K) : Stock "chaud" (dépôt principal)                      │
+│  GCSTOCK_STATUT : Statuts de stock                                         │
+│                                                                             │
+│  GCPRMP (208K) : Historique PRMP par article                               │
+│                                                                             │
+│  ┌─── INVENTAIRES ───────────────────────────────────────────────────────┐  │
+│  │ GCINVE (329) : Entêtes d'inventaire                                   │  │
+│  │ GCINVD (5M) : Lignes d'inventaire (comptage)                          │  │
+│  │ GCINVD_ZONE (1.6M) : Inventaire par zone                              │  │
+│  │ GCZONES (35) : Zones physiques                                        │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── MOUVEMENTS DE STOCK ───────────────────────────────────────────────┐  │
+│  │ GCBRDD (54.7M lignes, 7.5 Go) : LIGNES DE BORDEREAU                   │  │
+│  │ ← TABLE CENTRALE DU SYSTÈME (tous mouvements stock)                   │  │
+│  │ ├── IDBRD, NUMLIG : Bordereau + Ligne                                 │  │
+│  │ ├── CODTBRD : Type bordereau (VTE, ACH, TRF, INV, etc.)              │  │
+│  │ ├── CODDEP, DEPDES : Dépôt source / destinataire                      │  │
+│  │ ├── CODART : Article                                                  │  │
+│  │ ├── QTEBRD : Quantité                                                 │  │
+│  │ ├── PUBRD, MONTBRD : Prix unitaire / Montant (au revient)             │  │
+│  │ ├── PUVEN : Prix de vente                                             │  │
+│  │ ├── PUHT, MONTHT : Prix / Montant HT                                  │  │
+│  │ ├── TAUXREM : Taux de remise                                          │  │
+│  │ ├── TYPLIG : Type ligne (Stock/Commentaire/Divers)                    │  │
+│  │ ├── COEFF : Coefficient de conversion unité                           │  │
+│  │ ├── QTETRANS : Quantité transformée                                   │  │
+│  │ ├── QTEDEDUITE : Quantité déduite                                     │  │
+│  │ ├── QTEVALID : Quantité validée                                       │  │
+│  │ ├── TAUXTAX, MTAX : Taxe spécifique                                   │  │
+│  │ ├── NBCOLIS : Nombre de colis                                         │  │
+│  │ ├── DELAI : Délai livraison                                           │  │
+│  │ ├── EXONERE : Exonéré (O/N)                                          │  │
+│  │ ├── PROMO : En promotion                                              │  │
+│  │ ├── VALID_PART : Validation partielle                                 │  │
+│  │ └── ZLIBRE_L1..L5, ZLIBRE_M1..M5, ZLIBRE_C1..C5 : Zones libres      │  │
+│  │                                                                       │  │
+│  │ GCBRDE (2.2M lignes) : ENTÊTES DE BORDEREAU                           │  │
+│  │ ├── IDBRD (PK) : Identifiant bordereau                                │  │
+│  │ ├── CODTBRD : Type bordereau                                          │  │
+│  │ ├── CODDEP : Dépôt                                                    │  │
+│  │ ├── DATBRD : Date bordereau                                           │  │
+│  │ ├── CODUTI : Utilisateur                                              │  │
+│  │ ├── ETAT : État (Validé/Annulé/En cours)                             │  │
+│  │ └── ...                                                               │  │
+│  │                                                                       │  │
+│  │ GCBRDE_LOG (6.8M) : Journal des bordereaux                            │  │
+│  │ GCBRDE_LOG_QUEUE (7) : File d'attente logs                            │  │
+│  │                                                                       │  │
+│  │ GCBRDE_VTE (834K) : Bordereaux de vente                               │  │
+│  │ GCBRDE_VTE_QUEUE : File d'attente ventes                              │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── TYPES DE BORDEREAUX (GCPTBRD - 37 types) ──────────────────────────┐  │
+│  │ VTE : Vente                                                           │  │
+│  │ ACH : Achat                                                           │  │
+│  │ TRF : Transfert inter-dépôts                                          │  │
+│  │ INV : Inventaire                                                      │  │
+│  │ RET : Retour                                                          │  │
+│  │ CMD : Commande                                                        │  │
+│  │ BLC : Bon de livraison                                                │  │
+│  │ FAC : Facture                                                         │  │
+│  │ ...                                                                   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── DOCUMENTS SPÉCIFIQUES ─────────────────────────────────────────────┐  │
+│  │ GCBRDE_CDEC : Commandes d'achat                                       │  │
+│  │ GCBRDE_CDEF : Commandes fournisseur                                   │  │
+│  │ GCBRDE_CDEF_SGS : Commandes fournisseur SGS                           │  │
+│  │ GCBRDE_DDE : Demandes                                                 │  │
+│  │ GCBRDE_PROFORMA : Factures proforma                                   │  │
+│  │ GCBRDE_IMP : Importations                                             │  │
+│  │ GCBRDE_MS : Mouvements stock                                          │  │
+│  │ GCBRDE_MS_CTNER : Conteneurs                                          │  │
+│  │ GCBRDE_DOCS : Documents liés                                          │  │
+│  │ GCBRDE_RISTOURNE : Ristournes                                         │  │
+│  │ GCBRDE_VTRSF : Ventes transfert                                       │  │
+│  │ GCBRDE_AVCE_LETTRAGE : Bordereaux avec lettrage                       │  │
+│  │ GCBRDE_BON_CHARG : Bons de chargement                                 │  │
+│  │ GCBRDE_RECF : Réceptions                                              │  │
+│  │ GCBRDE_RECF_FACT : Réceptions facturées                               │  │
+│  │ GCBRDE_RECF_FACTF : Réceptions facturées fournisseur                  │  │
+│  │ GCBRDE_RECF_FACT_FAP : Réceptions facturées FAP                       │  │
+│  │ GCBRDE_RECF_FAP : Réceptions FAP                                      │  │
+│  │ GCBRDE_VIDE : Bordereaux vides                                        │  │
+│  │ GCBRDE_QUEUE : File d'attente bordereaux                              │  │
+│  │                                                                       │  │
+│  │ GCBRDD_IMP : Lignes import                                            │  │
+│  │ GCBRDD_MS : Lignes mouvement stock                                    │  │
+│  │ GCBRDD_NSERIE : Numéros de série                                      │  │
+│  │ GCBRDD_LOT (48) : Lots sur lignes                                     │  │
+│  │ GCBRDD_LOT_QUEUE : File lots                                          │  │
+│  │ GCBRDD_PROMO (4.6K) : Promos sur lignes                               │  │
+│  │ GCBRDD_PROMO_QUEUE : File promos lignes                               │  │
+│  │ GCBRDD_RECF : Réceptions lignes                                       │  │
+│  │ GCBRDD_RECF_PV : Réceptions lignes PV                                 │  │
+│  │ GCBRDD_REMFOURN : Remises fournisseur                                 │  │
+│  │ GCBRDD_QUEUE : File lignes                                            │  │
+│  │ GCBRDD_RECF_PV : Réceptions PV                                        │  │
+│  │                                                                       │  │
+│  │ GCRGLD : Règlements détails                                           │  │
+│  │ GCRGLE : Règlements entêtes                                           │  │
+│  │ GCREMFOURN : Remises fournisseur                                      │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── EXPÉDITIONS ───────────────────────────────────────────────────────┐  │
+│  │ GCEXPEDITION_CF (1) : Expéditions                                     │  │
+│  │ GCEXPEDITION_CF_CDE (1) : Commandes expédition                        │  │
+│  │ GCEXPEDITION_CF_CTNER (1) : Conteneurs                                │  │
+│  │ GCEXPEDITION_CF_DOCS : Documents expédition                           │  │
+│  │ GCEXPEDITION_CF_FACT : Factures expédition                            │  │
+│  │ GCEXPEDITION_CF_FACT_FAP : Factures FAP expédition                    │  │
+│  │ GCEXPEDITION_CF_ITEM : Items expédition                               │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── LOGS & SUIVI STOCK ────────────────────────────────────────────────┐  │
+│  │ GCLOGC_DATES : Log dates                                              │  │
+│  │ GCLOGC_DEP : Log dépôts                                               │  │
+│  │ GCLOGC_QTE : Log quantités                                            │  │
+│  │ GCFUART_LOG (5.3K) : Log changements unités article                   │  │
+│  │ GCFUART_LOG_SAV_2019_05_28 : Backup                                   │  │
+│  │ GCBRDD_LP_2017_04_14 : Backup lignes                                  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── RECETTES / TRANSFORMATIONS ────────────────────────────────────────┐  │
+│  │ GCPRECETTE : Recettes                                                 │  │
+│  │ GCPRECETTE_DETAIL : Détails recettes                                  │  │
+│  │ GCPRECETTE_PR : Recettes PR                                           │  │
+│  │ GCPRECETTE_PR_DETAIL : Détails recettes PR                            │  │
+│  │ GC_PFI_QUEUE : File PFI                                               │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                        POINT DE VENTE (POS)                                  │
+│                                                                             │
+│  ┌─── SESSIONS CAISSE ───────────────────────────────────────────────────┐  │
+│  │ CEPSESSION (120K) : Sessions de caisse                                │  │
+│  │ ├── CODCAI : Code caisse                                              │  │
+│  │ ├── NUMSES : Numéro session                                           │  │
+│  │ ├── CODUTI : Utilisateur                                              │  │
+│  │ ├── HDSES, HFSES : Heure début / fin                                  │  │
+│  │ ├── SOLDDEP, SOLDFIN, SOLDTHEO : Soldes début/fin/théorique           │  │
+│  │ ├── MTVERS : Montant versé                                            │  │
+│  │ ├── NBOUV_TIROIR : Nombre ouvertures tiroir                           │  │
+│  │ └── EXPDATA, EXPINTERFACE : Export données                            │  │
+│  │                                                                       │  │
+│  │ CEPSESSION_OPC (507K) : Opérations de session                         │  │
+│  │ CEPSESSION_LOG (28) : Logs sessions                                   │  │
+│  │ CEPSESSION_ARCH (18.6K) : Sessions archivées                          │  │
+│  │ CEPSESSION_OPC_ARCH (123K) : Opérations archivées                     │  │
+│  │ CEPSESSION_BILL : Factures session                                    │  │
+│  │ CEPSESSION7 (827) : Sessions type 7                                   │  │
+│  │ CEPSESSION7_ARCH (219) : Sessions 7 archivées                         │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── TICKETS DE CAISSE ─────────────────────────────────────────────────┐  │
+│  │ CETICKET (16M lignes, 1.5 Go) : TICKETS                               │  │
+│  │ ├── CODCAI, NUMSES, NUMTIC : Caisse + Session + Numéro ticket         │  │
+│  │ ├── DATICKET : Date ticket                                            │  │
+│  │ ├── CODUTI : Caissier                                                 │  │
+│  │ ├── CODTIE : Client (si identifié)                                    │  │
+│  │ ├── MONTHT, MONTTTC : Montants HT / TTC                               │  │
+│  │ ├── MONTREMISE : Montant remise                                       │  │
+│  │ ├── ETAT : État (Validé/Annulé)                                      │  │
+│  │ └── ...                                                               │  │
+│  │                                                                       │  │
+│  │ CETICKETD (65.5M lignes, 5.2 Go) : LIGNES TICKET                     │  │
+│  │ ├── CODCAI, NUMSES, NUMTIC, NUMLIG : Clé complète                    │  │
+│  │ ├── CODART : Article                                                  │  │
+│  │ ├── QTEVTE : Quantité vendue                                          │  │
+│  │ ├── PUVEN, PUHT : Prix vente / HT                                    │  │
+│  │ ├── MONTVEN, MONTHT : Montants                                        │  │
+│  │ ├── TAUXREM : Taux remise                                             │  │
+│  │ ├── CODTVA : Code TVA                                                 │  │
+│  │ └── ...                                                               │  │
+│  │                                                                       │  │
+│  │ CETICKET_OFFICE (11.7M) : Tickets consolidés Office                   │  │
+│  │ CETICKET_ARCH (3M) : Tickets archivés                                 │  │
+│  │ CETICKETD_ARCH (28M) : Lignes tickets archivées                       │  │
+│  │ CETICKET_ARCH_OFFICE (3M) : Tickets archivés Office                   │  │
+│  │ CETICKET_DIFF / CETICKETD_DIFF : Écarts tickets                       │  │
+│  │                                                                       │  │
+│  │ CETICKETR (1.2M) : RETOURS TICKETS                                   │  │
+│  │ CETICKETR_ARCH (558K) : Retours archivés                              │  │
+│  │                                                                       │  │
+│  │ CETICKET_PROMO (16K) : Promotions appliquées sur tickets              │  │
+│  │ CETICKET_PROMO_ARCH (53) : Promos archivées                           │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── CAISSES & PARAMÈTRES POS ──────────────────────────────────────────┐  │
+│  │ CEPCAISSE (180) : Caisses physiques                                   │  │
+│  │ CEPPAR (1.1K) : Paramètres POS                                        │  │
+│  │ CEPTOPC (2) : Types opérations POS                                    │  │
+│  │ CEPCAISSE_ART : Articles par caisse                                   │  │
+│  │ CECFOPER (147K) : Opérations de caisse                                │  │
+│  │ CECFLOT : Lots de caisse                                              │  │
+│  │ CEBON (54K) : Bons / Cartes cadeaux                                   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── IMPRESSION ────────────────────────────────────────────────────────┐  │
+│  │ GCPRINT_LOG : Logs impression                                         │  │
+│  │ GCPRINT_RESTRICT : Restrictions impression                            │  │
+│  │ GCPRINT_RULE : Règles impression                                      │  │
+│  │ GCFORMATS (1) : Formats tickets                                       │  │
+│  │ GCFORMATS_ZONES (13) : Zones formats                                  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                     PROMOTIONS & FIDÉLITÉ                                   │
+│                                                                             │
+│  ┌─── PROMOTIONS ────────────────────────────────────────────────────────┐  │
+│  │ GCPROMO (210) : Promotions                                            │  │
+│  │ GCPROMO_ART (484) : Articles en promotion                             │  │
+│  │ GCPROMO_QTE (193) : Promotions par quantité (BOGO)                    │  │
+│  │ GCPROMO_FAMTIE (7) : Promotions par famille tiers                     │  │
+│  │ GCPROMO_PTVTE : Promotions par point de vente                         │  │
+│  │                                                                       │  │
+│  │ CEPCFPROMO : Promotions POS                                           │  │
+│  │ CEPCFPROMO_ART : Articles promo POS                                   │  │
+│  │ CEPCFPROMO_HR : Promos horaires POS                                   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── FIDÉLITÉ ──────────────────────────────────────────────────────────┐  │
+│  │ CEPCFCARTE (1.2K) : Cartes de fidélité                                │  │
+│  │ CEPCFTYPCARTE (4) : Types de cartes                                   │  │
+│  │ CEPCFTYPOPER (6) : Types opérations fidélité                          │  │
+│  │ CFID_APP (2) : Application fidélité                                   │  │
+│  │ CFID_LOG (6) : Logs fidélité                                          │  │
+│  │ CFID_STATUT (3) : Statuts fidélité                                    │  │
+│  │ CFID_STATUT_RULE : Règles de statut                                   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── REMISES ───────────────────────────────────────────────────────────┐  │
+│  │ GCPREMISE_PLAF : Plafonds de remise                                   │  │
+│  │ GCPREMTIE : Remises par tiers                                         │  │
+│  │ GCPTIE_REM : Remises tiers                                            │  │
+│  │ GCPTIE_REMISE : Remises tiers                                         │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                        TIERS (PARTIES)                                      │
+│                                                                             │
+│  GCPTIE (9K) : Tiers (Clients / Fournisseurs)                              │
+│  ├── CODTIE (PK) : Code tiers                                              │
+│  ├── NOMTIE : Nom / Raison sociale                                         │
+│  ├── TYPTIE : Type (Client/Fournisseur)                                    │
+│  ├── CODFAMTIE, CODSFAMTIE : Famille / Sous-famille                        │
+│  ├── CODREG : Région                                                       │
+│  ├── CODSECTACT : Secteur d'activité                                       │
+│  ├── ENCTIE : Encours autorisé                                             │
+│  ├── MODREG : Mode de règlement                                            │
+│  └── ...                                                                   │
+│                                                                             │
+│  Tables satellites :                                                        │
+│  ├── GCPTIE_ADR : Adresses                                                 │
+│  ├── GCPTIE_BQE : Comptes bancaires                                        │
+│  ├── GCPTIE_GRPE : Groupes de tiers                                        │
+│  ├── GCPTIE_REM / GCPTIE_REMISE : Remises                                  │
+│  ├── GCPFAMTIE (4) : Familles tiers                                        │
+│  ├── GCPSFAMTIE (4) : Sous-familles tiers                                  │
+│  ├── GCPGEST_TIE : Gestion tiers                                           │
+│  ├── GCPFRNART (821) : Articles par fournisseur                            │
+│  ├── GCPTRANSITAIRE (2) : Transitaires                                     │
+│  ├── GCPFRNART_REP : Remplacements articles fournisseur                    │
+│  └── GCPACONIER (1) : Année comptable                                      │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                     COMPTABILITÉ GÉNÉRALE (OHADA)                           │
+│                                                                             │
+│  ┌─── ÉCRITURES COMPTABLES ──────────────────────────────────────────────┐  │
+│  │ CP_ECR (879K) : Écritures comptables                                  │  │
+│  │ CP_ECR_GEN (2.7M) : Écritures générales                               │  │
+│  │ CP_ECR_LET (2.4M) : Écritures lettrées                                │  │
+│  │ CP_ECR_LET_DET (1.1M) : Détails lettrage                              │  │
+│  │ CP_ECR_ANA (567K) : Écritures analytiques                             │  │
+│  │ CP_ECR_SUPPR (3.6K) : Écritures supprimées                            │  │
+│  │ CP_ECR_RECYCLE (3.5K) : Écritures recyclées                           │  │
+│  │ CP_ECR_HUB (5) : Hub écritures                                        │  │
+│  │ CP_ECR_BQE : Écritures bancaires                                      │  │
+│  │ CP_ECRAUTO : Écritures automatiques                                   │  │
+│  │ CP_ECRAUTO_VENT : Ventilation écritures auto                          │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── PLAN COMPTABLE & RÉFÉRENTIELS ─────────────────────────────────────┐  │
+│  │ CP_CPT (82) : Plan comptable (comptes)                                │  │
+│  │ CP_DES (65) : Désignations / Sections                                 │  │
+│  │ CP_NAT (19) : Natures de compte                                       │  │
+│  │ CP_JOU (10) : Journaux comptables                                     │  │
+│  │ CP_PER (156) : Périodes comptables                                    │  │
+│  │ CP_PRO (7) : Profils comptables                                       │  │
+│  │ CP_ETS (1) : Établissements                                           │  │
+│  │ CP_DOS (1) : Dossiers                                                 │  │
+│  │ CP_PAR (1) : Paramètres                                               │  │
+│  │ COPAR (164) : Paramètres société                                      │  │
+│  │ CP_AXE (1) : Axes analytiques                                         │  │
+│  │ CP_CPT_AXE (1) : Comptes par axe                                      │  │
+│  │ CP_ABR (2) : Abréviations                                             │  │
+│  │ CP_PCE (28) : Pièces comptables                                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── RÈGLEMENTS & TRÉSORERIE ───────────────────────────────────────────┐  │
+│  │ CP_HISTO_RGL (501K) : Historique règlements                           │  │
+│  │ CP_TRE (2) : Trésorerie                                               │  │
+│  │ CP_TYPRGL (1) : Types règlement                                       │  │
+│  │ CP_TYPRGL_CPT (4) : Comptes par type règlement                        │  │
+│  │ CP_EFFET (319) : Effets de commerce                                   │  │
+│  │ CP_VIREMENT : Virements                                               │  │
+│  │ CP_VIREMENT_BRDE : Virements par bordereau                            │  │
+│  │ CP_VIREMENT_ECR : Virements par écriture                              │  │
+│  │ CP_RELBQE : Rapprochements bancaires                                  │  │
+│  │ CP_RELBQE_ARCH : Rapprochements archivés                              │  │
+│  │ CP_TMPBQE : Banque temporaire                                         │  │
+│  │ CP_PARBQE (2) : Paramètres bancaires                                  │  │
+│  │ CP_BQE_FOUR : Banques fournisseurs                                    │  │
+│  │ CP_CHEQUIER : Chéquiers                                               │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── FACTURATION & FISCALITÉ ───────────────────────────────────────────┐  │
+│  │ CP_FACTURE : Factures                                                 │  │
+│  │ CP_FACT_FOUR : Factures fournisseurs                                  │  │
+│  │ CP_FACT_ARCH : Factures archivées                                     │  │
+│  │ CP_FACTURE_RUBR_CPT (306) : Rubriques comptables facture              │  │
+│  │ CP_RUBR_CPT (12) : Rubriques comptables                               │  │
+│  │ CP_REGIME_IMP (5) : Régimes d'imposition                              │  │
+│  │ CP_CTRL_IMP : Contrôles fiscaux                                       │  │
+│  │ CP_CPTTAXE : Comptes de taxes                                         │  │
+│  │ CP_CPTREP : Comptes de reports                                        │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── ÉTATS FINANCIERS & BUDGETS ────────────────────────────────────────┐  │
+│  │ CP_ETAT (1) : États financiers                                        │  │
+│  │ CP_ETAT_PARAM (8) : Paramètres états                                  │  │
+│  │ CP_ETAT_PARAM_CPT (1) : Paramètres comptes états                      │  │
+│  │ CP_BUDA : Budgets                                                     │  │
+│  │ CP_BUDA_VENT : Ventilation budgets                                    │  │
+│  │ CP_RES : Résultats                                                    │  │
+│  │ CP_RES_EXE : Résultats par exercice                                   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── COMPTABILITÉ ANALYTIQUE ───────────────────────────────────────────┐  │
+│  │ CP_ECR_ANA (567K) : Écritures analytiques                             │  │
+│  │ CP_AXE (1) : Axes analytiques                                         │  │
+│  │ CP_CPT_AXE (1) : Comptes par axe                                      │  │
+│  │ CP_STOCK_DEV (22) : Valorisation stock                                │  │
+│  │ CP_STOCK_DEV_MVT (87) : Mouvements valorisation                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── SCHÉMAS COMPTABLES & INTERFACES ───────────────────────────────────┐  │
+│  │ CP_SCHEMA (3) : Schémas comptables                                    │  │
+│  │ CP_SCHEMA_DETAIL (8) : Détails schémas                                │  │
+│  │ CP_JOU_SCHEMA : Journaux par schéma                                   │  │
+│  │ CP_INT (1.4K) : Interfaces comptables                                 │  │
+│  │ CP_INT_B : Interfaces bancaires                                       │  │
+│  │ CP_INT_FOU : Interfaces fournisseurs                                  │  │
+│  │ CP_EDI : Échanges de données informatisés                             │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── TIERS COMPTABLES ──────────────────────────────────────────────────┐  │
+│  │ CP_AUX (9.1K) : Comptes auxiliaires (clients/fournisseurs)            │  │
+│  │ CP_CPT_FOUR : Comptes fournisseurs                                    │  │
+│  │ CP_PAR1_FOUR / CP_PAR2_FOUR : Paramètres fournisseurs                 │  │
+│  │ CP_REG_FOUR : Règlements fournisseurs                                 │  │
+│  │ CP_BQE_FOUR : Banques fournisseurs                                    │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── AUTRES MODULES COMPTABLES ─────────────────────────────────────────┐  │
+│  │ CP_EVA_DEF / CP_EVA / CP_EVA_PER : Évaluations                        │  │
+│  │ CP_VA_DEF : Valeurs par défaut                                        │  │
+│  │ CP_LVA / CP_LVA_DEF / CP_LVA_PER : LVA                               │  │
+│  │ CP_MDR : MDR                                                          │  │
+│  │ CP_PAE : PAE                                                          │  │
+│  │ CP_PARG : PARG                                                        │  │
+│  │ CP_COP : Copies                                                       │  │
+│  │ CP_CHG : Changements                                                  │  │
+│  │ CP_ETA / CP_ETA02 : États                                             │  │
+│  │ CP_UTIJOU : Utilisateurs par journal                                  │  │
+│  │ CP_ABDES / CP_ABDES2 / CP_ABO / CP_ABV : Abonnements                  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                        GESTION DE CAISSE                                    │
+│                                                                             │
+│  CAICAISSE : Caisses                                                        │
+│  CAICODMVT (8) : Codes mouvement caisse                                     │
+│  CAIJOURNAL (1) : Journal de caisse                                         │
+│  CAIJOURNAL_BILL : Journal de caisse par facture                            │
+│  CAIMVT : Mouvements de caisse                                              │
+│  CAIMVT_IMP : Mouvements importés                                           │
+│  CAIMVT_LETTRAGE : Lettrage mouvements                                      │
+│  CAIPPAR (160) : Paramètres caisse                                          │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                     FRAMEWORK TECHNIQUE (KERNEL)                            │
+│                                                                             │
+│  ┌─── UTILISATEURS & SÉCURITÉ ───────────────────────────────────────────┐  │
+│  │ UTUTI (372) : Utilisateurs                                            │  │
+│  │ UTUTI_MENU (17) : Menus utilisateurs                                  │  │
+│  │ UTUTI_CLE (25.5K) : Clés utilisateurs                                 │  │
+│  │ UTUTI_RESTR (2) : Restrictions utilisateurs                           │  │
+│  │ UTUTI_APP (291K) : Applications utilisateurs                          │  │
+│  │ UTUTI1 / UTUTI1_CLE / UTUTI1_MENU : Utilisateurs secondaires          │  │
+│  │ UTUTI_GCLE : Utilisateurs clés GC                                     │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── PROGRAMMES & NAVIGATION ───────────────────────────────────────────┐  │
+│  │ UTPROG (508) : Programmes / Écrans                                    │  │
+│  │ UTPROG_CLE (1.2K) : Clés programmes                                   │  │
+│  │ UTAPPLI (3) : Applications                                            │  │
+│  │ UTCLE (291) : Clés                                                    │  │
+│  │ UTTCLE (12) : Tables de clés                                          │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── PARAMÉTRAGE GÉNÉRAL ───────────────────────────────────────────────┐  │
+│  │ UTPPAR (152) : Paramètres                                             │  │
+│  │ UTPDEVISE (3) : Devises                                               │  │
+│  │ UTPPAYS (3) : Pays                                                    │  │
+│  │ UTPVILLE (3) : Villes                                                 │  │
+│  │ UTPREG (3) : Régions                                                  │  │
+│  │ UTPLOCALITE (49) : Localités                                          │  │
+│  │ UTPBANQUE (1) : Banques                                               │  │
+│  │ UTPMRGL (10) : Marges                                                 │  │
+│  │ UTPRTAX (8) : Taux de taxe                                            │  │
+│  │ UTPTAXE (3) : Taxes                                                   │  │
+│  │ UTPTYPRGL (8) : Types règlement                                       │  │
+│  │ UTPECH (11) : Échéances                                               │  │
+│  │ UTPCHANGE (2) : Changes                                               │  │
+│  │ UTSOC (1) : Société                                                   │  │
+│  │ UT_STD_EVENT (1) : Événements standard                                │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── MESSAGERIE & INTERNATIONALISATION ─────────────────────────────────┐  │
+│  │ UTMSG (4.4K) : Messages                                               │  │
+│  │ UTMSG_LANGUE (8.3K) : Messages par langue                             │  │
+│  │ UTITEM_MSG (561) : Messages par item                                  │  │
+│  │ UTLANGUE (2) : Langues                                                │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── LOGS & AUDIT ──────────────────────────────────────────────────────┐  │
+│  │ UTLOG (444K) : Logs système                                           │  │
+│  │ UTLOG_APP (127K) : Logs applicatifs                                   │  │
+│  │ UTSYNCHRO_LOG (120K) : Logs synchronisation                           │  │
+│  │ UTOUTPUT (1.3M) : Sorties                                             │  │
+│  │ UTERR : Erreurs                                                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── EMAILS & FICHIERS ─────────────────────────────────────────────────┐  │
+│  │ UT_MAIL_EVENT : Événements email                                      │  │
+│  │ UT_MAIL_QUEUE : File d'attente emails                                 │  │
+│  │ UT_MAIL_SEND : Emails envoyés                                         │  │
+│  │ UT_SMTP_SETTINGS : Paramètres SMTP                                    │  │
+│  │ UT_STORE_FILES : Stockage fichiers                                    │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── TABLES TEMPORAIRES & TRANSFERTS ───────────────────────────────────┐  │
+│  │ TT_BRD_OFFICE (228K) : Transferts bordereaux Office                   │  │
+│  │ TT_BRDD (1.8K) : Transferts lignes                                    │  │
+│  │ TT_BRDE (288) : Transferts entêtes                                    │  │
+│  │ TT_LUM (19.8K) : Transferts LUM                                       │  │
+│  │ TT_GCPPAR (1.5K) : Transferts paramètres GCP                          │  │
+│  │ TT_CAIPPAR (160) : Transferts paramètres caisse                       │  │
+│  │ TT_ECR / TT_ECR_GEN / TT_ECR_LET : Transferts écritures               │  │
+│  │ TT_GCPUNI_COEFF (170) : Transferts coefficients unité                 │  │
+│  │ TT_RTAX (1.1K) : Transferts taux taxe                                 │  │
+│  │ TT_TLOC (676) : Transferts localisations                              │  │
+│  │ TMP (28) : Table temporaire                                           │  │
+│  │ PLAN_TABLE (19) : Plan d'exécution                                    │  │
+│  │ SQLN_EXPLAIN_PLAN (6) : Plans SQL                                     │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── VUES MATÉRIALISÉES (Sync Office) ──────────────────────────────────┐  │
+│  │ MV_CEPSESSION : Sessions caisse                                       │  │
+│  │ MV_GCBRDD_NUMLIG : Numéros lignes bordereau                           │  │
+│  │ MV_GCBRDE_IDBRD : IDs bordereaux                                      │  │
+│  │ MV_GCFUART_LOG : Log changements unités                               │  │
+│  │ MV_GCPART : Articles                                                  │  │
+│  │ ← Toutes basées sur des DB LINKs @XAPP_OFFICE                         │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                     FRAMEWORK TECHNIQUE (KERNEL)                            │
+│                                                                             │
+│  ┌─── UTILISATEURS & SÉCURITÉ ───────────────────────────────────────────┐  │
+│  │ UTUTI (372) : Utilisateurs                                            │  │
+│  │ UTUTI_MENU (17) : Menus utilisateurs                                  │  │
+│  │ UTUTI_CLE (25.5K) : Clés utilisateurs                                 │  │
+│  │ UTUTI_RESTR (2) : Restrictions utilisateurs                           │  │
+│  │ UTUTI_APP (291K) : Applications utilisateurs                          │  │
+│  │ UTUTI1 / UTUTI1_CLE / UTUTI1_MENU : Utilisateurs secondaires          │  │
+│  │ UTUTI_GCLE : Utilisateurs clés GC                                     │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── PROGRAMMES & NAVIGATION ───────────────────────────────────────────┐  │
+│  │ UTPROG (508) : Programmes / Écrans                                    │  │
+│  │ UTPROG_CLE (1.2K) : Clés programmes                                   │  │
+│  │ UTAPPLI (3) : Applications                                            │  │
+│  │ UTCLE (291) : Clés                                                    │  │
+│  │ UTTCLE (12) : Tables de clés                                          │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── PARAMÉTRAGE GÉNÉRAL ───────────────────────────────────────────────┐  │
+│  │ UTPPAR (152) : Paramètres                                             │  │
+│  │ UTPDEVISE (3) : Devises                                               │  │
+│  │ UTPPAYS (3) : Pays                                                    │  │
+│  │ UTPVILLE (3) : Villes                                                 │  │
+│  │ UTPREG (3) : Régions                                                  │  │
+│  │ UTPLOCALITE (49) : Localités                                          │  │
+│  │ UTPBANQUE (1) : Banques                                               │  │
+│  │ UTPMRGL (10) : Marges                                                 │  │
+│  │ UTPRTAX (8) : Taux de taxe                                            │  │
+│  │ UTPTAXE (3) : Taxes                                                   │  │
+│  │ UTPTYPRGL (8) : Types règlement                                       │  │
+│  │ UTPECH (11) : Échéances                                               │  │
+│  │ UTPCHANGE (2) : Changes                                               │  │
+│  │ UTSOC (1) : Société                                                   │  │
+│  │ UT_STD_EVENT (1) : Événements standard                                │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── MESSAGERIE & INTERNATIONALISATION ─────────────────────────────────┐  │
+│  │ UTMSG (4.4K) : Messages                                               │  │
+│  │ UTMSG_LANGUE (8.3K) : Messages par langue                             │  │
+│  │ UTITEM_MSG (561) : Messages par item                                  │  │
+│  │ UTLANGUE (2) : Langues                                                │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── LOGS & AUDIT ──────────────────────────────────────────────────────┐  │
+│  │ UTLOG (444K) : Logs système                                           │  │
+│  │ UTLOG_APP (127K) : Logs applicatifs                                   │  │
+│  │ UTSYNCHRO_LOG (120K) : Logs synchronisation                           │  │
+│  │ UTOUTPUT (1.3M) : Sorties                                             │  │
+│  │ UTERR : Erreurs                                                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── EMAILS & FICHIERS ─────────────────────────────────────────────────┐  │
+│  │ UT_MAIL_EVENT : Événements email                                      │  │
+│  │ UT_MAIL_QUEUE : File d'attente emails                                 │  │
+│  │ UT_MAIL_SEND : Emails envoyés                                         │  │
+│  │ UT_SMTP_SETTINGS : Paramètres SMTP                                    │  │
+│  │ UT_STORE_FILES : Stockage fichiers                                    │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── TABLES TEMPORAIRES & TRANSFERTS ───────────────────────────────────┐  │
+│  │ TT_BRD_OFFICE (228K) : Transferts bordereaux Office                   │  │
+│  │ TT_BRDD (1.8K) : Transferts lignes                                    │  │
+│  │ TT_BRDE (288) : Transferts entêtes                                    │  │
+│  │ TT_LUM (19.8K) : Transferts LUM                                       │  │
+│  │ TT_GCPPAR (1.5K) : Transferts paramètres GCP                          │  │
+│  │ TT_CAIPPAR (160) : Transferts paramètres caisse                       │  │
+│  │ TT_ECR / TT_ECR_GEN / TT_ECR_LET : Transferts écritures               │  │
+│  │ TT_GCPUNI_COEFF (170) : Transferts coefficients unité                 │  │
+│  │ TT_RTAX (1.1K) : Transferts taux taxe                                 │  │
+│  │ TT_TLOC (676) : Transferts localisations                              │  │
+│  │ TMP (28) : Table temporaire                                           │  │
+│  │ PLAN_TABLE (19) : Plan d'exécution                                    │  │
+│  │ SQLN_EXPLAIN_PLAN (6) : Plans SQL                                     │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌─── VUES MATÉRIALISÉES (Sync Office) ──────────────────────────────────┐  │
+│  │ MV_CEPSESSION : Sessions caisse                                       │  │
+│  │ MV_GCBRDD_NUMLIG : Numéros lignes bordereau                           │  │
+│  │ MV_GCBRDE_IDBRD : IDs bordereaux                                      │  │
+│  │ MV_GCFUART_LOG : Log changements unités                               │  │
+│  │ MV_GCPART : Articles                                                  │  │
+│  │ ← Toutes basées sur des DB LINKs @XAPP_OFFICE                         │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BUSINESS INTELLIGENCE (Oracle Discoverer)                │
+│                                                                             │
+│  EUL5_DOCUMENTS (26) : Documents / Rapports                                │
+│  EUL5_EXPRESSIONS (1.7K) : Expressions / Calculs                           │
+│  EUL5_ELEM_XREFS (394) : Références croisées                               │
+│  EUL5_OBJS (130) : Objets                                                  │
+│  EUL5_ACCESS_PRIVS (28) : Privilèges d'accès                               │
+│  EUL5_APP_PARAMS (17) : Paramètres application                             │
+│  EUL5_BA_OBJ_LINKS (130) : Liens objets BA                                 │
+│  EUL5_BAS (1) : Business Areas                                             │
+│  EUL5_DBH_NODES (8) : Nœuds DBH                                            │
+│  EUL5_DOC_FOLDERS (1) : Dossiers documents                                 │
+│  EUL5_EUL_USERS (4) : Utilisateurs EUL                                     │
+│  EUL5_EXP_DEPS (296) : Dépendances expressions                             │
+│  EUL5_FREQ_UNITS (6) : Unités de fréquence                                 │
+│  EUL5_FUN_ARGUMENTS (326) : Arguments fonctions                            │
+│  EUL5_FUN_CTGS (10) : Catégories fonctions                                 │
+│  EUL5_FUNCTIONS (278) : Fonctions                                          │
+│  EUL5_FUN_FC_LINKS (269) : Liens fonctions                                 │
+│  EUL5_GATEWAYS (2) : Passerelles                                           │
+│  EUL5_HIERARCHIES (8) : Hiérarchies                                        │
+│  EUL5_HI_NODES (30) : Nœuds hiérarchie                                     │
+│  EUL5_HI_SEGMENTS (30) : Segments hiérarchie                               │
+│  EUL5_IG_EXP_LINKS (30) : Liens expressions IG                             │
+│  EUL5_KEY_CONS (104) : Contraintes clés                                    │
+│  EUL5_QPP_STATS (36) : Statistiques QPP                                    │
+│  EUL5_SEGMENTS (36) : Segments                                             │
+│  EUL5_SEQUENCES (1) : Séquences                                            │
+│  EUL5_VERSIONS (1) : Versions                                              │
+│  + ~40 autres tables vides (structure Discoverer complète)                 │
+└─────────────────────────────────────────────────────────────────────────────┘┌─────────────────────────────────────────────────────────────────────────────┐
+│                         FLUX MÉTIERS PRINCIPAUX                             │
+│                                                                             │
+│  1. APPROVISIONNEMENT                                                       │
+│     GCBRDE (CMD Achat) → GCBRDD (Lignes) → GCSTOCK (Entrée stock)          │
+│     → GCPRMP (Mise à jour PRMP) → XCPTA.CP_ECR (Écriture comptable)        │
+│                                                                             │
+│  2. VENTE EN BOUTIQUE (POS)                                                │
+│     CEPSESSION (Ouverture) → CETICKET + CETICKETD (Vente)                  │
+│     → GCSTOCK (Sortie stock) → CASH.CAIMVT (Encaissement)                  │
+│     → XCPTA.CP_ECR (Écriture vente) → CEPSESSION (Clôture)                 │
+│                                                                             │
+│  3. TRANSFERT INTER-DÉPÔTS                                                  │
+│     GCBRDE (TRF) → GCBRDD (Lignes) → GCSTOCK (Sortie source)               │
+│     → GCSTOCK (Entrée destination) → TRANSFERT.TR_GCBRDD (Sync Office)     │
+│                                                                             │
+│  4. INVENTAIRE                                                              │
+│     GCINVE (Entête) → GCINVD (Comptage) → GCINVD_ZONE (Par zone)           │
+│     → GCBRDE (INV) → GCBRDD (Ajustements) → GCSTOCK (Correction)           │
+│                                                                             │
+│  5. RETOUR CLIENT                                                           │
+│     CETICKETR (Retour) → GCSTOCK (Entrée stock) → CASH.CAIMVT (Rembourse)  │
+│     → XCPTA.CP_ECR (Écriture retour)                                       │
+│                                                                             │
+│  6. SYNCHRONISATION BOUTIQUE → OFFICE                                       │
+│     TRANSFERT.TR_* (Files) → UTSYNCHRO_LOG (Log) → KERNEL.MV_* (MV Office)│
+│                                                                             │
+│  7. INTERFACE COMPTABLE                                                     │
+│     CAISSE.GCBRDE/GCBRDD → XCPTA.CP_INT (Interface) → XCPTA.CP_ECR_GEN     │
+│     → XCPTA.CP_ECR_LET (Lettrage) → XCPTA.CP_HISTO_RGL (Règlement)        │
+│                                                                             │
+│  8. FIDÉLITÉ                                                                │
+│     CEPCFCARTE (Carte) → CETICKET (Ticket avec carte)                      │
+│     → CFID_LOG (Points gagnés) → CEPCFCARTE (Solde points)                 │
+│                                                                             │
+│  9. PROMOTIONS                                                              │
+│     GCPROMO (Définition) → GCPROMO_ART (Articles) → CETICKETD (Appliquée) │
+│     → CETICKET_PROMO (Trace) → GCBRDD (Impact stock)                       │
+└─────────────────────────────────────────────────────────────────────────────┘
