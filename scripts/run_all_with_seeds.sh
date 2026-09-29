@@ -50,7 +50,10 @@ for seed in \
   S23_seed_transfer_stock.sql \
   S24_seed_immobilisations.sql \
   S25_seed_declarations_fiscales.sql \
-  S26_seed_payroll.sql
+  S26_seed_payroll.sql \
+  S27_seed_congo_pni.sql \
+  S28_seed_payroll_congo.sql \
+  S29_seed_tva_congo.sql
 do
     echo ""
     echo "▶ Seed : $seed"

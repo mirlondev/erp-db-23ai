@@ -150,6 +150,9 @@ UNION ALL SELECT 'app_gl.imm_disposal',      COUNT(*) FROM app_gl.imm_disposal
 UNION ALL SELECT 'app_gl.imm_revaluation',   COUNT(*) FROM app_gl.imm_revaluation
 UNION ALL SELECT 'app_gl.tax_form_type',     COUNT(*) FROM app_gl.tax_form_type
 UNION ALL SELECT 'app_gl.tax_declaration',   COUNT(*) FROM app_gl.tax_declaration
+UNION ALL SELECT 'app_sys.cg_tax_center',    COUNT(*) FROM app_sys.cg_tax_center
+UNION ALL SELECT 'app_sys.cg_irpp_bracket',  COUNT(*) FROM app_sys.cg_irpp_bracket
+UNION ALL SELECT 'app_sys.cg_cnss_param',    COUNT(*) FROM app_sys.cg_cnss_param
 UNION ALL SELECT 'app_gl.tax_declaration_line', COUNT(*) FROM app_gl.tax_declaration_line
 UNION ALL SELECT 'app_gl.tax_payment',       COUNT(*) FROM app_gl.tax_payment
 UNION ALL SELECT 'app_gl.tax_credit',        COUNT(*) FROM app_gl.tax_credit

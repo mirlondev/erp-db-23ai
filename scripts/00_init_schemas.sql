@@ -146,9 +146,9 @@ DECLARE
     'CREATE TYPE',
     'CREATE MATERIALIZED VIEW',
     'CREATE JOB',
-    'CREATE INDEX',
-    'CREATE ATTRIBUTE DIMENSION',
-    'CREATE DOMAIN'            -- 23ai+ (SQL Domains) — testé individuellement
+    -- CREATE INDEX : pas un privilège système valide (CREATE TABLE inclut implicitement)
+    'CREATE ATTRIBUTE DIMENSION'
+    -- CREATE DOMAIN : déprécié en 26ai (SQL Domain feature dépréciée)
   );
   v_ok  NUMBER;
   v_ko  NUMBER;
