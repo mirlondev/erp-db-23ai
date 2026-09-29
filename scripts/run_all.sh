@@ -62,7 +62,10 @@ for script in \
   49_congo_fiscal.sql \
   50_grants_cross_schema.sql \
   51_hub_spoke_topology.sql \
-  52_sync_framework.sql
+  52_sync_framework.sql \
+  53_legacy_gap_filler.sql \
+  54_partition_tables_volumineuses.sql \
+  55_pkg_etl_legacy_v2.sql
 do
     echo ""
     echo "▶ Exécution : $script"

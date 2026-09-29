@@ -157,6 +157,12 @@ UNION ALL SELECT 'app_sys.site_master',      COUNT(*) FROM app_sys.site_master
 UNION ALL SELECT 'app_sys.site_link',        COUNT(*) FROM app_sys.site_link
 UNION ALL SELECT 'app_sys.site_sync_run',    COUNT(*) FROM app_sys.site_sync_run
 UNION ALL SELECT 'app_sys.outbox_event',     COUNT(*) FROM app_sys.outbox_event
+UNION ALL SELECT 'app_sys.tt_brd_office',    COUNT(*) FROM app_sys.tt_brd_office
+UNION ALL SELECT 'app_sys.sys_message',      COUNT(*) FROM app_sys.sys_message
+UNION ALL SELECT 'app_ar.payment_history',   COUNT(*) FROM app_ar.payment_history
+UNION ALL SELECT 'app_product.product_unit_region', COUNT(*) FROM app_product.product_unit_region
+UNION ALL SELECT 'app_pos.pos_format',       COUNT(*) FROM app_pos.pos_format
+UNION ALL SELECT 'app_purchase.supplier_product',  COUNT(*) FROM app_purchase.supplier_product
 UNION ALL SELECT 'app_gl.tax_declaration_line', COUNT(*) FROM app_gl.tax_declaration_line
 UNION ALL SELECT 'app_gl.tax_payment',       COUNT(*) FROM app_gl.tax_payment
 UNION ALL SELECT 'app_gl.tax_credit',        COUNT(*) FROM app_gl.tax_credit
