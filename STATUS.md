@@ -1,7 +1,7 @@
 # 📊 STATUS — État du projet erp-db-23ai
 
-> Dernière mise à jour : 2026-09-29
-> Contexte : Migration ERP REGAL (Congo Brazzaville) Oracle 11g → 23ai/26ai Free
+> Dernière mise à jour : 2026-09-30
+> Contexte : Migration ERP REGAL (Congo Brazzaville) Oracle 11g → 23ai/26ai Free + APEX 26.1 UI
 
 ## 🎯 Résumé exécutif
 
@@ -11,10 +11,11 @@
 | Schémas APP_* | **17** | cible 17 |
 | Scripts DDL | **57** | - |
 | Seeds | **31** | - |
-| Packages PL/SQL | **8** | - |
+| Packages PL/SQL | **9** (+ `pkg_apex_auth`) | - |
 | Triggers | **9** | - |
 | Tables partitionnées | **4** | - |
 | Tables externes ETL | **6** | - |
+| **APEX 26.1 specs** | **5 apps** + 12 vues partagées | nouveau |
 | Sites REGAL mappés | **7** | - |
 
 ## 📈 Couverture par schéma legacy

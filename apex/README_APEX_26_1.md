@@ -40,19 +40,47 @@ Scripts PL/SQL à jouer dans l'ordre (connecté en `SYS as sysdba` sur `FREEPDB1
 | 1 | `setup/01_apex_workspace.sql` | Crée le workspace **REGAL** (schéma principal `APP_API` + groupes `APP_SALES`, `APP_INV`, `APP_GL`, `APP_SYS`), tablespace, quotas, privilèges REST |
 | 2 | `setup/02_ords_enable_parsers.sql` | Active ORDS sur les schémas APP_* (URL mapping `/ords/regal/...`) |
 | 3 | `setup/03_apex_auth_setup.sql` | Comptes/rôles applicatifs REGAL_* pour le schéma d'authentification |
+| 4 | `setup/04_apex_components.sql` | 12 vues métier partagées + fonction `regal_split` (CSV → table pour filtres APEX) |
+| 5 | `setup/05_apex_litoko_branding.sql` | Branding LITOKO SARL : logo SVG, thème CSS (couleurs Congo), JS utilitaires |
 
 ## 3. Applications APEX par module
 
-| App | Module | Schéma | Pages clés |
-|---|---|---|---|
-| 100 | **POS / Ventes** (caisse LITOKO) | `APP_SALES` via synonymes `APP_API` | Ticket live, encaissement multi-modes, Z de caisse, formats tickets (`pos_format`) |
-| 200 | **Stock hub-spoke** | `APP_INV` | Transferts Master→Boutiques (`v_tt_pending`), mouvements, inventaires, alertes stock |
-| 300 | **Achats & Fournisseurs** | `APP_PURCHASE` | Commandes, réception, articles fournisseurs (`supplier_product`, ex-`GCPFRNART`) |
-| 400 | **Comptabilité OHADA** | `APP_GL` | Écritures (`gl_entry_line` partitionné), lettrage, déclarations fiscales Congo, grand livre |
-| 500 | **Administration système** | `APP_SYS` | Outbox/CDC (`outbox_event`), jobs, i18n (`sys_message*`), sécurité PC/dépôt (`warehouse_pc_auth`) |
+| App | Module | Schéma | Spec | Pages clés |
+|---|---|---|---|---|
+| 100 | **POS / Ventes** (caisse LITOKO) | `APP_SALES` via synonymes `APP_API` | `apps/SPEC_app100_pos.md` | Ticket live, encaissement multi-modes, Z de caisse, formats tickets (`pos_format`) |
+| 200 | **Stock hub-spoke** | `APP_INV` | `apps/SPEC_app200_stock.md` | Transferts Master→Boutiques (`v_tt_pending`), mouvements, inventaires, alertes stock |
+| 300 | **Achats & Fournisseurs** | `APP_PURCHASE` | `apps/SPEC_app300_achats.md` | Commandes, réception 3-way match, articles fournisseurs (`supplier_product`, ex-`GCPFRNART`) |
+| 400 | **Comptabilité OHADA** | `APP_GL` | `apps/SPEC_app400_compta.md` | Écritures (`gl_entry_line_v2` partitionné), lettrage, déclarations fiscales Congo CEMAC, grand livre |
+| 500 | **Administration système** | `APP_SYS` | `apps/SPEC_app500_admin.md` | Outbox/CDC (`outbox_event`), jobs, i18n (`sys_message*`), sécurité PC/dépôt (`warehouse_pc_auth`) |
 
 Chaque application = un fichier d'export APEX dans `apps/` (généré depuis l'IDE),
-importable via l'IDE (*App Builder → Import*) ou en ligne de commande.
+importable via `apps/import_app.sql <id> <fichier_export.sql>`.
+
+### 3.1 Vues & fonctions partagées (`setup/04`)
+
+12 vues métier réutilisables par toutes les apps :
+
+| Vue | Module | Usage APEX |
+|---|---|---|
+| `v_inv_stock_kpi` | Stock | Dashboard 200 |
+| `v_transfer_pipeline` | Stock | Wizard 200 (transferts en cours) |
+| `v_pos_session_kpi` | POS | Sessions actives 100 |
+| `v_today_sales` | POS | CA du jour 100 |
+| `v_gl_account_balance` | Compta | Soldes par compte 400 |
+| `v_general_ledger` | Compta | Grand livre 400 |
+| `v_trial_balance` | Compta | Balance 400 |
+| `v_cg_tax_due` | Compta Congo | TVA CEMAC 18.9% 400 |
+| `v_supplier_otd` | Achats | On-Time Delivery 300 |
+| `v_three_way_match` | Achats | 3-way match BL/Cmd/Fact 300 |
+| `v_imm_progress` | Compta | Amortissement immo 400 |
+| `v_cnss_charges` | RH Congo | Charges CNSS LITOKO 400 |
+
+### 3.2 Branding LITOKO SARL (`setup/05`)
+
+- **Logo SVG** : bleu Congo (#0F4C81) + or (#D4AF37), 240×80
+- **Thème CSS** : variables CSS couleurs drapeau Congo, responsive mobile (Pointe-Noire)
+- **JS utilitaires** : `litFormatXAF()` (séparateur espace + FCFA), `litBadgeStatus()` (8 statuts transferts), `litFilterSites()` (filtre sites via `pkg_apex_auth`)
+- **Badges statut** : DRAFT (gris), REQUESTED (bleu), APPROVED (vert), PACKED (jaune), IN_TRANSIT (orange), RECEIVED/CLOSED (vert), CANCELLED (rouge)
 
 ## 4. Composants natifs APEX 26.1 utilisés
 

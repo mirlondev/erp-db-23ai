@@ -109,13 +109,39 @@
 - Table `etl_run_progress` : reprise après crash
 - Table `etl_brd_mapping` : 9 types CODTBRD mappés
 
-### v0.1.4 — Partitionnement EFFECTIF + ETL CSV legacy (actuelle)
+### v0.1.4 — Partitionnement EFFECTIF + ETL CSV legacy
 - **4 tables partitionnées** : ticket_line_v2, transfer_line_v2, gl_entry_line_v2, payment_history_v2
 - Stratégie 23ai : `PARTITION BY RANGE (date) INTERVAL` + `SUBPARTITION BY LIST (site_code)`
 - `fn_partition_info()` + `fn_total_partitions()` : helpers
 - `JOB_PARTITION_MAINT` : drop auto > 36 mois
 - **ETL CSV legacy** : tables externes Oracle Loader pour GCPART, GCSTOCK, GCPTARIF_ART, GCPTIE, GCPTBRD, GCPRTAX
 - BULK COLLECT 500 rows par batch
+
+### v0.1.5 — Fix compatibilité WS legacy (branche `fix/ws-compat-fetch-failures`)
+- `53_legacy_gap_filler.sql` : suppression GRANT self-schema `app_product.product TO app_product` (ORA-01749)
+- `54_partition_tables_volumineuses.sql` :
+  - index `payment_history` skip controlé si table absente (ORA-00942)
+  - réutilise `ix_outbox_event_status` (ORA-01408)
+  - MV log outbox idempotent + `WHENEVER SQLERROR EXIT`
+- `56_partition_effectives.sql` :
+  - retrait des 5 GRANT self-schema `*_v2 TO proprio` (ORA-01749)
+  - garde-fou drop-before-create sur les 4 tables `_v2` (ORA-00955)
+  - `JOB_PARTITION_MAINT` déplacé dans `app_sales` (owner des partitions)
+  - bloc validation `CONNECT-in-UNION ALL` remplacé par `dba_tab_partitions`
+
+### v0.1.6 — APEX 26.1 — Couche UI (actuelle)
+- `apex/setup/01_apex_workspace.sql` : workspace **REGAL** (schéma principal `APP_API` + 6 schémas secondaires)
+- `apex/setup/02_ords_enable_parsers.sql` : activation ORDS sur schémas APP_*
+- `apex/setup/03_apex_auth_setup.sql` : package `pkg_apex_auth` (authenticate, user_roles, user_site_codes, log_login)
+- `apex/setup/04_apex_components.sql` : **12 vues métier partagées** + fonction `regal_split` (CSV → table)
+- `apex/setup/05_apex_litoko_branding.sql` : logo SVG + thème CSS (couleurs Congo) + JS utilitaires
+- `apex/apps/SPEC_app100_pos.md` : spec POS/Ventes (7 pages)
+- `apex/apps/SPEC_app200_stock.md` : spec Stock hub-spoke (8 pages + wizard 6 étapes)
+- `apex/apps/SPEC_app300_achats.md` : spec Achats/Fournisseurs (12 pages + 3-way match)
+- `apex/apps/SPEC_app400_compta.md` : spec Compta OHADA + Fiscal CG (18 pages)
+- `apex/apps/SPEC_app500_admin.md` : spec Admin (7 pages)
+- `apex/apps/import_app.sql` : helper d'import APEX
+- `apex/README_APEX_26_1.md` : doc complète (compatibilité WS, roadmap UI 5 sprints)
 
 ## 🏛️ Schémas créés (17)
 

@@ -1,27 +1,40 @@
-# 🏛️ erp-db-23ai — Migration ERP Oracle 11g → 23ai/26ai Free
+# 🏛️ erp-db-23ai — Migration ERP Oracle 11g → 23ai/26ai Free + APEX 26.1
 
 > **REGAL** : ERP retail multi-sites du Congo Brazzaville (Pointe-Noire)
-> Migration 391 tables legacy (6 schémas) → Oracle 23ai/26ai Free
+> Migration 391 tables legacy (6 schémas) → Oracle 23ai/26ai Free + **APEX 26.1 UI**
 
-[![Coverage](https://img.shields.io/badge/coverage-49%25-yellow)] [![Schemas](https://img.shields.io/badge/schemas-17-blue)] [![Tables](https://img.shields.io/badge/tables-195-green)] [![Scripts](https://img.shields.io/badge/scripts-57-orange)]
+[![Coverage](https://img.shields.io/badge/coverage-49%25-yellow)] [![Schemas](https://img.shields.io/badge/schemas-17-blue)] [![Tables](https://img.shields.io/badge/tables-195-green)] [![APEX](https://img.shields.io/badge/APEX-26.1-red)]
 
 ## ⚡ Quickstart
 
 ```bash
-# Prérequis : Oracle 23ai Free, user system/oracle
+# Prérequis : Oracle 23ai Free + APEX 26.1, user system/oracle
 cd /workspace/erp-db-23ai
-./run_all.sh                    # Déploie DDL (57 scripts)
-./run_all_with_seeds.sh         # + 31 seeds
+
+# 1. DDL complet
+./run_all.sh                    # 62 scripts (00-57 + apex/setup)
+
+# 2. + Seeds
+./run_all_with_seeds.sh         # + 40 seeds
+
+# 3. APEX : workspace REGAL + ORDS + auth
+sqlplus sys/oracle@FREEPDB1 as sysdba @apex/setup/01_apex_workspace.sql
+sqlplus sys/oracle@FREEPDB1 as sysdba @apex/setup/02_ords_enable_parsers.sql
+sqlplus app_sys/AppSys#2026 @apex/setup/03_apex_auth_setup.sql
+sqlplus app_api/AppApi#2026 @apex/setup/04_apex_components.sql
+sqlplus app_api/AppApi#2026 @apex/setup/05_apex_litoko_branding.sql
+
+# 4. APEX IDE : App Builder → Import des apps 100..500
 ```
 
-## 📊 État du projet (au 2026-09-29)
+## 📊 État du projet (au 2026-09-30)
 
 | | Valeur | Évolution |
 |---|---:|---:|
-| Scripts SQL | **57** | 0 → 57 |
+| Scripts SQL | **62** | 0 → 62 |
 | Tables modernes | **~195** | 0 → 195 |
 | Schémas APP_* | **17** | 0 → 17 |
-| Packages PL/SQL | **8** | 0 → 8 |
+| Packages PL/SQL | **9** (+ `pkg_apex_auth`) | 0 → 9 |
 | Triggers CDC | **3** | nouveau |
 | Triggers métier | **6** | nouveau |
 | Mat. Views | **3** | nouveau |
@@ -31,8 +44,9 @@ cd /workspace/erp-db-23ai
 | Seeds | **40** | nouveau |
 | Tables partitionnées | **4** | nouveau |
 | Tables externes (ETL) | **6** | nouveau |
-| **Couverture legacy** | **49 %** | 0% → 49% |
+| **APEX 26.1 apps** | **5 specs + 12 vues partagées** | nouveau |
 | Deprecated 26ai fixes | **4 patterns** | 0 → 4 |
+| **Couverture legacy** | **49 %** | 0% → 49% |
 
 ## 🏛️ Schémas (17)
 
@@ -170,7 +184,22 @@ erp-db-23ai/
 │   ├── 56_partition_effectives.sql
 │   ├── 57_etl_legacy_csv.sql
 │   └── 99_validation.sql
-├── seed_data/       # 31 fichiers de seed
+├── apex/            # UI APEX 26.1
+│   ├── README_APEX_26_1.md
+│   ├── setup/
+│   │   ├── 01_apex_workspace.sql       (workspace REGAL)
+│   │   ├── 02_ords_enable_parsers.sql  (ORDS sur APP_*)
+│   │   ├── 03_apex_auth_setup.sql      (pkg_apex_auth)
+│   │   ├── 04_apex_components.sql      (12 vues partagées)
+│   │   └── 05_apex_litoko_branding.sql (logo/CSS/JS)
+│   └── apps/
+│       ├── SPEC_app100_pos.md          (POS/Ventes)
+│       ├── SPEC_app200_stock.md        (Stock hub-spoke)
+│       ├── SPEC_app300_achats.md       (Achats/Fournisseurs)
+│       ├── SPEC_app400_compta.md       (Compta OHADA + Fiscal CG)
+│       ├── SPEC_app500_admin.md        (Admin système)
+│       └── import_app.sql              (helper import)
+├── seed_data/       # 40 fichiers de seed
 ├── docs/            # CSV legacy REGAL + docs
 ├── old-office/      # Architecture legacy complète
 ├── ARCHITECTURE_HUB_SPOKE.md
