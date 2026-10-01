@@ -55,7 +55,8 @@ for seed in \
   S28_seed_payroll_congo.sql \
   S29_seed_tva_congo.sql \
   S30_seed_regal_topology.sql \
-  S31_seed_legacy_gap.sql
+  S31_seed_legacy_gap.sql \
+  S32_re_seed_real_codes.sql
 do
     echo ""
     echo "▶ Seed : $seed"
