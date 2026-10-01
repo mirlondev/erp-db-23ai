@@ -2,18 +2,14 @@
 -- Import des applications APEX REGAL (workspace REGAL)
 -- ============================================================
 -- Usage :
---   sqlplus sys/oracle@localhost:1521/FREEPDB1 as sysdba \
---     @import_app.sql <id_app> <fichier_export.sql>
--- Exemples :
---   @import_app.sql 100 app-100-pos.sql
---   @import_app.sql 500 app-500-admin.sql
+--   @apex/apps/import_app.sql <id_app> <fichier_export.sql>
 --
--- Prérequis : apex/setup/01→03 joués, exports générés depuis l'IDE
--- (App Builder → Export Application, format "Database application").
+-- Prérequis : workspace REGAL créé et export SQL généré depuis APEX.
 -- ============================================================
 SET DEFINE ON
 SET SERVEROUTPUT ON SIZE UNLIMITED
 WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 DEFINE APP_ID    = &1
 DEFINE APP_FILE  = &2
@@ -23,25 +19,46 @@ PROMPT Import APEX : app &APP_ID ← &APP_FILE (workspace REGAL)
 PROMPT ══════════════════════════════════════════════════════════
 
 DECLARE
-  v_ws_id NUMBER;
+  v_workspace_id NUMBER;
+  v_application_id NUMBER := TO_NUMBER('&APP_ID');
 BEGIN
-  SELECT workspace_id INTO v_ws_id
+  IF v_application_id NOT IN (100, 200, 300, 400, 500) THEN
+    RAISE_APPLICATION_ERROR(-20602, 'ID application attendu : 100, 200, 300, 400 ou 500.');
+  END IF;
+
+  SELECT workspace_id INTO v_workspace_id
     FROM apex_workspaces WHERE workspace = UPPER('REGAL');
-  APEX_INSTANCE_ADMIN.SET_WORKSPACE('REGAL'); -- contexte workspace pour l'import
-  DBMS_OUTPUT.PUT_LINE('Workspace REGAL résolu (id='||v_ws_id||').');
+  APEX_APPLICATION_INSTALL.SET_WORKSPACE('REGAL');
+  APEX_APPLICATION_INSTALL.SET_WORKSPACE_ID(v_workspace_id);
+  APEX_APPLICATION_INSTALL.SET_APPLICATION_ID(v_application_id);
+  DBMS_OUTPUT.PUT_LINE('Workspace REGAL résolu (id='||v_workspace_id||').');
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE_APPLICATION_ERROR(-20601, 'Workspace REGAL introuvable — jouer setup/01_apex_workspace.sql');
 END;
 /
 
--- La commande d'import SQLPlus standard (disponible avec le kit APEX) :
+-- Exécute le fichier d'export APEX fourni en argument.
 @&APP_FILE
 
 COMMIT;
 
+DECLARE
+  v_workspace_id NUMBER;
+  v_application_count NUMBER;
+BEGIN
+  SELECT workspace_id INTO v_workspace_id
+    FROM apex_workspaces WHERE workspace = UPPER('REGAL');
+  SELECT COUNT(*) INTO v_application_count
+    FROM apex_applications
+   WHERE workspace_id = v_workspace_id
+     AND application_id = TO_NUMBER('&APP_ID');
+  IF v_application_count = 0 THEN
+    RAISE_APPLICATION_ERROR(-20603, 'Application absente du workspace REGAL après import.');
+  END IF;
+END;
+/
+
 PROMPT
-PROMPT ✅ Application &APP_ID importée. Vérifier :
-PROMPT   SELECT application_id, application_name FROM apex_applications
-PROMPT    WHERE workspace = (SELECT workspace_id FROM apex_workspaces WHERE workspace='REGAL');
-PROMPT puis courir les pages via :
+PROMPT Application &APP_ID importée et vérifiée dans REGAL.
+PROMPT URL :
 PROMPT   http://<host>:8080/apex/f?p=&APP_ID:1:::REGAL

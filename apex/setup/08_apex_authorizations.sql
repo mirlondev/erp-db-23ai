@@ -1,22 +1,11 @@
 -- ============================================================
--- APEX SETUP 08 : Schémas d'autorisation REGAL (5 rôles)
--- ============================================================
--- Crée 5 schémas d'autorisation APEX liés à app_sys.sys_user_role :
---
---   REGAL_CAISSIER    : ventes, sessions POS, paiements
---   REGAL_VENDEUR     : + stocks, produits (lecture seule prix)
---   REGAL_MANAGER     : + transferts, achats, RH
---   REGAL_COMPTABLE   : + écritures GL, fiscal, déclarations
---   REGAL_ADMIN       : full access, config, BRANDS, USERS
---
--- Chaque schéma APEX utilise un appel à app_sys.fn_apex_has_role()
--- qui vérifie les rôles dans sys_user_role.
+-- APEX SETUP 08 : Autorisations REGAL sur le modèle sécurité du script 29
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
@@ -24,114 +13,90 @@ PROMPT ════════════════════════�
 PROMPT   APEX SETUP 08 — Authorizations REGAL
 PROMPT ══════════════════════════════════════════════════════════
 
--- ============================================================
--- 1) Tables roles & user_roles
--- ============================================================
+-- SYS_ROLE et SYS_USER_ROLE sont créées par scripts/29_lot_r13_security.sql.
+MERGE INTO sys_role target
+USING (
+  SELECT 'REGAL_CAISSIER' role_code, 'Caissier POS' role_name, 1 role_level,
+         'Sessions caisse, tickets, paiements cash/mobile' description FROM dual
+  UNION ALL SELECT 'REGAL_VENDEUR', 'Vendeur boutique', 2,
+         'Lecture stock et produits' FROM dual
+  UNION ALL SELECT 'REGAL_MANAGER', 'Manager magasin', 3,
+         'Transferts, achats et RH' FROM dual
+  UNION ALL SELECT 'REGAL_COMPTABLE', 'Comptable', 4,
+         'Comptabilité et déclarations fiscales' FROM dual
+  UNION ALL SELECT 'REGAL_ADMIN', 'Administrateur système', 5,
+         'Administration REGAL' FROM dual
+  UNION ALL SELECT 'REGAL_SUPERADMIN', 'Super administrateur Oracle', 9,
+         'Administration complète' FROM dual
+) source
+ON (target.role_code = source.role_code)
+WHEN MATCHED THEN UPDATE SET
+  role_name = source.role_name,
+  role_level = source.role_level,
+  description = source.description,
+  is_active = TRUE
+WHEN NOT MATCHED THEN INSERT (role_code, role_name, role_level, description)
+  VALUES (source.role_code, source.role_name, source.role_level, source.description);
+
 BEGIN
-  EXECUTE IMMEDIATE 'DROP TABLE sys_user_role CASCADE CONSTRAINTS';
-EXCEPTION WHEN OTHERS THEN NULL;
+  EXECUTE IMMEDIATE 'CREATE TABLE apex_user_site_access (
+    user_id NUMBER NOT NULL REFERENCES sys_user(user_id) ON DELETE CASCADE,
+    site_code VARCHAR2(30) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    valid_from DATE DEFAULT SYSDATE NOT NULL,
+    valid_to DATE,
+    CONSTRAINT pk_apex_user_site_access PRIMARY KEY (user_id, site_code))';
+EXCEPTION WHEN OTHERS THEN
+  IF SQLCODE != -955 THEN RAISE; END IF;
 END;
 /
 
-CREATE TABLE sys_role (
-  role_id         NUMBER GENERATED ALWAYS AS IDENTITY,
-  role_code       VARCHAR2(30)  NOT NULL,
-  role_name       VARCHAR2(120) NOT NULL,
-  role_level      NUMBER(2)     NOT NULL,   -- 1=bas, 5=haut
-  description     VARCHAR2(500),
-  is_active       BOOLEAN       DEFAULT TRUE,
-  created_at      TIMESTAMP     DEFAULT SYSTIMESTAMP,
-  CONSTRAINT pk_sys_role PRIMARY KEY (role_id),
-  CONSTRAINT uk_sys_role UNIQUE (role_code)
-);
+MERGE INTO sys_user_role target
+USING (
+  SELECT u.user_id, seed.role_code
+    FROM (
+      SELECT 'ADMIN' user_code, 'REGAL_SUPERADMIN' role_code FROM dual
+      UNION ALL SELECT 'CAISSIER_PNR', 'REGAL_CAISSIER' FROM dual
+      UNION ALL SELECT 'MANAGER_PNR', 'REGAL_MANAGER' FROM dual
+      UNION ALL SELECT 'COMPTABLE_BZV', 'REGAL_COMPTABLE' FROM dual
+    ) seed
+    JOIN sys_user u ON u.user_code = seed.user_code
+) source
+ON (target.user_id = source.user_id AND target.role_code = source.role_code)
+WHEN MATCHED THEN UPDATE SET is_active = TRUE
+WHEN NOT MATCHED THEN INSERT (user_id, role_code, assigned_by, is_active)
+  VALUES (source.user_id, source.role_code, 'SYSTEM', TRUE);
 
-CREATE TABLE sys_user_role (
-  user_role_id    NUMBER GENERATED ALWAYS AS IDENTITY,
-  user_id         NUMBER        NOT NULL,
-  role_id         NUMBER        NOT NULL,
-  site_code       VARCHAR2(10),             -- null = tous sites
-  valid_from      DATE          DEFAULT SYSDATE,
-  valid_to        DATE,
-  granted_by      VARCHAR2(20),
-  granted_at      TIMESTAMP     DEFAULT SYSTIMESTAMP,
-  CONSTRAINT pk_sys_user_role PRIMARY KEY (user_role_id),
-  CONSTRAINT uk_sys_user_role UNIQUE (user_id, role_id, site_code)
-);
-
-ALTER TABLE sys_user_role
-  ADD CONSTRAINT fk_user_role_user FOREIGN KEY (user_id) REFERENCES sys_user(user_id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_user_role_role FOREIGN KEY (role_id) REFERENCES sys_role(role_id);
-
--- ============================================================
--- 2) Seed 5 rôles REGAL
--- ============================================================
-PROMPT
-PROMPT [1] 5 rôles REGAL
-INSERT INTO sys_role (role_code, role_name, role_level, description) VALUES
-  ('REGAL_CAISSIER',  'Caissier POS',                1, 'Sessions caisse, tickets, paiements cash/mobile');
-INSERT INTO sys_role (role_code, role_name, role_level, description) VALUES
-  ('REGAL_VENDEUR',   'Vendeur boutique',            2, 'Lecture stock, produits, prix. Pas d''écritures comptables');
-INSERT INTO sys_role (role_code, role_name, role_level, description) VALUES
-  ('REGAL_MANAGER',   'Manager magasin',             3, 'Transferts, achats, RH, clôtures sessions');
-INSERT INTO sys_role (role_code, role_name, role_level, description) VALUES
-  ('REGAL_COMPTABLE', 'Comptable',                   4, 'Écritures GL, fiscal CG, déclarations TVA/IS, immobilisations');
-INSERT INTO sys_role (role_code, role_name, role_level, description) VALUES
-  ('REGAL_ADMIN',     'Administrateur système',      5, 'Full access : config, BRANDS, USERS, ROLES, paramètres');
-
--- Admin de l'app (superadmin pour DEV/test)
-INSERT INTO sys_role (role_code, role_name, role_level, description) VALUES
-  ('REGAL_SUPERADMIN', 'Super administrateur Oracle', 9, 'SYS/DBA — tous droits sur tous les schémas');
+MERGE INTO apex_user_site_access target
+USING (
+  SELECT u.user_id, seed.site_code
+    FROM (
+      SELECT 'CAISSIER_PNR' user_code, 'PNR-OFC' site_code FROM dual
+      UNION ALL SELECT 'MANAGER_PNR', 'PNR-B01' FROM dual
+    ) seed
+    JOIN sys_user u ON u.user_code = seed.user_code
+) source
+ON (target.user_id = source.user_id AND target.site_code = source.site_code)
+WHEN MATCHED THEN UPDATE SET is_active = TRUE
+WHEN NOT MATCHED THEN INSERT (user_id, site_code, is_active)
+  VALUES (source.user_id, source.site_code, TRUE);
 COMMIT;
 
--- ============================================================
--- 3) Seed affectations users (démo)
--- ============================================================
-PROMPT
-PROMPT [2] Affectations users (démo)
-INSERT INTO sys_user_role (user_id, role_id, granted_by)
-SELECT u.user_id, r.role_id, 'SYSTEM'
-  FROM sys_user u, sys_role r
- WHERE u.user_code = 'ADMIN' AND r.role_code = 'REGAL_SUPERADMIN';
-
-INSERT INTO sys_user_role (user_id, role_id, granted_by)
-SELECT u.user_id, r.role_id, 'SYSTEM'
-  FROM sys_user u, sys_role r
- WHERE u.user_code = 'CAISSIER_PNR' AND r.role_code = 'REGAL_CAISSIER';
-
-INSERT INTO sys_user_role (user_id, role_id, site_code, granted_by)
-SELECT u.user_id, r.role_id, 'PNR-B01', 'SYSTEM'
-  FROM sys_user u, sys_role r
- WHERE u.user_code = 'MANAGER_PNR' AND r.role_code = 'REGAL_MANAGER';
-
-INSERT INTO sys_user_role (user_id, role_id, granted_by)
-SELECT u.user_id, r.role_id, 'SYSTEM'
-  FROM sys_user u, sys_role r
- WHERE u.user_code = 'COMPTABLE_BZV' AND r.role_code = 'REGAL_COMPTABLE';
-COMMIT;
-
--- ============================================================
--- 4) Package fn_apex_has_role
--- ============================================================
-PROMPT
-PROMPT [3] Package fn_apex_has_role
 CREATE OR REPLACE PACKAGE pkg_apex_auth_v2 AS
-  -- Vérifie qu'un user APEX a un rôle donné
   FUNCTION has_role(
     p_username VARCHAR2,
     p_role     VARCHAR2,
     p_site     VARCHAR2 DEFAULT NULL
   ) RETURN BOOLEAN;
 
-  -- Vérifie qu'un user a au moins un des rôles
   FUNCTION has_any_role(
     p_username VARCHAR2,
-    p_roles    VARCHAR2,  -- CSV 'CAISSIER,VENDEUR'
+    p_roles    VARCHAR2,
     p_site     VARCHAR2 DEFAULT NULL
   ) RETURN BOOLEAN;
 
-  -- Liste les sites accessibles
-  FUNCTION user_sites(p_username VARCHAR2) RETURN VARCHAR2;  -- CSV
-  FUNCTION user_role_codes(p_username VARCHAR2) RETURN VARCHAR2;  -- CSV
+  FUNCTION user_sites(p_username VARCHAR2) RETURN VARCHAR2;
+  FUNCTION user_role_codes(p_username VARCHAR2) RETURN VARCHAR2;
   FUNCTION user_role_level(p_username VARCHAR2) RETURN NUMBER;
 END pkg_apex_auth_v2;
 /
@@ -145,14 +110,24 @@ CREATE OR REPLACE PACKAGE BODY pkg_apex_auth_v2 AS
     SELECT COUNT(*) INTO v_cnt
       FROM sys_user_role ur
       JOIN sys_user u ON u.user_id = ur.user_id
-      JOIN sys_role r ON r.role_id = ur.role_id
-     WHERE u.user_code = UPPER(p_username)
-       AND u.is_active = 'Y'
+      JOIN sys_role r ON r.role_code = ur.role_code
+     WHERE UPPER(u.user_code) = UPPER(p_username)
+       AND u.is_active = TRUE
+       AND ur.is_active = TRUE
+       AND r.is_active = TRUE
        AND r.role_code = UPPER(p_role)
-       AND r.is_active = 'Y'
        AND (ur.valid_from IS NULL OR ur.valid_from <= SYSDATE)
-       AND (ur.valid_to   IS NULL OR ur.valid_to   >= SYSDATE)
-       AND (ur.site_code IS NULL OR ur.site_code = p_site OR p_site IS NULL);
+       AND (ur.valid_to IS NULL OR ur.valid_to >= SYSDATE)
+       AND (p_site IS NULL
+            OR r.role_code IN ('REGAL_ADMIN', 'REGAL_SUPERADMIN')
+            OR EXISTS (
+                 SELECT 1
+                   FROM apex_user_site_access usa
+                  WHERE usa.user_id = u.user_id
+                    AND usa.site_code = p_site
+                    AND usa.is_active = TRUE
+                    AND usa.valid_from <= SYSDATE
+                    AND (usa.valid_to IS NULL OR usa.valid_to >= SYSDATE)));
     RETURN v_cnt > 0;
   END has_role;
 
@@ -160,10 +135,12 @@ CREATE OR REPLACE PACKAGE BODY pkg_apex_auth_v2 AS
     RETURN BOOLEAN IS
     v_ret BOOLEAN := FALSE;
   BEGIN
-    FOR r IN (SELECT TRIM(REGEXP_SUBSTR(p_roles, '[^,]+', 1, LEVEL)) AS role_code
-                FROM DUAL
-             CONNECT BY LEVEL <= REGEXP_COUNT(p_roles, ',') + 1) LOOP
-      IF has_role(p_username, r.role_code, p_site) THEN
+    FOR role_row IN (
+      SELECT TRIM(REGEXP_SUBSTR(p_roles, '[^,]+', 1, LEVEL)) AS role_code
+        FROM dual
+      CONNECT BY LEVEL <= REGEXP_COUNT(p_roles, ',') + 1
+    ) LOOP
+      IF has_role(p_username, role_row.role_code, p_site) THEN
         v_ret := TRUE;
         EXIT;
       END IF;
@@ -176,11 +153,16 @@ CREATE OR REPLACE PACKAGE BODY pkg_apex_auth_v2 AS
   BEGIN
     SELECT LISTAGG(site_code, ',') WITHIN GROUP (ORDER BY site_code)
       INTO v_csv
-      FROM (SELECT DISTINCT ur.site_code
-              FROM sys_user_role ur
-              JOIN sys_user u ON u.user_id = ur.user_id
-             WHERE u.user_code = UPPER(p_username)
-               AND ur.site_code IS NOT NULL);
+      FROM (
+        SELECT DISTINCT usa.site_code
+          FROM apex_user_site_access usa
+          JOIN sys_user u ON u.user_id = usa.user_id
+         WHERE UPPER(u.user_code) = UPPER(p_username)
+           AND u.is_active = TRUE
+           AND usa.is_active = TRUE
+           AND usa.valid_from <= SYSDATE
+           AND (usa.valid_to IS NULL OR usa.valid_to >= SYSDATE)
+      );
     RETURN v_csv;
   END user_sites;
 
@@ -191,116 +173,60 @@ CREATE OR REPLACE PACKAGE BODY pkg_apex_auth_v2 AS
       INTO v_csv
       FROM sys_user_role ur
       JOIN sys_user u ON u.user_id = ur.user_id
-      JOIN sys_role r ON r.role_id = ur.role_id
-     WHERE u.user_code = UPPER(p_username)
-       AND r.is_active = 'Y';
+      JOIN sys_role r ON r.role_code = ur.role_code
+     WHERE UPPER(u.user_code) = UPPER(p_username)
+       AND u.is_active = TRUE
+       AND ur.is_active = TRUE
+       AND r.is_active = TRUE
+       AND (ur.valid_from IS NULL OR ur.valid_from <= SYSDATE)
+       AND (ur.valid_to IS NULL OR ur.valid_to >= SYSDATE);
     RETURN v_csv;
   END user_role_codes;
 
   FUNCTION user_role_level(p_username VARCHAR2) RETURN NUMBER IS
-    v_max NUMBER := 0;
+    v_level NUMBER;
   BEGIN
-    SELECT MAX(r.role_level)
-      INTO v_max
+    SELECT NVL(MAX(r.role_level), 0)
+      INTO v_level
       FROM sys_user_role ur
       JOIN sys_user u ON u.user_id = ur.user_id
-      JOIN sys_role r ON r.role_id = ur.role_id
-     WHERE u.user_code = UPPER(p_username)
-       AND r.is_active = 'Y';
-    RETURN v_max;
+      JOIN sys_role r ON r.role_code = ur.role_code
+     WHERE UPPER(u.user_code) = UPPER(p_username)
+       AND u.is_active = TRUE
+       AND ur.is_active = TRUE
+       AND r.is_active = TRUE
+       AND (ur.valid_from IS NULL OR ur.valid_from <= SYSDATE)
+       AND (ur.valid_to IS NULL OR ur.valid_to >= SYSDATE);
+    RETURN v_level;
   END user_role_level;
 
 END pkg_apex_auth_v2;
 /
+SHOW ERRORS
+
+DECLARE
+  v_error_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_error_count
+    FROM user_errors
+   WHERE name = 'PKG_APEX_AUTH_V2'
+     AND type IN ('PACKAGE', 'PACKAGE BODY');
+  IF v_error_count > 0 THEN
+    RAISE_APPLICATION_ERROR(-20003, 'PKG_APEX_AUTH_V2 contient des erreurs de compilation.');
+  END IF;
+END;
+/
+
 GRANT EXECUTE ON pkg_apex_auth_v2 TO app_api;
-PROMPT ✓ pkg_apex_auth_v2 créé.
-
--- ============================================================
--- 5) Génération du script APEX 26.1 pour les authorizations
--- ============================================================
-PROMPT
-PROMPT [4] Génération script d'enregistrement APEX
-SET LINESIZE 300
-SET LONG 10000
-SET LONGCHUNKSIZE 2000
-
-DECLARE
-  v_lines CLOB;
-BEGIN
-  v_lines := v_lines || '-- ═══ A exécuter en tant qu''ADMIN APEX dans le workspace REGAL ═══' || CHR(10);
-  v_lines := v_lines || '-- (Shared Components → Authorization Schemes → Create)' || CHR(10) || CHR(10);
-
-  FOR r IN (
-    SELECT role_code, role_name, role_level
-      FROM sys_role WHERE is_active = 'Y' ORDER BY role_level
-  ) LOOP
-    v_lines := v_lines ||
-      '-- ▸ Authorization Scheme: ' || r.role_name || CHR(10) ||
-      'BEGIN' || CHR(10) ||
-      '  APEX_ACL.REMOVE_USER_ROLE(p_application_id => 100, p_user_name => :APP_USER, p_role_static_id => ''' || r.role_code || ''');' || CHR(10) ||
-      '  APEX_ACL.GRANT_USER_ROLE(p_application_id => 100, p_user_name => :APP_USER, p_role_static_id => ''' || r.role_code || ''');' || CHR(10) ||
-      'END;' || CHR(10) ||
-      '/' || CHR(10) || CHR(10);
-  END LOOP;
-
-  v_lines := v_lines || '-- PL/SQL Function Body returning BOOLEAN (pour Authorization Scheme PL/SQL):' || CHR(10) ||
-    'RETURN app_sys.pkg_apex_auth_v2.has_role(:APP_USER, ''REGAL_CAISSIER'');' || CHR(10);
-END;
-/
 
 PROMPT
-PROMPT ═══ Validation ═══
-SELECT role_code, role_name, role_level FROM sys_role ORDER BY role_level;
+PROMPT APEX authorization function examples (one scheme per role):
+PROMPT RETURN app_sys.pkg_apex_auth_v2.has_role(:APP_USER, 'REGAL_CAISSIER');
+PROMPT Return FALSE for site-specific access unless a site is assigned.
 
-PROMPT
-PROMPT ═══ Tests ═══
+SELECT role_code, role_name, role_level
+  FROM sys_role
+ WHERE is_active = TRUE
+ ORDER BY role_level;
 
-PROMPT [T1] ADMIN → SUPERADMIN ?
-DECLARE
-  v_has BOOLEAN;
-BEGIN
-  v_has := pkg_apex_auth_v2.has_role('ADMIN', 'REGAL_SUPERADMIN');
-  DBMS_OUTPUT.PUT_LINE('  ADMIN REGAL_SUPERADMIN = ' || CASE WHEN v_has THEN 'TRUE' ELSE 'FALSE' END);
-END;
-/
-
-PROMPT [T2] CAISSIER_PNR → CAISSIER ?
-DECLARE
-  v_has BOOLEAN;
-BEGIN
-  v_has := pkg_apex_auth_v2.has_role('CAISSIER_PNR', 'REGAL_CAISSIER', 'PNR-OFC');
-  DBMS_OUTPUT.PUT_LINE('  CAISSIER_PNR REGAL_CAISSIER @ PNR-OFC = ' || CASE WHEN v_has THEN 'TRUE' ELSE 'FALSE' END);
-END;
-/
-
-PROMPT [T3] MANAGER_PNR → sites accessibles
-DECLARE
-  v_sites VARCHAR2(4000);
-BEGIN
-  v_sites := pkg_apex_auth_v2.user_sites('MANAGER_PNR');
-  DBMS_OUTPUT.PUT_LINE('  MANAGER_PNR sites = ' || NVL(v_sites, '(aucun)'));
-END;
-/
-
-PROMPT [T4] has_any_role (multi-roles)
-DECLARE
-  v_has BOOLEAN;
-BEGIN
-  v_has := pkg_apex_auth_v2.has_any_role('COMPTABLE_BZV', 'REGAL_MANAGER,REGAL_COMPTABLE');
-  DBMS_OUTPUT.PUT_LINE('  COMPTABLE_BZV has MANAGER ou COMPTABLE = ' || CASE WHEN v_has THEN 'TRUE' ELSE 'FALSE' END);
-END;
-/
-
-PROMPT [T5] Volumétrie users / roles
-SELECT 'users' AS type, COUNT(*) AS nb FROM sys_user
-UNION ALL SELECT 'rôles',     COUNT(*) FROM sys_role
-UNION ALL SELECT 'affectations', COUNT(*) FROM sys_user_role;
-
-PROMPT
-PROMPT ══════════════════════════════════════════════════════════
-PROMPT   ✅ APEX SETUP 08 — 6 rôles + 4 affectations + pkg
-PROMPT   - REGAL_CAISSIER, REGAL_VENDEUR, REGAL_MANAGER
-PROMPT   - REGAL_COMPTABLE, REGAL_ADMIN, REGAL_SUPERADMIN
-PROMPT   - pkg_apex_auth_v2.has_role, user_sites, etc.
-PROMPT ══════════════════════════════════════════════════════════
-EXIT;
+PROMPT APEX SETUP 08 terminé.

@@ -104,8 +104,18 @@ cd /workspace/erp-db-23ai
 | 400 | **Comptabilité OHADA** | `APP_GL` | `apps/SPEC_app400_compta.md` | Écritures (`gl_entry_line_v2` partitionné), lettrage, déclarations fiscales Congo CEMAC, grand livre |
 | 500 | **Administration système** | `APP_SYS` | `apps/SPEC_app500_admin.md` | Outbox/CDC (`outbox_event`), jobs, i18n (`sys_message*`), sécurité PC/dépôt (`warehouse_pc_auth`) |
 
-Chaque application = un fichier d'export APEX dans `apps/` (généré depuis l'IDE),
-importable via `apps/import_app.sql <id> <fichier_export.sql>`.
+Les fichiers `SPEC_app*.md` décrivent les pages, mais ne sont pas des exports
+importables. Après avoir créé/exporté une application depuis APEX au format SQL,
+importer son fichier avec :
+
+```bash
+export APEX_DB_CONNECT='sys@localhost:1521/FREEPDB1 as sysdba'
+scripts/import_apex_app.sh 100 /chemin/vers/f100.sql
+```
+
+L’importateur limite les IDs à 100, 200, 300, 400 et 500, cible le workspace
+`REGAL`, puis vérifie que l’application est présente dans ce workspace.
+Les exports SQL ne sont pas encore versionnés dans `apex/apps/`.
 
 ### 3.1 Vues & fonctions partagées (`setup/04`)
 

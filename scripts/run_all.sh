@@ -2,7 +2,7 @@
 
 set -e
 
-CONN="system/oracle@localhost:1521/FREEPDB1"
+CONN="sys/oracle@localhost:1521/FREEPDB1 as sysdba"
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "═══════════════════════════════════════════════════════════"
@@ -65,19 +65,15 @@ for script in \
   52_sync_framework.sql \
   53_legacy_gap_filler.sql \
   54_partition_tables_volumineuses.sql \
-  55_pkg_etl_legacy_v2.sql \
-  55b_pkg_etl_legacy_v2_fix.sql \
   55c_pkg_etl_legacy_v3.sql \
-  56_partition_effectives.sql \
   56b_partition_fix.sql \
-  57_etl_legacy_csv.sql \
   57b_etl_legacy_csv_fix.sql
 do
     echo ""
     echo "▶ Exécution : $script"
     echo "───────────────────────────────────────────────────────────"
 
-    sqlplus -S "$CONN" <<EOF
+    sql -S "$CONN" <<EOF
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 WHENEVER OSERROR EXIT FAILURE
 
@@ -93,7 +89,7 @@ echo ""
 echo "▶ Validation finale"
 echo "───────────────────────────────────────────────────────────"
 
-sqlplus -S "$CONN" <<EOF
+sql "$CONN" <<EOF
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 WHENEVER OSERROR EXIT FAILURE
 

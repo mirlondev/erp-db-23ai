@@ -11,7 +11,7 @@
 # ============================================================
 set -e
 
-CONN="system/oracle@localhost:1521/FREEPDB1"
+CONN="sys/oracle@localhost:1521/FREEPDB1 as sysdba"
 SCRIPTS_DIR="$(cd "$(dirname "$0")/.." && pwd)/apex/setup"
 
 echo "═══════════════════════════════════════════════════════════"
@@ -35,8 +35,9 @@ do
     echo "▶ APEX : $script"
     echo "───────────────────────────────────────────────────────────"
 
-    sqlplus -S "$CONN" <<EOF
-WHENEVER SQLERROR CONTINUE
+    sql "$CONN" <<EOF
+  WHENEVER SQLERROR EXIT SQL.SQLCODE
+  WHENEVER OSERROR EXIT FAILURE
 @${SCRIPTS_DIR}/${script}
 EXIT
 EOF

@@ -12,15 +12,16 @@ PROMPT ════════════════════════�
 PROMPT APEX SETUP 02 — Enable ORDS schemas REGAL
 PROMPT ══════════════════════════════════════════════════════════
 
--- Activation via la procédure officielle ORDS_METADATA.ENABLE_ORDS
--- (signature: p_schema, p_enabled, p_auto_rest_auth, p_alias, ...).
+-- Activation via ORDS_ADMIN.ENABLE_SCHEMA.
 -- Idempotent : vérifie user_ords_enabled avant d'appeler.
 DECLARE
   v_cnt     NUMBER;
-  v_enabled VARCHAR2(5);
+  v_status  VARCHAR2(20);
 BEGIN
-  SELECT COUNT(*) INTO v_cnt FROM all_objects
-   WHERE owner = 'ORDS_METADATA' AND object_name = 'ENABLE_ORDS';
+  SELECT COUNT(*) INTO v_cnt FROM all_procedures
+   WHERE owner = 'ORDS_METADATA'
+     AND object_name = 'ORDS_ADMIN'
+     AND procedure_name = 'ENABLE_SCHEMA';
   IF v_cnt = 0 THEN
     DBMS_OUTPUT.PUT_LINE('!! ORDS non installé dans ce PDB.');
     DBMS_OUTPUT.PUT_LINE('   Lancer d''abord: java -jar ords.war install');
@@ -33,22 +34,20 @@ BEGIN
             WHERE username IN ('APP_API','APP_SALES','APP_INV','APP_GL',
                                'APP_SYS','APP_PURCHASE','APP_POS')) LOOP
     BEGIN
-      SELECT enabled INTO v_enabled
-        FROM ords_metadata.ordd_enabled_schemas_view
-       WHERE schema = r.username;
+      EXECUTE IMMEDIATE
+        'SELECT status FROM ords_metadata.dba_ords_schemas WHERE parsing_schema = :1'
+        INTO v_status USING r.username;
     EXCEPTION
-      WHEN NO_DATA_FOUND THEN v_enabled := 'N';
-      WHEN OTHERS        THEN v_enabled := 'N';
+      WHEN NO_DATA_FOUND THEN v_status := 'DISABLED';
+      WHEN OTHERS        THEN v_status := 'DISABLED';
     END;
 
-    IF v_enabled = 'Y' THEN
+    IF v_status = 'ENABLED' THEN
       DBMS_OUTPUT.PUT_LINE('  • '||r.username||' déjà activé — skip.');
     ELSE
-      ORDS_METADATA.ENABLE_ORDS(
-        p_schema          => r.username,
-        p_enabled         => TRUE,
-        p_auto_rest_auth  => FALSE,
-        p_alias           => 'regal-' || LOWER(SUBSTR(r.username, 5)));
+      EXECUTE IMMEDIATE
+        'BEGIN ORDS_ADMIN.ENABLE_SCHEMA(p_enabled => TRUE, p_schema => :1, p_url_mapping_type => :2, p_url_mapping_pattern => :3, p_auto_rest_auth => FALSE); END;'
+        USING r.username, 'BASE_PATH', 'regal-' || LOWER(SUBSTR(r.username, 5));
       DBMS_OUTPUT.PUT_LINE('  ✓ '||r.username||' → /ords/regal-'||LOWER(SUBSTR(r.username,5)));
     END IF;
   END LOOP;

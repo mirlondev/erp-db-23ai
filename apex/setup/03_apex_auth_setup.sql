@@ -4,22 +4,15 @@
 -- Pattern "Custom Authorization" + fonction de validation mot de passe.
 -- Les rôles APEX (REGAL_CAISSIER, REGAL_MAGASINIER, REGAL_COMPTABLE,
 -- REGAL_ADMIN) sont dérivés de app_sys.sys_user_role (script 29).
--- À jouer en APP_SYS (mots de passe hachés PBKDF2 via DBMS_CRYPTO
--- si dispo ; sinon SHA-256 — cohérent avec le seed existant).
+-- À jouer en SYS AS SYSDBA : accorde DBMS_CRYPTO, puis compile en APP_SYS.
+-- Les mots de passe sont hachés en SHA-256, comme le seed existant.
 -- Idempotent.
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
-
 -- DBMS_CRYPTO requis pour le hachage SHA-256 des mots de passe
-BEGIN
-  EXECUTE IMMEDIATE 'GRANT EXECUTE ON SYS.DBMS_CRYPTO TO app_sys';
-EXCEPTION WHEN OTHERS THEN
-  DBMS_OUTPUT.PUT_LINE('⚠ GRANT DBMS_CRYPTO refusé ('||SQLERRM||') — vérifier le mot de passe SYS.');
-END;
-/
+GRANT EXECUTE ON SYS.DBMS_CRYPTO TO app_sys;
 
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
@@ -55,13 +48,15 @@ CREATE OR REPLACE PACKAGE BODY pkg_apex_auth AS
   END hash_pw;
 
   FUNCTION authenticate(p_username VARCHAR2, p_password VARCHAR2) RETURN BOOLEAN IS
-    v_cnt NUMBER;
+    v_cnt          NUMBER;
+    v_password_hash VARCHAR2(64);
   BEGIN
+    v_password_hash := hash_pw(p_password);
     SELECT COUNT(*) INTO v_cnt
       FROM sys_user u
      WHERE UPPER(u.user_code) = UPPER(p_username)
        AND u.is_active = TRUE
-       AND u.password_hash = hash_pw(p_password);
+       AND u.password_hash = v_password_hash;
     log_login(p_username, v_cnt > 0);
     RETURN v_cnt > 0;
   EXCEPTION WHEN OTHERS THEN
@@ -72,11 +67,15 @@ CREATE OR REPLACE PACKAGE BODY pkg_apex_auth AS
   FUNCTION user_roles(p_username VARCHAR2) RETURN VARCHAR2 IS
     v_list VARCHAR2(4000);
   BEGIN
-    SELECT LISTAGG(ur.role_code, ',') WITHIN GROUP (ORDER BY ur.role_code)
+    SELECT LISTAGG(r.role_code, ',') WITHIN GROUP (ORDER BY r.role_code)
       INTO v_list
-      FROM sys_user_role ur JOIN sys_user u ON u.user_id = ur.user_id
+      FROM sys_user_role ur
+      JOIN sys_user u ON u.user_id = ur.user_id
+      JOIN sys_role r ON r.role_code = ur.role_code
      WHERE UPPER(u.user_code) = UPPER(p_username)
        AND ur.is_active = TRUE
+       AND r.is_active = TRUE
+       AND NVL(ur.valid_from, SYSDATE) <= SYSDATE
        AND NVL(ur.valid_to, SYSDATE+1) >= SYSDATE;
     RETURN v_list;
   END user_roles;
@@ -111,6 +110,19 @@ CREATE OR REPLACE PACKAGE BODY pkg_apex_auth AS
 END pkg_apex_auth;
 /
 SHOW ERRORS
+
+DECLARE
+  v_error_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_error_count
+    FROM user_errors
+   WHERE name = 'PKG_APEX_AUTH'
+     AND type = 'PACKAGE BODY';
+  IF v_error_count > 0 THEN
+    RAISE_APPLICATION_ERROR(-20002, 'PKG_APEX_AUTH contient des erreurs de compilation.');
+  END IF;
+END;
+/
 
 -- Grants vers le schéma workspace APEX
 GRANT EXECUTE ON pkg_apex_auth TO app_api;

@@ -23,7 +23,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 CONNECT app_api/AppApi#2026@localhost:1521/FREEPDB1
 
@@ -66,10 +66,10 @@ PROMPT [2/11] LOV Dépôts
 INSERT INTO apex_lov (lov_code, lov_name, sql_query, description) VALUES (
   'WAREHOUSES',
   'Entrepôts / Dépôts',
-  q'[SELECT warehouse_code AS d, warehouse_name || ' [' || warehouse_code || ']' AS r
+  q'~SELECT warehouse_code AS d, warehouse_name || ' [' || warehouse_code || ']' AS r
        FROM app_org.org_warehouse
       WHERE is_active = 'Y'
-      ORDER BY warehouse_code]'
+      ORDER BY warehouse_code~'
 );
 COMMIT;
 
