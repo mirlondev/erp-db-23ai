@@ -1,6 +1,6 @@
 # 📊 STATUS — État du projet erp-db-23ai
 
-> Dernière mise à jour : 2026-10-01 (fix consistency batch 27d3984)
+> Dernière mise à jour : 2026-10-01 11:00 (commit 9e61bc9 — APEX 26.1 focus + 3 fixes)
 > **⚠️ Note** : seed_data S23-S31 référençaient des codes inventés (DEP01/POS01).
 > DEP01/DEP02 sont maintenant créés par **S32_re_seed_real_codes.sql** + tous
 > les seeds sont re-exécutés avec les VRAIS codes (W90, CAI01, CAI02, ...).
@@ -13,13 +13,13 @@
 |---|---:|---:|
 | Tables modernes | **~195** | 49% des 391 legacy |
 | Schémas APP_* | **17** | cible 17 |
-| Scripts DDL | **60** (57 + 55b + 55c + 56b + 57b) | - |
+| Scripts DDL | **64** (60 + 55b/55c/56b/57b + apex 07/08/09/10/11) | - |
 | Seeds | **32** (S01-S31 + S32 re-seed) | - |
 | Packages PL/SQL | **9** (+ `pkg_apex_auth`) | - |
 | Triggers | **9** | - |
 | Tables partitionnées | **4** | - |
 | Tables externes ETL | **6** | - |
-| **APEX 26.1 specs** | **5 apps** + 12 vues partagées (fix setup/06) | ✅ |
+| **APEX 26.1 specs** | **5 apps** + 11 setup scripts + 11 LOVs + 6 rôles + 5 menus + 6 PDF + locale CG | ✅ |
 | Sites REGAL mappés | **7** | - |
 
 ## 📈 Couverture par schéma legacy
@@ -93,6 +93,29 @@
 | gl_entry_line | 2.8M | **10.6M** |
 | payment_history | 501K | **1.9M** |
 
+## 🎯 APEX 26.1 — 11 scripts setup (commit 9e61bc9)
+
+| # | Script | Contenu |
+|---|---|---|
+| 01 | workspace REGAL | Schéma APP_API, groupes APP_SALES/INV/GL/SYS, ORDS enable |
+| 02 | ORDS parsers | JSON/CSV/SOAP/WSS sur schémas APP_* |
+| 03 | auth setup | `pkg_apex_auth` (PBKDF2), comptes, rôles REGAL_* |
+| 04 | components | 12 vues métier partagées (1ère version — cassée) |
+| 05 | LITOKO branding | Logo SVG, CSS Congo, JS utils (`apex_static_file`) |
+| 06 | **FIX components** | 7 vues recréées (PK composite pos_session, etc.) |
+| **07** | **LOVs** | **11 Listes de valeurs partagées** + `apex_lov_api` |
+| **08** | **Authorizations** | **6 rôles REGAL** + `sys_role`/`sys_user_role` + `pkg_apex_auth_v2` |
+| **09** | **Nav menus** | **5 menus (33 entrées)** + `apex_nav_menu_v` CONNECT BY |
+| **10** | **PDF reports** | **6 templates** (Ticket 80mm, Facture A4, BL A5, Z caisse, TVA CG, paie LITOKO) |
+| **11** | **Locale Congo** | fr_CG, XAF, Africa/Brazzaville, CSS mobile 768px, `apex_messages_v` i18n |
+
+Apps métier (specs) :
+- **App 100 POS/Ventes** — caisse LITOKO, sessions, Z, formats tickets
+- **App 200 Stock** — hub-spoke, transferts, inventaires, alertes
+- **App 300 Achats** — BC, réceptions, fournisseurs, OTD
+- **App 400 Compta** — OHADA, écritures, fiscal CG (TVA 18.9%, IS), immos
+- **App 500 Admin** — users, rôles, sites, ETL, audit
+
 ## 🩹 Patch de cohérence (commit 687a40e)
 
 Les 5 bugs remontés ont été corrigés :
@@ -103,8 +126,9 @@ Les 5 bugs remontés ont été corrigés :
 | `ticket_line_v2` FK vers `ticket(ticket_id)` (PK composite) | `56_partition_effectives` | `scripts/56b_partition_fix.sql` (drop+recreate sans FK) |
 | `gl_entry_line_v2` : ORA-14761 MAXVALUE + INTERVAL | `56_partition_effectives` | `scripts/56b_partition_fix.sql` (RANGE simple) |
 | `fn_partition_info` BYTES dans all_tab_partitions | `56_partition_effectives` | `scripts/56b_partition_fix.sql` (dba_segments) |
-| `product.COMPANY_CODE`, `party.IS_ACTIVE`, `product_price.VALID_FROM` | `57_etl_legacy_csv` | `scripts/57b_etl_legacy_csv_fix.sql` (MERGE idempotent) |
-| PLS-00364 (utilisation `R` index), ORA-00942 tables absentes | `55b_pkg_etl_legacy_v2_fix` | `scripts/55c_pkg_etl_legacy_v3.sql` (helper get_target_count) |
+| `product.COMPANY_CODE`, `party.IS_ACTIVE`, `product_price.VALID_FROM` | `57_etl_legacy_csv` | `scripts/57b_etl_legacy_csv_fix.sql` v2 (MERGE + END LOOP + GRANTs + email) |
+| PLS-00364 (utilisation `R` index), ORA-00942 tables absentes | `55b_pkg_etl_legacy_v2_fix` | `scripts/55c_pkg_etl_legacy_v3.sql` v3.1 (SQL runtime) |
+| ORA-00942 `caisse.gcbrdd` à la compilation, FK gl_entry invalide, CASE dans EXECUTE IMMEDIATE | `56b_partition_fix`, `55c` | `scripts/55c_v3.1` (runtime SQL), `scripts/56b_v2` (DROP statique, FK conforme) |
 | Seeds S23-S31 : codes inventés DEP01/POS01 | `seed_data/S23-S31` | `seed_data/S32_re_seed_real_codes.sql` (DEP01/02 créés, re-seed) |
 
 ## 🐛 Deprecated patterns (26ai) — Tous fixés
