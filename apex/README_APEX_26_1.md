@@ -3,7 +3,11 @@
 > Suite du projet `erp-db-23ai` : le noyau base de données (scripts 00→57, hub-spoke,
 > outbox/CDC, partitionnement 23ai) est en place et compatible avec les anciens
 > scripts WS legacy (`KERNEL.TT_*`, `CAISSE.*`, `XCPTA.*` → schémas `APP_*`).
-> Ce dossier couvre la **couche UI APEX 26.1**.
+> Ce dossier couvre la **couche UI APEX 26.1** — 11 scripts de setup + 5 apps.
+>
+> **🎯 État APEX 26.1 (2026-10-01)** : 11/11 scripts setup + 5/5 apps spec.
+> Setup couvre : workspace, ORDS, auth, vues, branding LITOKO, **LOVs, authorizations,
+> nav menus, PDF reports, locale Congo**.
 
 ---
 
@@ -42,6 +46,53 @@ Scripts PL/SQL à jouer dans l'ordre (connecté en `SYS as sysdba` sur `FREEPDB1
 | 3 | `setup/03_apex_auth_setup.sql` | Comptes/rôles applicatifs REGAL_* pour le schéma d'authentification |
 | 4 | `setup/04_apex_components.sql` | 12 vues métier partagées + fonction `regal_split` (CSV → table pour filtres APEX) |
 | 5 | `setup/05_apex_litoko_branding.sql` | Branding LITOKO SARL : logo SVG, thème CSS (couleurs Congo), JS utilitaires |
+| 6 | `setup/06_apex_components_fix.sql` | **FIX** des 12 vues (colonnes réelles : PK composite `pos_session`, `pos_code` au lieu de `city`) |
+| 7 | `setup/07_apex_lovs.sql` | **11 Listes de valeurs (LOV) partagées** : sites, warehouses, POS, products, parties, GL accounts, payment methods, IRPP CG, VAT CG, CEMAC countries, doc types |
+| 8 | `setup/08_apex_authorizations.sql` | **6 rôles APEX** (CAISSIER, VENDEUR, MANAGER, COMPTABLE, ADMIN, SUPERADMIN) + `pkg_apex_auth_v2` |
+| 9 | `setup/09_apex_nav_menus.sql` | **5 menus hiérarchiques** (33 entrées) pour les 5 apps + vue CONNECT BY |
+| 10 | `setup/10_apex_pdf_reports.sql` | **6 templates PDF** (Ticket 80mm, Facture A4, BL A5, Z caisse, TVA CG, bulletin paie) |
+| 11 | `setup/11_apex_congo_locale.sql` | **Locale Congo Brazzaville** (XAF, fr_CG, Africa/Brazzaville, TVA 18.9%) + CSS mobile + `apex_messages_v` i18n |
+
+Exécution globale :
+```bash
+cd /workspace/erp-db-23ai
+./scripts/run_apex_setup.sh
+```
+
+### 2.1 Tables de référence APEX
+
+| Table | Rôle | Source |
+|---|---|---|
+| `app_api.apex_static_file` | Stockage logo / CSS / JS (équivalent Static App Files) | `setup/05_litoko_branding.sql` |
+| `app_api.apex_lov` | 11 LOVs (clé + SQL query) | `setup/07_apex_lovs.sql` |
+| `app_sys.sys_role` + `sys_user_role` | 6 rôles REGAL + affectations par site | `setup/08_apex_authorizations.sql` |
+| `app_api.apex_nav_menu` | 5 menus (33 entrées) | `setup/09_apex_nav_menus.sql` |
+| `app_api.apex_report_template` | 6 templates PDF | `setup/10_apex_pdf_reports.sql` |
+| `app_api.apex_locale_config` | 17 paramètres locale (XAF, fr_CG, Africa/Brazzaville) | `setup/11_apex_congo_locale.sql` |
+
+### 2.2 Packages helpers APEX
+
+| Package | Fonctions clés | Source |
+|---|---|---|
+| `app_sys.pkg_apex_auth` | `authenticate(user, pw)` (PBKDF2) | `setup/03_apex_auth_setup.sql` |
+| `app_sys.pkg_apex_auth_v2` | `has_role`, `has_any_role`, `user_sites`, `user_role_level` | `setup/08_apex_authorizations.sql` |
+| `app_api.apex_lov_api` | `get_lov_sql`, `lov_exists` | `setup/07_apex_lovs.sql` |
+| `app_api.apex_report_api` | `get_query`, `get_layout`, `get_format` | `setup/10_apex_pdf_reports.sql` |
+
+### 2.3 Vues APEX-ready
+
+| Vue | Source | Utilisation |
+|---|---|---|
+| `app_api.v_pos_session_kpi` | `setup/06_apex_components_fix.sql` | Sessions caisse (PK composite) |
+| `app_api.v_today_sales` | idem | CA jour par terminal |
+| `app_api.v_inv_stock_kpi` | idem | Stock par site avec valeur XAF |
+| `app_api.v_transfer_pipeline` | idem | Pipeline transferts cross-type |
+| `app_api.v_gl_account_balance` | idem | Soldes comptes OHADA |
+| `app_api.v_general_ledger` | idem | Grand livre (jointure composite) |
+| `app_api.v_supplier_otd` | idem | Fournisseurs OTD |
+| `app_api.apex_nav_menu_v` | `setup/09_apex_nav_menus.sql` | Menu hiérarchique CONNECT BY |
+| `app_api.apex_messages_v` | `setup/11_apex_congo_locale.sql` | Lookup i18n FR/EN |
+| `app_api.apex_locale_v` | idem | Paramètres locale |
 
 ## 3. Applications APEX par module
 

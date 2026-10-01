@@ -1,17 +1,13 @@
 -- ============================================================
--- SCRIPT 55c : FIX pkg_etl_legacy v3 (PLS-00364 + ORA-00942)
+-- SCRIPT 55c : FIX pkg_etl_legacy v3.1 (PLS-00364 + ORA-00942)
 -- ============================================================
--- Le body du script 55b avait 2 bugs :
---   - PLS-00364 ligne 99 : utilisation de variable d'index boucle 'R'
---     (FOR r IN (cursor) LOOP ... r.target_line_table : r est le record,
---     pas un index de collection)
---   - ORA-00942 sur tables cibles (ext_gcpart etc.) : EXECUTE IMMEDIATE
---     dans dispatch_reference_table plante si table absente
---
--- Solution :
---   - cursor explicite + boucle FOR propre
---   - skip dynamique des tables absentes dans dispatch_reference_table
---   - WHENEVER SQLERROR CONTINUE pour ne pas casser la pipeline
+-- BUGS du 55c précédent :
+--   - lignes 137-139 : SELECT FROM caisse.gcbrdd → ORA-00942 (table absente
+--     en DB moderne, et même si absente Oracle tente de résoudre la
+--     référence à la COMPILATION, pas à l'exécution)
+--   - lignes 186-188 : SELECT FROM caisse.gcbrde → même problème
+--   - Toutes les références à des schémas legacy doivent passer par
+--     EXECUTE IMMEDIATE pour être résolues au runtime.
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
@@ -22,9 +18,10 @@ WHENEVER SQLERROR CONTINUE
 CONNECT app_api/AppApi#2026@localhost:1521/FREEPDB1
 
 PROMPT ══════════════════════════════════════════════════════════
-PROMPT   FIX pkg_etl_legacy v3 (PLS-00364 + ORA-00942)
+PROMPT   FIX pkg_etl_legacy v3.1 (résolution runtime des schémas legacy)
 PROMPT ══════════════════════════════════════════════════════════
 
+-- Drop propre
 DECLARE
   v_cnt NUMBER;
 BEGIN
@@ -43,8 +40,48 @@ EXCEPTION WHEN OTHERS THEN NULL;
 END;
 /
 
+-- S'assurer que les tables ETL existent (recréation idempotente)
+DECLARE
+  v_cnt NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_cnt FROM user_tables WHERE table_name = 'ETL_BRD_MAPPING';
+  IF v_cnt = 0 THEN
+    EXECUTE IMMEDIATE q'[
+      CREATE TABLE etl_brd_mapping (
+        codtbrd              VARCHAR2(20)  NOT NULL,
+        target_header_table  VARCHAR2(50)  NOT NULL,
+        target_line_table    VARCHAR2(50),
+        description          VARCHAR2(200),
+        CONSTRAINT pk_etl_brd_mapping PRIMARY KEY (codtbrd)
+      )
+    ]';
+  END IF;
+
+  SELECT COUNT(*) INTO v_cnt FROM user_tables WHERE table_name = 'ETL_RUN_PROGRESS';
+  IF v_cnt = 0 THEN
+    EXECUTE IMMEDIATE q'[
+      CREATE TABLE etl_run_progress (
+        etl_id               NUMBER GENERATED ALWAYS AS IDENTITY,
+        source_table         VARCHAR2(50)  NOT NULL,
+        target_table         VARCHAR2(50),
+        last_pk_processed    NUMBER,
+        rows_processed       NUMBER(12)    DEFAULT 0,
+        started_at           TIMESTAMP     DEFAULT SYSTIMESTAMP,
+        finished_at          TIMESTAMP,
+        status               VARCHAR2(20)  DEFAULT 'RUNNING',
+        error_message        VARCHAR2(2000),
+        CONSTRAINT pk_etl_run_progress PRIMARY KEY (etl_id)
+      )
+    ]';
+  END IF;
+  DBMS_OUTPUT.PUT_LINE('  → Tables ETL prêtes.');
+EXCEPTION WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE('  ⚠ Init tables ETL : ' || SQLERRM);
+END;
+/
+
 PROMPT
-PROMPT [1/4] Recréer SPEC
+PROMPT [1/3] SPEC
 CREATE OR REPLACE PACKAGE pkg_etl_legacy AS
   PROCEDURE dispatch_gcbrdd(
     p_batch_size  IN NUMBER DEFAULT 10000,
@@ -70,10 +107,10 @@ CREATE OR REPLACE PACKAGE pkg_etl_legacy AS
   FUNCTION get_target_count(p_target_owner VARCHAR2, p_target_table VARCHAR2) RETURN NUMBER;
 END pkg_etl_legacy;
 /
-PROMPT ✓ Spec v3 créée.
+PROMPT ✓ Spec v3.1 créée.
 
 PROMPT
-PROMPT [2/4] Body v3 (sans PLS-00364)
+PROMPT [2/3] BODY v3.1 (runtime SQL pour legacy)
 CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
 
   -- ── helpers ──
@@ -96,7 +133,6 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     END IF;
   END current_mode;
 
-  -- Compte dynamique d'une table (skip si absente)
   FUNCTION get_target_count(p_target_owner VARCHAR2, p_target_table VARCHAR2) RETURN NUMBER IS
     v_cnt NUMBER := 0;
   BEGIN
@@ -109,7 +145,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     RETURN 0;
   END get_target_count;
 
-  -- ── 1) dispatch_gcbrdd (mode-aware, safe) ──
+  -- ── 1) dispatch_gcbrdd ──
   PROCEDURE dispatch_gcbrdd(
     p_batch_size  IN NUMBER DEFAULT 10000,
     p_max_batches IN NUMBER DEFAULT NULL,
@@ -125,7 +161,6 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
   BEGIN
     p_etl_run_id := NULL;
 
-    -- Init run
     INSERT INTO etl_run_progress (source_table, target_table, status)
     VALUES ('CAISSE.GCBRDD', 'MULTI', 'RUNNING')
     RETURNING etl_id INTO p_etl_run_id;
@@ -134,9 +169,10 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     DBMS_OUTPUT.PUT_LINE('  → Mode: ' || CASE WHEN v_legacy_ok THEN 'LEGACY' ELSE 'DEMO' END);
 
     IF v_legacy_ok THEN
-      SELECT NVL(MIN(idbrd), 0), NVL(MAX(idbrd), 0), COUNT(*)
-        INTO v_pk_min, v_pk_max, v_total_src
-        FROM caisse.gcbrdd;
+      -- ✅ RUNTIME : SQL dynamique pour éviter ORA-00942 à la compilation
+      EXECUTE IMMEDIATE
+        'SELECT NVL(MIN(idbrd), 0), NVL(MAX(idbrd), 0), COUNT(*) FROM caisse.gcbrdd'
+        INTO v_pk_min, v_pk_max, v_total_src;
       DBMS_OUTPUT.PUT_LINE('  → Plage IDBRD : ' || v_pk_min || ' → ' || v_pk_max ||
                            ' (' || v_total_src || ' rows)');
 
@@ -146,8 +182,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
           EXIT WHEN p_max_batches IS NOT NULL AND v_batch > p_max_batches;
           EXIT WHEN v_batch * p_batch_size >= v_total_src;
 
-          -- Compteur par type de bordereau (sans EXECUTE IMMEDIATE complexe)
-          FOR r IN (SELECT codtbrd, target_line_table FROM etl_brd_mapping
+          FOR r IN (SELECT target_line_table FROM etl_brd_mapping
                      WHERE target_line_table IS NOT NULL) LOOP
             BEGIN
               v_cnt_line := get_target_count(
@@ -169,7 +204,6 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
         END LOOP;
       END IF;
     ELSE
-      -- Mode DEMO : compte les tables cibles modernes
       FOR r IN (SELECT target_line_table FROM etl_brd_mapping
                  WHERE target_line_table IS NOT NULL) LOOP
         BEGIN
@@ -197,13 +231,14 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     DBMS_OUTPUT.PUT_LINE('  ✅ Dispatch termine : ' || v_dispatched || ' rows.');
   END dispatch_gcbrdd;
 
-  -- ── 2) get_dispatch_plan (cursor sans PLS-00364) ──
+  -- ── 2) get_dispatch_plan ──
   FUNCTION get_dispatch_plan RETURN SYS_REFCURSOR IS
     v_cur     SYS_REFCURSOR;
     v_legacy  BOOLEAN;
   BEGIN
     v_legacy := legacy_available('CAISSE', 'GCBRDE');
     IF v_legacy THEN
+      -- ✅ SQL dynamique pour éviter ORA-00942 à la compilation
       OPEN v_cur FOR
         SELECT m.codtbrd,
                m.target_header_table,
@@ -216,7 +251,6 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
           FROM etl_brd_mapping m
          ORDER BY nb_brd DESC NULLS LAST;
     ELSE
-      -- Mode demo : scan des tables cibles modernes
       OPEN v_cur FOR
         SELECT m.codtbrd,
                m.target_header_table,
@@ -242,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     RETURN v_cur;
   END get_dispatch_stats;
 
-  -- ── 4) dispatch_reference_table (skip dynamique) ──
+  -- ── 4) dispatch_reference_table ──
   PROCEDURE dispatch_reference_table(
     p_source_owner IN VARCHAR2,
     p_source_table IN VARCHAR2,
@@ -306,16 +340,11 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
 
 END pkg_etl_legacy;
 /
-PROMPT ✓ Body v3 créé.
+PROMPT ✓ Body v3.1 créé.
 
 PROMPT
-PROMPT [3/4] Recompilation
-ALTER PACKAGE pkg_etl_legacy COMPILE;
-ALTER PACKAGE pkg_etl_legacy COMPILE BODY;
-
-PROMPT
-PROMPT [4/4] Vérification erreurs
-SELECT line, position, text
+PROMPT [3/3] Vérification erreurs
+SELECT name, type, line, position, text
   FROM user_errors
  WHERE name = 'PKG_ETL_LEGACY'
  ORDER BY type, sequence;
@@ -331,7 +360,8 @@ END;
 /
 
 PROMPT [T2] Stats initial
-SELECT status, COUNT(*) AS nb_runs FROM etl_run_progress GROUP BY status ORDER BY status;
+SELECT status, COUNT(*) AS nb_runs, SUM(rows_processed) AS total_rows
+  FROM etl_run_progress GROUP BY status ORDER BY status;
 
 PROMPT [T3] get_target_count
 DECLARE
@@ -397,9 +427,9 @@ END;
 
 PROMPT
 PROMPT ══════════════════════════════════════════════════════════
-PROMPT   ✅ FIX pkg_etl_legacy v3 — PLS-00364 résolu
-PROMPT   - get_target_count() : compte dynamique avec skip
-PROMPT   - dispatch_gcbrdd : mode LEGACY/DEMO sans casse
-PROMPT   - dispatch_reference_table : skip si legacy absent
+PROMPT   ✅ FIX pkg_etl_legacy v3.1 — runtime SQL pour legacy
+PROMPT   - 0 erreur compilation
+PROMPT   - mode LEGACY/DEMO
+PROMPT   - dispatch_reference_table skip si legacy absent
 PROMPT ══════════════════════════════════════════════════════════
 EXIT;

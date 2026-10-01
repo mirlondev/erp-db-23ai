@@ -1,13 +1,14 @@
 -- ============================================================
--- SCRIPT 56b : FIX des partitions créées par 56_partition_effectives
+-- SCRIPT 56b : FIX partitions (v2) — colonnes réelles, FK valides
 -- ============================================================
--- 3 bugs corrigés :
---   1. ticket_line_v2 FK vers ticket(ticket_id) — n'existe pas,
---      ticket a une PK composite (terminal_id, ticket_no)
---   2. gl_entry_line_v2 MAXVALUE + INTERVAL = incompatible (ORA-14761)
---   3. fn_partition_info colonne BYTES inexistante (BYTES dans dba_segments)
---
--- Stratégie : drop + recréer les _v2 + recompiler fn_partition_info
+-- BUGS du 56b précédent :
+--   1. PLS-00103 dans le DROP dynamique : EXECUTE IMMEDIATE 'DROP ' ||
+--      CASE (SELECT ...) WHEN ... THEN ... — CASE-expression
+--      n'accepte pas de SELECT inline (résolu en PL/SQL statique).
+--   2. ORA-02270 sur gl_entry : PK réelle = (company_code, entry_no)
+--      et NON (company_code, entity_code, entry_no).
+--   3. fn_partition_info : BYTES n'est pas dans all_tab_partitions
+--      mais dans dba_segments → subquery nécessaire.
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
@@ -16,39 +17,27 @@ SET DEFINE OFF
 WHENEVER SQLERROR CONTINUE
 
 PROMPT ══════════════════════════════════════════════════════════
-PROMPT   FIX partitions 56 — colonnes réelles, FK valides
+PROMPT   FIX partitions 56b v2 — statique, FK conforme
 PROMPT ══════════════════════════════════════════════════════════
 
 -- ====================================================================
--- 1) app_sales.ticket_line_v2 — recréer SANS FK vers ticket (PK composite)
+-- 1) app_sales.ticket_line_v2 — drop statique, sans FK ticket
 -- ====================================================================
 CONNECT app_sales/AppSales#2026@localhost:1521/FREEPDB1
 
 PROMPT
-PROMPT [1/4] app_sales.ticket_line_v2 — drop+recreate SANS FK ticket
+PROMPT [1/4] app_sales.ticket_line_v2 — drop statique + recreate
 BEGIN
-  FOR o IN (SELECT object_name FROM user_objects
-             WHERE object_name IN ('TICKET_LINE_V2','PK_TICKET_LINE_V2')
-               AND object_type IN ('TABLE','INDEX','VIEW','CONSTRAINT')) LOOP
-    BEGIN
-      EXECUTE IMMEDIATE 'DROP ' ||
-        CASE (SELECT object_type FROM user_objects WHERE object_name = o.object_name AND ROWNUM = 1)
-          WHEN 'INDEX' THEN 'INDEX'
-          WHEN 'VIEW' THEN 'VIEW'
-          ELSE 'TABLE'
-        END || ' ' || o.object_name || ' CASCADE CONSTRAINTS';
-    EXCEPTION WHEN OTHERS THEN NULL;
-    END;
-  END LOOP;
-  DBMS_OUTPUT.PUT_LINE('  → ancien ticket_line_v2 droppé.');
-EXCEPTION WHEN OTHERS THEN NULL;
+  EXECUTE IMMEDIATE 'DROP TABLE ticket_line_v2 CASCADE CONSTRAINTS';
+EXCEPTION WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE('  drop ignoré : ' || SQLERRM);
 END;
 /
 
 CREATE TABLE ticket_line_v2 (
   ticket_line_id    NUMBER GENERATED ALWAYS AS IDENTITY,
-  terminal_id       VARCHAR2(12)  NOT NULL,                   -- PK composite de ticket
-  ticket_no         NUMBER(8)     NOT NULL,                   -- PK composite de ticket
+  terminal_id       VARCHAR2(12)  NOT NULL,
+  ticket_no         NUMBER(8)     NOT NULL,
   line_no           NUMBER(4)     NOT NULL,
   product_code      VARCHAR2(80)  NOT NULL,
   quantity          NUMBER(16,4)  NOT NULL,
@@ -58,10 +47,10 @@ CREATE TABLE ticket_line_v2 (
   tax_amount        NUMBER(16,4),
   amount_ttc        NUMBER(16,4),
   promotion_id      NUMBER,
-  site_code         VARCHAR2(10)  NOT NULL,                   -- partitionnement
-  sale_date         DATE          NOT NULL,                   -- partitionnement
+  site_code         VARCHAR2(10)  NOT NULL,
+  sale_date         DATE          NOT NULL,
   created_at        TIMESTAMP     DEFAULT SYSTIMESTAMP,
-  CONSTRAINT pk_ticket_line_v2       PRIMARY KEY (ticket_line_id)
+  CONSTRAINT pk_ticket_line_v2 PRIMARY KEY (ticket_line_id)
 )
 PARTITION BY RANGE (sale_date)
 INTERVAL (NUMTOYMINTERVAL(1, 'MONTH'))
@@ -78,31 +67,29 @@ SUBPARTITION TEMPLATE (
 )
 (PARTITION p_init VALUES LESS THAN (DATE '2026-01-01'));
 
-CREATE INDEX ix_ticket_line_v2_tk ON ticket_line_v2(terminal_id, ticket_no) LOCAL;
+CREATE INDEX ix_ticket_line_v2_tk   ON ticket_line_v2(terminal_id, ticket_no) LOCAL;
 CREATE INDEX ix_ticket_line_v2_prod ON ticket_line_v2(product_code) LOCAL;
 CREATE INDEX ix_ticket_line_v2_site ON ticket_line_v2(site_code, sale_date) LOCAL;
 
-PROMPT ✓ ticket_line_v2 recréée sans FK ticket.
+PROMPT ✓ ticket_line_v2 recréée sans FK ticket (PK composite).
 
 -- ====================================================================
--- 2) app_gl.gl_entry_line_v2 — recréer SANS INTERVAL (sinon MAXVALUE interdit)
+-- 2) app_gl.gl_entry_line_v2 — FK conforme (company_code, entry_no)
 -- ====================================================================
 CONNECT app_gl/AppGl#2026@localhost:1521/FREEPDB1
 
 PROMPT
-PROMPT [2/4] app_gl.gl_entry_line_v2 — drop+recreate sans INTERVAL
+PROMPT [2/4] app_gl.gl_entry_line_v2 — FK conforme à PK réelle
 BEGIN
-  FOR o IN (SELECT object_name FROM user_objects
-             WHERE object_name = 'GL_ENTRY_LINE_V2'
-               AND object_type IN ('TABLE','INDEX')) LOOP
-    BEGIN
-      EXECUTE IMMEDIATE 'DROP TABLE ' || o.object_name || ' CASCADE CONSTRAINTS';
-    EXCEPTION WHEN OTHERS THEN NULL;
-    END;
-  END LOOP;
+  EXECUTE IMMEDIATE 'DROP TABLE gl_entry_line_v2 CASCADE CONSTRAINTS';
+EXCEPTION WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE('  drop ignoré : ' || SQLERRM);
 END;
 /
 
+-- PK réelle de gl_entry = (company_code, entry_no)
+-- PK réelle de gl_entry_line = (company_code, entity_code, entry_no, line_no)
+-- Donc FK vers gl_entry doit être sur (company_code, entry_no) uniquement
 CREATE TABLE gl_entry_line_v2 (
   entry_line_id     NUMBER GENERATED ALWAYS AS IDENTITY,
   company_code      VARCHAR2(2)   NOT NULL,
@@ -111,48 +98,48 @@ CREATE TABLE gl_entry_line_v2 (
   line_no           NUMBER(5)     NOT NULL,
   account_code      VARCHAR2(8)   NOT NULL,
   party_code        VARCHAR2(8),
-  direction         VARCHAR2(1)   NOT NULL,                  -- D ou C
+  direction         VARCHAR2(1)   NOT NULL,
   company_debit     NUMBER(16,4)  DEFAULT 0,
   company_credit    NUMBER(16,4)  DEFAULT 0,
   fiscal_year       NUMBER(4)     NOT NULL,
-  -- Partitioning
   posting_date      DATE          NOT NULL,
   CONSTRAINT pk_gl_entry_line_v2 PRIMARY KEY (entry_line_id),
-  CONSTRAINT fk_gl_entry_line_v2_e FOREIGN KEY (company_code, entity_code, entry_no)
-    REFERENCES gl_entry(company_code, entity_code, entry_no) ON DELETE CASCADE,
+  -- ✅ FK conforme à la PK réelle de gl_entry : (company_code, entry_no)
+  CONSTRAINT fk_gl_entry_line_v2_e FOREIGN KEY (company_code, entry_no)
+    REFERENCES gl_entry(company_code, entry_no) ON DELETE CASCADE,
   CONSTRAINT ck_gl_entry_line_v2_a CHECK (direction IN ('D','C') AND
                                             NVL(company_debit,0) >= 0 AND NVL(company_credit,0) >= 0)
 )
 PARTITION BY RANGE (fiscal_year)
 (
-  PARTITION p_2022 VALUES LESS THAN (2023),
-  PARTITION p_2023 VALUES LESS THAN (2024),
-  PARTITION p_2024 VALUES LESS THAN (2025),
-  PARTITION p_2025 VALUES LESS THAN (2026),
-  PARTITION p_2026 VALUES LESS THAN (2027),
-  PARTITION p_2027 VALUES LESS THAN (2028),
-  PARTITION p_future VALUES LESS THAN (MAXVALUE)
+  PARTITION p_2022    VALUES LESS THAN (2023),
+  PARTITION p_2023    VALUES LESS THAN (2024),
+  PARTITION p_2024    VALUES LESS THAN (2025),
+  PARTITION p_2025    VALUES LESS THAN (2026),
+  PARTITION p_2026    VALUES LESS THAN (2027),
+  PARTITION p_2027    VALUES LESS THAN (2028),
+  PARTITION p_future  VALUES LESS THAN (MAXVALUE)
 );
 
-CREATE INDEX ix_gl_entry_line_v2_e ON gl_entry_line_v2(company_code, entity_code, entry_no) LOCAL;
+CREATE INDEX ix_gl_entry_line_v2_e ON gl_entry_line_v2(company_code, entry_no) LOCAL;
 CREATE INDEX ix_gl_entry_line_v2_a ON gl_entry_line_v2(account_code, fiscal_year) LOCAL;
 
-PROMPT ✓ gl_entry_line_v2 recréée (RANGE simple, MAXVALUE OK).
+PROMPT ✓ gl_entry_line_v2 recréée (FK conforme à PK réelle).
 
 -- ====================================================================
--- 3) fn_partition_info — utiliser dba_segments pour BYTES
+-- 3) fn_partition_info — BYTES via dba_segments
 -- ====================================================================
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
 PROMPT
-PROMPT [3/4] fn_partition_info — recompile avec dba_segments
+PROMPT [3/4] fn_partition_info — BYTES via dba_segments
 CREATE OR REPLACE FUNCTION fn_partition_info(
   p_owner VARCHAR2,
   p_table VARCHAR2
 ) RETURN SYS_REFCURSOR IS
   v_cur SYS_REFCURSOR;
 BEGIN
-  -- BYTES vient de dba_segments, PAS de all_tab_partitions
+  -- BYTES vient de dba_segments (PAS all_tab_partitions)
   OPEN v_cur FOR
     SELECT tp.partition_name,
            tp.partition_position,
@@ -173,7 +160,7 @@ END fn_partition_info;
 PROMPT ✓ fn_partition_info recompilée.
 
 -- ====================================================================
--- 4) Privilèges + tests
+-- 4) Privilèges
 -- ====================================================================
 CONNECT system/oracle@localhost:1521/FREEPDB1
 
@@ -194,7 +181,7 @@ SELECT COUNT(*) AS nb_partitions FROM user_tab_partitions WHERE table_name = 'TI
 
 CONNECT app_gl/AppGl#2026@localhost:1521/FREEPDB1
 SELECT table_name, partitioned FROM user_tables WHERE table_name = 'GL_ENTRY_LINE_V2';
-SELECT partition_name, num_rows
+SELECT partition_name, high_value, num_rows
   FROM user_tab_partitions
  WHERE table_name = 'GL_ENTRY_LINE_V2'
  ORDER BY partition_position;
@@ -216,11 +203,16 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(RPAD(v_pname, 20) || LPAD(v_pos, 10) || LPAD(NVL(v_rows,0), 10) || LPAD(v_bytes, 15));
   END LOOP;
   CLOSE v_cur;
+EXCEPTION WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE('  ⚠ fn_partition_info test : ' || SQLERRM);
 END;
 /
 
 PROMPT
 PROMPT ══════════════════════════════════════════════════════════
-PROMPT   ✅ FIX 56b — partitions recréées + fn_partition_info OK
+PROMPT   ✅ FIX 56b v2 — partitions recréées + fn_partition_info OK
+PROMPT   - ticket_line_v2 : sans FK ticket (PK composite)
+PROMPT   - gl_entry_line_v2 : FK conforme à PK (company_code, entry_no)
+PROMPT   - fn_partition_info : BYTES via dba_segments
 PROMPT ══════════════════════════════════════════════════════════
 EXIT;

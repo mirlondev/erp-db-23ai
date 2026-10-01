@@ -6,7 +6,7 @@
 
 | | Début | Maintenant | Évolution |
 |---|---:|---:|---:|
-| Scripts SQL | 0 | **57** | +57 |
+| Scripts SQL | 0 | **60** | +60 |
 | Tables modernes | 0 | **~195** | +195 |
 | Schémas APP_* | 0 | **17** | +17 |
 | Packages PL/SQL | 0 | **8** | +8 |
@@ -16,8 +16,30 @@
 | Duality Views | 0 | **5** | +5 |
 | Schedulers | 0 | **5** | +5 |
 | Sites REGAL | 0 | **7** | +7 |
-| Seeds | 0 | **40** | +40 |
+| Seeds | 0 | **32** (S01-S32) | +32 |
 | Couverture legacy | 0% | **49%** | +49% |
+
+## 69d0d14 (2026-10-01) — docs
+- STATUS.md : section "🩹 Patch de cohérence" listant 5 bugs + correctifs
+- Compteurs : 60 scripts (57+55b+55c+56b+57b), 32 seeds (S01-S32)
+
+## 27d3984 (2026-10-01) — chore(scripts)
+- run_all.sh : ordre 55b→55c→56→56b→57→57b
+
+## 687a40e (2026-10-01) — Patch de cohérence
+**5 bugs remontés par le user — 5 fichiers corrigés**
+
+| Bug | Script cassé | Fix |
+|---|---|---|
+| `v_pos_session_kpi` : colonnes `s.session_id`, `s.status`, `t.city` inexistantes | `apex/setup/04_apex_components.sql` | **`apex/setup/06_apex_components_fix.sql`** (7 vues recrées) |
+| `ticket_line_v2` FK vers `ticket(ticket_id)` — PK composite | `scripts/56_partition_effectives.sql` | **`scripts/56b_partition_fix.sql`** (drop+recreate sans FK) |
+| `gl_entry_line_v2` ORA-14761 MAXVALUE + INTERVAL | idem | **`scripts/56b_partition_fix.sql`** (RANGE simple 5 partitions) |
+| `fn_partition_info` BYTES dans all_tab_partitions | idem | **`scripts/56b_partition_fix.sql`** (subquery dba_segments) |
+| `product.COMPANY_CODE`, `party.IS_ACTIVE`, `product_price.VALID_FROM` | `scripts/57_etl_legacy_csv.sql` | **`scripts/57b_etl_legacy_csv_fix.sql`** (MERGE idempotent, lookup subquery) |
+| PLS-00364 `R` index + ORA-00942 tables absentes | `scripts/55b_pkg_etl_legacy_v2_fix.sql` | **`scripts/55c_pkg_etl_legacy_v3.sql`** (helper `get_target_count()`) |
+| Seeds S23-S31 : codes inventés DEP01/POS01 | `seed_data/S23-S31` | **`seed_data/S32_re_seed_real_codes.sql`** (DEP01/02 créés) |
+
+**Plus** : `run_all_with_seeds.sh` ajoute S32.
 
 ## 📜 Historique détaillé
 
