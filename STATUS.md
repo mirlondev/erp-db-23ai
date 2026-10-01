@@ -1,6 +1,10 @@
 # 📊 STATUS — État du projet erp-db-23ai
 
-> Dernière mise à jour : 2026-09-30
+> Dernière mise à jour : 2026-10-01 (fix consistency batch 27d3984)
+> **⚠️ Note** : seed_data S23-S31 référençaient des codes inventés (DEP01/POS01).
+> DEP01/DEP02 sont maintenant créés par **S32_re_seed_real_codes.sql** + tous
+> les seeds sont re-exécutés avec les VRAIS codes (W90, CAI01, CAI02, ...).
+> Scripts de correction batch : `55c`, `56b`, `57b`, `apex/setup/06`, `S32`.
 > Contexte : Migration ERP REGAL (Congo Brazzaville) Oracle 11g → 23ai/26ai Free + APEX 26.1 UI
 
 ## 🎯 Résumé exécutif
@@ -9,13 +13,13 @@
 |---|---:|---:|
 | Tables modernes | **~195** | 49% des 391 legacy |
 | Schémas APP_* | **17** | cible 17 |
-| Scripts DDL | **57** | - |
-| Seeds | **31** | - |
+| Scripts DDL | **60** (57 + 55b + 55c + 56b + 57b) | - |
+| Seeds | **32** (S01-S31 + S32 re-seed) | - |
 | Packages PL/SQL | **9** (+ `pkg_apex_auth`) | - |
 | Triggers | **9** | - |
 | Tables partitionnées | **4** | - |
 | Tables externes ETL | **6** | - |
-| **APEX 26.1 specs** | **5 apps** + 12 vues partagées | nouveau |
+| **APEX 26.1 specs** | **5 apps** + 12 vues partagées (fix setup/06) | ✅ |
 | Sites REGAL mappés | **7** | - |
 
 ## 📈 Couverture par schéma legacy
@@ -88,6 +92,20 @@
 | ticket | 16.1M | **61M** |
 | gl_entry_line | 2.8M | **10.6M** |
 | payment_history | 501K | **1.9M** |
+
+## 🩹 Patch de cohérence (commit 687a40e)
+
+Les 5 bugs remontés ont été corrigés :
+
+| Bug | Fichier cassé | Fix |
+|---|---|---|
+| `v_pos_session_kpi` : `s.session_id`, `s.status`, `t.city` | `apex/setup/04` | `apex/setup/06_apex_components_fix.sql` (7 vues) |
+| `ticket_line_v2` FK vers `ticket(ticket_id)` (PK composite) | `56_partition_effectives` | `scripts/56b_partition_fix.sql` (drop+recreate sans FK) |
+| `gl_entry_line_v2` : ORA-14761 MAXVALUE + INTERVAL | `56_partition_effectives` | `scripts/56b_partition_fix.sql` (RANGE simple) |
+| `fn_partition_info` BYTES dans all_tab_partitions | `56_partition_effectives` | `scripts/56b_partition_fix.sql` (dba_segments) |
+| `product.COMPANY_CODE`, `party.IS_ACTIVE`, `product_price.VALID_FROM` | `57_etl_legacy_csv` | `scripts/57b_etl_legacy_csv_fix.sql` (MERGE idempotent) |
+| PLS-00364 (utilisation `R` index), ORA-00942 tables absentes | `55b_pkg_etl_legacy_v2_fix` | `scripts/55c_pkg_etl_legacy_v3.sql` (helper get_target_count) |
+| Seeds S23-S31 : codes inventés DEP01/POS01 | `seed_data/S23-S31` | `seed_data/S32_re_seed_real_codes.sql` (DEP01/02 créés, re-seed) |
 
 ## 🐛 Deprecated patterns (26ai) — Tous fixés
 
