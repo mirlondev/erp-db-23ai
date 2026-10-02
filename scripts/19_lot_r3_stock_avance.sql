@@ -175,7 +175,7 @@ CREATE INDEX ix_inv_reorder_validated  ON inv_reorder(is_validated);
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 GRANT SELECT ON app_inv.inv_avg_cost          TO app_product;
 GRANT SELECT ON app_inv.inv_reorder          TO app_product;
 GRANT SELECT ON app_inv.inv_stock_status     TO app_api;

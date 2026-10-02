@@ -117,7 +117,7 @@ CREATE INDEX ix_inv_adjust_reason            ON inventory_adjustment(reason);
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- app_api lit tout (reporting inventaire)
 GRANT SELECT ON app_inv.inventory_count_zone   TO app_api;

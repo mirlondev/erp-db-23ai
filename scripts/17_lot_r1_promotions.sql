@@ -161,7 +161,7 @@ CREATE INDEX ix_price_tier_product_prod ON price_tier_product(product_id);
 
 PROMPT
 PROMPT ═══ Privilèges croisés (app_sales peut lire les promos) ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 GRANT SELECT ON app_product.promo_header         TO app_sales;
 GRANT SELECT ON app_product.promo_product       TO app_sales;
 GRANT SELECT ON app_product.promo_quantity       TO app_sales;

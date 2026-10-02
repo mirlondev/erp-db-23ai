@@ -11,6 +11,8 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_gl/AppGl#2026@localhost:1521/FREEPDB1
 
@@ -26,6 +28,35 @@ BEGIN
   COMMIT;
 END;
 /
+
+MERGE INTO tax_form_type tgt
+USING (
+  SELECT 'TVA-MENS-CG' form_code, 'TVA mensuelle Congo' form_label,
+    'TVA' form_type, 'MONTHLY' frequency, 'CG' jurisdiction,
+    0 base_amount, 0.189 rate, 'TVA CEMAC Congo' legal_basis, 20 due_day
+    FROM dual
+  UNION ALL SELECT 'IS-AAC-CG', 'Acompte IS Congo', 'IS', 'QUARTERLY', 'CG',
+    0, 0.30, 'IS Congo', 15 FROM dual
+  UNION ALL SELECT 'PATENTE-CG', 'Patente Congo', 'PATENTE', 'ANNUAL', 'CG',
+    0, NULL, 'Patente Congo', 1 FROM dual
+  UNION ALL SELECT 'IRCM-CG', 'IRCM Congo', 'IR', 'EVENT', 'CG',
+    0, 0.05, 'IRCM Congo', 15 FROM dual
+) src
+ON (tgt.form_code = src.form_code AND tgt.jurisdiction = src.jurisdiction)
+WHEN MATCHED THEN UPDATE SET
+  tgt.form_label = src.form_label,
+  tgt.form_type = src.form_type,
+  tgt.frequency = src.frequency,
+  tgt.base_amount = src.base_amount,
+  tgt.rate = src.rate,
+  tgt.legal_basis = src.legal_basis,
+  tgt.due_day = src.due_day
+WHEN NOT MATCHED THEN INSERT
+  (form_code, form_label, form_type, frequency, jurisdiction, base_amount, rate, legal_basis, due_day)
+  VALUES
+  (src.form_code, src.form_label, src.form_type, src.frequency, src.jurisdiction,
+   src.base_amount, src.rate, src.legal_basis, src.due_day);
+COMMIT;
 
 -- ═══ 1. Déclaration TVA LITOKO - 03-2026 (Pointe-Noire) ═══
 DECLARE

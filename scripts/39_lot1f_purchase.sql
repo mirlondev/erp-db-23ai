@@ -125,7 +125,7 @@ CREATE INDEX ix_supplier_quote_line_prod   ON supplier_quote_line(product_code);
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_purchase.purchase_request      TO app_api;
 GRANT SELECT ON app_purchase.purchase_request_line TO app_api;

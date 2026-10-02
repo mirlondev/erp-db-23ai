@@ -1,6 +1,6 @@
 # 📊 STATUS — État du projet erp-db-23ai
 
-> Dernière mise à jour : 2026-10-01 11:00 (commit 9e61bc9 — APEX 26.1 focus + 3 fixes)
+> Dernière mise à jour : 2026-10-01 — audit des runners, ETL CSV et cohérence legacy
 > **⚠️ Note** : seed_data S23-S31 référençaient des codes inventés (DEP01/POS01).
 > DEP01/DEP02 sont maintenant créés par **S32_re_seed_real_codes.sql** + tous
 > les seeds sont re-exécutés avec les VRAIS codes (W90, CAI01, CAI02, ...).
@@ -11,7 +11,7 @@
 
 | | Valeur | % |
 |---|---:|---:|
-| Tables modernes | **~195** | 49% des 391 legacy |
+| Tables du modèle cible | **~195** | la couverture de lignes legacy n'est pas mesurée |
 | Schémas APP_* | **17** | cible 17 |
 | Scripts DDL | **64** (60 + 55b/55c/56b/57b + apex 07/08/09/10/11) | - |
 | Seeds | **32** (S01-S31 + S32 re-seed) | - |
@@ -19,20 +19,22 @@
 | Triggers | **9** | - |
 | Tables partitionnées | **4** | - |
 | Tables externes ETL | **6** | - |
-| **APEX 26.1 specs** | **5 apps** + 11 setup scripts + 11 LOVs + 6 rôles + 5 menus + 6 PDF + locale CG | ✅ |
+| **APEX 26.1** | **5 spécifications**; exports SQL d'applications absents | setup à valider |
 | Sites REGAL mappés | **7** | - |
 
-## 📈 Couverture par schéma legacy
+## 📈 État de la migration des données legacy
 
 | Legacy | Tables | Cible | Statut |
 |---|---:|---:|---|
-| **CAISSE** (retail) | 200 | 195 modernes | **97%** ✅ |
-| **XCPTA** (compta) | 94 | 25 | **27%** 🟠 |
-| **KERNEL** (framework) | 56 | 30 | **54%** 🟠 |
-| **TRANSFERT** (sync) | 32 | 30 | **94%** ✅ |
-| **CASH** | 8 | 5 | **63%** 🟠 |
-| **XAPP_BI** (Discoverer) | 40 | 5 (Duality) | **100% (remplacé)** ✅ |
-| **Obsolètes** (SYSMAN, APEX, OLAP, etc.) | ~300 | 0 | **n/a** |
+| **CSV CAISSE** articles/stock/prix/tiers | snapshots dans `docs/` | ETL défini | chargement et rapprochement à exécuter |
+| **CAISSE** tickets/documents | nombreuses tables | cibles définies | ETL réel à vérifier |
+| **TRANSFERT** GCBRDE/GCBRDD | volume annoncé dans l’inventaire legacy | cibles définies | dispatcher réel non implémenté |
+| **XCPTA** écritures/analytique | volume à mesurer | `app_gl` | ETL et réconciliation à vérifier |
+| **KERNEL/CASH/XAPP_BI** | inventaire à vérifier | plusieurs cibles | taux non établi |
+
+**Couverture réelle : non mesurée.** Les nombres de schémas et tables décrivent le
+modèle cible, pas des lignes importées. Les anciens pourcentages ont été retirés
+faute de rapport de rapprochement source/cible reproductible.
 
 ## 🏛️ Schémas modernes (17)
 
@@ -56,7 +58,7 @@
 | `app_hr` | 5 | RH/Paie Congo | ✅ |
 | `app_audit` | 0+ | Audit consolidé | 🆕 |
 
-## 🇨🇬 Fisc Congo Brazzaville (CEMAC) — 100% implémenté
+## 🇨🇬 Fisc Congo Brazzaville (CEMAC) — modèle et scripts présents
 
 - ✅ **TVA 18.9%** (vs UEMOA 18%)
 - ✅ **CNSS** 10% salarié + 19.5% patron
@@ -66,14 +68,14 @@
 - ✅ **DGID** centres : BZV, PNR, DLS, NKY, OYO, IMP, SIB
 - ✅ **XAF (BEAC)** devise
 
-## 🌐 Architecture multi-sites — 100% implémenté
+## 🌐 Architecture multi-sites — modèle et scripts présents; sync réelle à valider
 
 - ✅ **7 sites** : PNR-OFC (master), 4 boutiques, 2 dépôts
 - ✅ **Topologie réseau** : latence, bande passante, fiabilité
 - ✅ **Outbox pattern** : events transactionnels CDC
-- ✅ **pkg_sync_hub** + **pkg_sync_boutique** : packages PL/SQL
+- 🟡 **pkg_sync_hub** + **pkg_sync_boutique** : packages présents; publication intersite réelle non validée
 - ✅ **3 stratégies sync** : MASTER_WINS, LAST_WRITE_WINS, MANUAL_REVIEW
-- ✅ **DBMS_SCHEDULER** : JOB_SYNC_HUB_PUBLISH toutes les 30 min
+- 🟡 **DBMS_SCHEDULER** : job défini; exécution réelle à valider
 - ✅ **Triggers CDC** sur `app_product.product`
 
 ## 🚀 Performance & partitionnement
@@ -83,7 +85,7 @@
 - ✅ **JOB_PARTITION_MAINT** : drop auto partitions > 36 mois
 - ✅ **fn_predict_growth()** : projection volumétrie 5 ans
 
-## 📊 Projection volumétrique 5 ans (à +30% an)
+## 📊 Projection volumétrique (estimation, non issue d'un import validé)
 
 | Table | Actuel | 5 ans |
 |---|---:|---:|
@@ -99,7 +101,7 @@
 |---|---|---|
 | 01 | workspace REGAL | Schéma APP_API, groupes APP_SALES/INV/GL/SYS, ORDS enable |
 | 02 | ORDS parsers | JSON/CSV/SOAP/WSS sur schémas APP_* |
-| 03 | auth setup | `pkg_apex_auth` (PBKDF2), comptes, rôles REGAL_* |
+| 03 | auth setup | `pkg_apex_auth` (SHA-256 selon le seed actuel), rôles REGAL_* |
 | 04 | components | 12 vues métier partagées (1ère version — cassée) |
 | 05 | LITOKO branding | Logo SVG, CSS Congo, JS utils (`apex_static_file`) |
 | 06 | **FIX components** | 7 vues recréées (PK composite pos_session, etc.) |
@@ -141,17 +143,14 @@ Les 5 bugs remontés ont été corrigés :
 | `EXCEPTION WHEN OTHERS THEN NULL` | ✅ + whitelist SQLCODE | `12_app_api.sql`, `33_trg_invoice_overdue.sql` |
 | `ALTER SESSION SET CONTAINER` (CDB-only) | ✅ Toléré | `00_init_schemas.sql` |
 
-## 🟢 Modules entièrement fonctionnels
+## 🟡 Modules modélisés; validation fonctionnelle de bout en bout en cours
 
-- ✅ **Catalogue produits** : `app_product.product` (211K articles ETL depuis CSV)
-- ✅ **Stock + Transferts** : `app_inv` avec `pkg_transfer_stock` workflow 6 étapes
-- ✅ **POS** : `app_pos` + `app_sales.ticket` + `pkg_pos_sales`
-- ✅ **Facturation** : `app_ar.invoice` + `pkg_doc`
-- ✅ **Paie Congo** : `app_hr` + IRPP 8 tranches + CNSS
-- ✅ **Fiscal CG** : `app_gl.tax_declaration` (TVA 18.9%, IS, Patente)
-- ✅ **Sync multi-sites** : Outbox + DBLINK + packages
-- ✅ **Topologie** : 7 sites REGAL avec hiérarchie
-- ✅ **ETL legacy** : 6 tables externes pour CSV REGAL
+- 🟡 **Catalogue produits** : cible `app_product.product`; snapshot CSV présent : 786 articles, import non vérifié
+- 🟡 **Stock** : snapshot CSV présent : 1 033 lignes, import non vérifié; transfert multi-sites à valider
+- 🟡 **POS, facturation, paie et fiscal CG** : schémas/packages présents; tests de bout en bout à faire
+- 🟡 **Topologie** : 7 sites définis; synchronisation distante réelle non implémentée/validée
+- 🟡 **ETL CSV** : chargement défini pour articles, stocks, prix et tiers; exécution/réconciliation à valider
+- 🔴 **ETL GCBRDD** : aucun mapping de lignes exécuté; le script refuse maintenant le faux statut `DONE`
 
 ## 🟠 À compléter (moyen terme)
 
@@ -175,10 +174,10 @@ Les 5 bugs remontés ont été corrigés :
 
 ## ✅ Conclusion
 
-**On a couvert 49% des 391 tables legacy**, soit l'essentiel pour un ERP retail multi-sites. Le projet est **fonctionnel** :
-- Topologie hub-and-spoke implémentée
-- Fisc Congo Brazzaville (CEMAC) complet
-- 4 tables volumineuses partitionnées (jusqu'à 248M rows en 5 ans)
-- ETL CSV legacy opérationnel
+**Le taux de migration des données n'est pas encore mesuré.** Le dépôt contient un
+modèle cible et des scripts de migration, mais les erreurs de compilation observées
+sur la base et l'absence de dispatcher GCBRDD empêchent d'affirmer que les modules
+sont opérationnels de bout en bout. Le pipeline protégé exige désormais un opt-in
+explicite avant de supprimer/recréer les schémas.
 
 **Le prochain jalon** est la **migration pilote d'une boutique** (BZV-B01) en conditions réelles, puis l'industrialisation avec CI/CD + tests automatisés.

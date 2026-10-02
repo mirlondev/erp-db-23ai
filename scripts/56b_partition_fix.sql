@@ -14,7 +14,10 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
+GRANT SELECT ON SYS.DBA_SEGMENTS TO APP_SYS;
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   FIX partitions 56b v2 — statique, FK conforme
@@ -159,15 +162,13 @@ END fn_partition_info;
 /
 PROMPT ✓ fn_partition_info recompilée.
 
--- ====================================================================
--- 4) Privilèges
--- ====================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT
 PROMPT [4/4] Privilèges
 GRANT SELECT ON app_sales.ticket_line_v2 TO app_api;
 GRANT SELECT ON app_gl.gl_entry_line_v2  TO app_api;
+GRANT EXECUTE ON app_sys.fn_partition_info TO app_gl, app_api;
 
 -- ====================================================================
 -- 5) Validation
@@ -193,12 +194,13 @@ DECLARE
   v_pname VARCHAR2(30);
   v_pos NUMBER;
   v_rows NUMBER;
+  v_last_analyzed DATE;
   v_bytes NUMBER;
 BEGIN
   v_cur := app_sys.fn_partition_info('APP_GL', 'GL_ENTRY_LINE_V2');
   DBMS_OUTPUT.PUT_LINE(RPAD('Partition', 20) || LPAD('Position', 10) || LPAD('Rows', 10) || LPAD('Size', 15));
   LOOP
-    FETCH v_cur INTO v_pname, v_pos, v_rows, v_bytes;
+    FETCH v_cur INTO v_pname, v_pos, v_rows, v_last_analyzed, v_bytes;
     EXIT WHEN v_cur%NOTFOUND;
     DBMS_OUTPUT.PUT_LINE(RPAD(v_pname, 20) || LPAD(v_pos, 10) || LPAD(NVL(v_rows,0), 10) || LPAD(v_bytes, 15));
   END LOOP;

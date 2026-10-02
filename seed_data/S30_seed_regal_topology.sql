@@ -13,6 +13,8 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
@@ -39,7 +41,7 @@ INSERT INTO site_master (site_code, site_name, site_type, parent_site_id, compan
                          country_code, city, department, address, is_master, sync_priority)
 VALUES ('PNR-OFC', 'Siège REGAL Pointe-Noire', 'OFFICE', NULL, 'REGAL', 'CG',
         'Pointe-Noire', 'Pointe-Noire', 'Avenue Charles de Gaulle, Centre-ville',
-        'Y', 1);
+  TRUE, 1);
 
 INSERT INTO site_master (site_code, site_name, site_type, parent_site_id, company_code,
                          country_code, city, department, address, sync_priority)
@@ -117,7 +119,7 @@ COMMIT;
 
 -- Liens boutique ↔ dépôt local
 INSERT INTO site_link (source_site_id, target_site_id, link_type, bandwidth_kbps, avg_latency_ms)
-SELECT b.site_id, d.site_id, 'INTRANET', 100000, 2
+SELECT b.site_id, d.site_id, 'MANUAL', 100000, 2
   FROM site_master b, site_master d
  WHERE b.site_type = 'BOUTIQUE'
    AND d.site_type = 'DEPOT'

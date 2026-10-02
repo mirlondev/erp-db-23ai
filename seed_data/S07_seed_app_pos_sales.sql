@@ -2,6 +2,8 @@
 -- S07 : Seed app_pos + app_sales
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_pos/AppPos#2026@localhost:1521/FREEPDB1
 

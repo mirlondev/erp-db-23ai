@@ -156,7 +156,7 @@ CREATE INDEX ix_audit_severity ON sys_audit_trail(
 
 PROMPT
 PROMPT Privileges
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_sys.sys_role             TO app_api;
 GRANT SELECT ON app_sys.sys_permission       TO app_api;

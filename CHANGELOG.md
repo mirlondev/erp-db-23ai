@@ -19,6 +19,11 @@
 | Seeds | 0 | **32** (S01-S32) | +32 |
 | Couverture legacy | 0% | **49%** | +49% |
 
+> **Correction (2026-10-01)** : le taux de 49% ci-dessus était une estimation de
+> couverture de schéma, sans rapprochement reproductible des lignes source/cible.
+> Il est retiré comme métrique de migration; la couverture réelle des données est
+> actuellement **non mesurée**.
+
 ## 69d0d14 (2026-10-01) — docs
 - STATUS.md : section "🩹 Patch de cohérence" listant 5 bugs + correctifs
 - Compteurs : 60 scripts (57+55b+55c+56b+57b), 32 seeds (S01-S32)

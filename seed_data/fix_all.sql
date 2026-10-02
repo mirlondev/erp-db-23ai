@@ -22,7 +22,7 @@ SELECT line, position, text
 -- [2] Droits
 PROMPT
 PROMPT [2] Droits app_sales → app_pos
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT, UPDATE ON app_pos.pos_terminal TO app_sales;
 
@@ -128,7 +128,7 @@ COMMIT;
 -- [6] Validation
 PROMPT
 PROMPT [6] Validation finale
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 SELECT 'TICKETS'           AS tbl, COUNT(*) AS nb FROM app_sales.ticket
 UNION ALL SELECT 'SESSIONS',         COUNT(*) FROM app_pos.pos_session

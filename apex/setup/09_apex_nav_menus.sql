@@ -174,7 +174,7 @@ SELECT m.menu_id,
        CONNECT_BY_ISLEAF AS is_leaf,
        SYS_CONNECT_BY_PATH(m.label, ' / ') AS path
   FROM apex_nav_menu m
- WHERE m.is_active = 'Y'
+ WHERE m.is_active = TRUE
  START WITH m.parent_id IS NULL
 CONNECT BY PRIOR m.menu_id = m.parent_id
  ORDER SIBLINGS BY m.seq;

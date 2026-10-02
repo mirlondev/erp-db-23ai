@@ -5,6 +5,8 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_product/AppProduct#2026@localhost:1521/FREEPDB1
 
@@ -41,14 +43,20 @@ VALUES ('PROMO001', 'Rentrée scolaire - Cahiers 10+2',
 
 -- Articles concernés : ART001 (Cahier 200p)
 INSERT INTO promo_product (promo_id, product_id, is_excluded, is_promo_product, unit_code, expected_qty)
-VALUES (1, 1, FALSE, TRUE, 'UNIT', 500);
+SELECT ph.promo_id, p.product_id, FALSE, TRUE, p.stock_unit, 500
+        FROM promo_header ph CROSS JOIN product p
+ WHERE ph.promo_code = 'PROMO001' AND p.product_code = '31275';
 
 -- Règle : pour 10 achetés, 2 gratuits
 INSERT INTO promo_quantity (promo_id, min_qty, max_qty, free_qty, promo_price, discount_rate, is_linear)
-VALUES (1, 10, NULL, 2, NULL, NULL, FALSE);
+SELECT promo_id, 10, NULL, 2, NULL, NULL, FALSE
+        FROM promo_header WHERE promo_code = 'PROMO001';
 
 -- Tous les POS
-INSERT INTO promo_pos (promo_id, pos_code) SELECT 1, pos_code FROM app_org.org_pos;
+INSERT INTO promo_pos (promo_id, pos_code)
+SELECT ph.promo_id, op.pos_code
+        FROM promo_header ph CROSS JOIN app_org.org_pos op
+ WHERE ph.promo_code = 'PROMO001';
 
 
 PROMPT [2] Promo #2 — Soldes USB (remise 15%)
@@ -62,10 +70,13 @@ VALUES ('PROMO002', 'Soldes été - USB -15%',
         'A', 'P', 'ADMIN');
 
 INSERT INTO promo_product (promo_id, product_id, is_excluded, unit_code)
-VALUES (2, 3, FALSE, 'UNIT'); -- ART003 = USB 32 Go
+SELECT ph.promo_id, p.product_id, FALSE, p.stock_unit
+        FROM promo_header ph CROSS JOIN product p
+ WHERE ph.promo_code = 'PROMO002' AND p.product_code = 'ADAPTER_USB_C';
 
 INSERT INTO promo_quantity (promo_id, min_qty, max_qty, free_qty, promo_price, discount_rate, is_linear)
-VALUES (2, 1, NULL, NULL, NULL, 15, FALSE);
+SELECT promo_id, 1, NULL, NULL, NULL, 15, FALSE
+        FROM promo_header WHERE promo_code = 'PROMO002';
 
 
 PROMPT [3] Promo #3 — Pack Bureau (3+1 sur stylos)
@@ -78,10 +89,13 @@ VALUES ('PROMO003', 'Pack Bureau Stylo Bleu',
 
 -- ART002 = Stylo bleu
 INSERT INTO promo_product (promo_id, product_id, is_excluded, is_promo_product)
-VALUES (3, 2, FALSE, TRUE);
+SELECT ph.promo_id, p.product_id, FALSE, TRUE
+        FROM promo_header ph CROSS JOIN product p
+ WHERE ph.promo_code = 'PROMO003' AND p.product_code = '16411';
 
 INSERT INTO promo_quantity (promo_id, min_qty, max_qty, free_qty, promo_price, discount_rate, is_linear)
-VALUES (3, 3, NULL, 1, NULL, NULL, FALSE);
+SELECT promo_id, 3, NULL, 1, NULL, NULL, FALSE
+        FROM promo_header WHERE promo_code = 'PROMO003';
 
 
 PROMPT [4] Promo #4 — Client VIP (remise -10% sur tout, familles GOLD/PLATINUM)
@@ -96,13 +110,14 @@ VALUES ('PROMO004', 'Remise fidélité GOLD/PLATINUM',
 -- (pas de ligne dans promo_product)
 
 INSERT INTO promo_customer_family (promo_id, customer_family, is_active)
-VALUES (4, 'GLD', TRUE);
+SELECT promo_id, 'GLD', TRUE FROM promo_header WHERE promo_code = 'PROMO004';
 INSERT INTO promo_customer_family (promo_id, customer_family, is_active)
-VALUES (4, 'PLT', TRUE);
+SELECT promo_id, 'PLT', TRUE FROM promo_header WHERE promo_code = 'PROMO004';
 
 -- Règle unique : -10% sur tout l'assortiment
 INSERT INTO promo_quantity (promo_id, min_qty, max_qty, free_qty, promo_price, discount_rate, is_linear)
-VALUES (4, 1, NULL, NULL, NULL, 10, FALSE);
+SELECT promo_id, 1, NULL, NULL, NULL, 10, FALSE
+        FROM promo_header WHERE promo_code = 'PROMO004';
 
 
 PROMPT [5] Palier tarifaire #1 — "Gros volume Cahiers" : -5% dès 50 unités
@@ -114,13 +129,16 @@ VALUES ('TIER001', 'Remise volume Cahiers',
         'Palier de remise quantitative sur ART001', TRUE, 'ADMIN');
 
 -- Article : ART001 (Cahier 200p)
-INSERT INTO price_tier_product (tier_id, product_id) VALUES (1, 1);
+INSERT INTO price_tier_product (tier_id, product_id)
+SELECT pt.tier_id, p.product_id
+        FROM price_tier pt CROSS JOIN product p
+ WHERE pt.tier_code = 'TIER001' AND p.product_code = '31275';
 
 -- Seuils : 50+ = -5%, 100+ = -10%
 INSERT INTO price_tier_quantity (tier_id, min_qty, max_qty, discount_amount, discount_rate)
-VALUES (1, 50, 99, NULL, 5);
+SELECT tier_id, 50, 99, NULL, 5 FROM price_tier WHERE tier_code = 'TIER001';
 INSERT INTO price_tier_quantity (tier_id, min_qty, max_qty, discount_amount, discount_rate)
-VALUES (1, 100, NULL, NULL, 10);
+SELECT tier_id, 100, NULL, NULL, 10 FROM price_tier WHERE tier_code = 'TIER001';
 
 COMMIT;
 

@@ -224,7 +224,7 @@ END;
 -- Privilèges
 PROMPT
 PROMPT ═══ Privilèges ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_sys.alert_type                TO app_api;
 GRANT SELECT ON app_sys.alert_instance            TO app_api;

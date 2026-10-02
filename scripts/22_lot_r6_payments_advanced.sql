@@ -203,7 +203,7 @@ CREATE INDEX ix_dunning_level            ON dunning_log(dunning_level, dunning_d
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- app_cash peut lire les sessions (rapprochement)
 GRANT SELECT ON app_ar.cash_register_session TO app_cash;

@@ -10,7 +10,7 @@ SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   LOT 1G : 5 tables dans app_ar (compléments)
@@ -139,7 +139,7 @@ CREATE TABLE collection_case_invoice (
 
 PROMPT
 PROMPT ═══ Privilèges ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_ar.invoice_installment       TO app_api;
 GRANT SELECT ON app_ar.invoice_dispute           TO app_api;

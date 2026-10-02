@@ -245,7 +245,7 @@ END;
 -- ============================================================
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- app_sales émet et consomme les bons en caisse
 GRANT SELECT, INSERT, UPDATE ON app_party.voucher_master       TO app_sales;

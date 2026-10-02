@@ -321,7 +321,7 @@ END;
 -- =================================================================
 -- 7) Privilèges
 -- =================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_sales.ticket_line_v2        TO app_api;
 GRANT SELECT ON app_inv.transfer_line_v2        TO app_api;

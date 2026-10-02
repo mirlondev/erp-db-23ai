@@ -7,7 +7,7 @@ SET DEFINE OFF
 -- =====================================================
 -- Droits croisés
 -- =====================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- (déjà accordés par le script 21 mais on reste idempotent)
 BEGIN EXECUTE IMMEDIATE 'GRANT SELECT, UPDATE ON app_ar.invoice TO app_ar'; EXCEPTION WHEN OTHERS THEN NULL; END;

@@ -13,7 +13,7 @@ SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   MODULE RH / PAIE (5 tables app_hr)
@@ -209,7 +209,7 @@ SELECT s.slip_id, s.run_id, e.matricule, e.full_name,
  ORDER BY p.period_start DESC, e.matricule;
 
 -- Privilèges
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_hr.mpf_employee        TO app_api;
 GRANT SELECT ON app_hr.payroll_period     TO app_api;

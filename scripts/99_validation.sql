@@ -4,8 +4,10 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET PAGESIZE 200
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ═══════════════════════════════════════════════════════
 PROMPT   VALIDATION FINALE — Base moderne 26ai
@@ -215,6 +217,22 @@ PROMPT
 PROMPT [19] Test package pkg_gl
 SELECT app_gl.pkg_gl.get_account_balance('01', '530000') AS solde_caisse
   FROM DUAL;
+
+PROMPT
+PROMPT [20] Barrière finale — objets APP_* invalides
+DECLARE
+  v_invalid_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_invalid_count
+    FROM dba_objects
+   WHERE status = 'INVALID'
+     AND owner LIKE 'APP\_%' ESCAPE '\';
+  IF v_invalid_count > 0 THEN
+    RAISE_APPLICATION_ERROR(-20999,
+      v_invalid_count || ' objet(s) APP_* invalide(s); consulter DBA_ERRORS.');
+  END IF;
+END;
+/
 
 PROMPT ═══════════════════════════════════════════════════════
 PROMPT   ✅ VALIDATION FINALE TERMINÉE

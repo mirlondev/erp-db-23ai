@@ -24,7 +24,7 @@ PROMPT ════════════════════════�
 
 -- Table de stockage des fichiers statiques LITOKO
 -- (équivalent "Static Application Files" d'APEX, version DB-direct)
-CREATE TABLE apex_static_file (
+CREATE TABLE IF NOT EXISTS apex_static_file (
   file_id              NUMBER GENERATED ALWAYS AS IDENTITY,
   file_name            VARCHAR2(120) NOT NULL,
   mime_type            VARCHAR2(80)  NOT NULL,
@@ -36,6 +36,10 @@ CREATE TABLE apex_static_file (
   CONSTRAINT pk_apex_static_file PRIMARY KEY (file_id),
   CONSTRAINT uk_apex_static_file  UNIQUE (file_name)
 );
+
+-- Remplacement idempotent des fichiers livrés par ce script.
+DELETE FROM apex_static_file
+ WHERE file_name IN ('litoko_logo.svg', 'litoko_theme.css', 'litoko_utils.js');
 
 PROMPT
 PROMPT [1] Logo LITOKO (SVG inline - placeholder)
@@ -60,11 +64,8 @@ VALUES (
 
 PROMPT
 PROMPT [2] Feuille de style LITOKO (couleurs Congo + accessibilité)
-INSERT INTO apex_static_file (file_name, mime_type, file_blob, description, uploaded_by)
-VALUES (
-  'litoko_theme.css',
-  'text/css',
-  UTL_RAW.CAST_TO_RAW('/* LITOKO SARL — Thème APEX 26.1 (Congo) */
+DECLARE
+  v_css    CLOB := q'~/* LITOKO SARL — Thème APEX 26.1 (Congo) */
 
 /* Couleurs drapeau Congo Brazzaville */
 :root {
@@ -185,11 +186,28 @@ VALUES (
   .t-LIT-Card-value { font-size: 18px; }
   .t-LIT-header { padding: 6px 10px; }
 }
-'),
-  'Thème LITOKO — couleurs Congo Brazzaville + responsive',
-  'LIT_APEX_INIT'
-);
+~';
+  v_blob   BLOB;
+  v_piece  VARCHAR2(2000 CHAR);
+  v_raw    RAW(2000);
+  v_offset PLS_INTEGER := 1;
+BEGIN
+  INSERT INTO apex_static_file
+    (file_name, mime_type, file_blob, description, uploaded_by)
+  VALUES
+    ('litoko_theme.css', 'text/css', EMPTY_BLOB(),
+     'Thème LITOKO — couleurs Congo Brazzaville + responsive', 'LIT_APEX_INIT')
+  RETURNING file_blob INTO v_blob;
 
+  LOOP
+    v_piece := DBMS_LOB.SUBSTR(v_css, 400, v_offset);
+    EXIT WHEN v_piece IS NULL;
+    v_raw := UTL_RAW.CAST_TO_RAW(v_piece);
+    DBMS_LOB.WRITEAPPEND(v_blob, UTL_RAW.LENGTH(v_raw), v_raw);
+    v_offset := v_offset + LENGTH(v_piece);
+  END LOOP;
+END;
+/
 PROMPT
 PROMPT [3] JavaScript utilitaire (filtre sites + format XAF)
 INSERT INTO apex_static_file (file_name, mime_type, file_blob, description, uploaded_by)

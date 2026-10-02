@@ -5,7 +5,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ===============================================================
 PROMPT   Attribution des privilèges cross-schéma

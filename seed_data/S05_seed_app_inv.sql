@@ -2,6 +2,8 @@
 -- S05 : Seed app_inv — Stock SUPER SONIC
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_inv/AppInv#2026@localhost:1521/FREEPDB1
 

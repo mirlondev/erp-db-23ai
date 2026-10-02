@@ -54,9 +54,9 @@ Refactoring complet vers **Oracle 23ai / 26ai Free**, avec exploitation des nouv
 
 ### Métriques cibles
 
-- **Couverture fonctionnelle** : 100% des modules retail modernes + ~80% de la compta OHADA
+- **Couverture des données legacy** : non mesurée; les modules décrivent le modèle cible, pas les lignes chargées
 - **Performance** : latence p95 des requêtes clés < 200 ms (cible à valider sur la vraie volumétrie)
-- **DX** : déploiement via `run_all_with_seeds.sh` en < 2 minutes
+- **DX** : durée de déploiement à mesurer après un run complet réussi
 - **Sécurité** : RBAC granulaire (15 actions × 9 ressources)
 
 ---
@@ -254,21 +254,21 @@ L'objectif n'est **pas** une migration 1:1 exhaustive. Les 391 tables legacy peu
 
 | Catégorie | Volume legacy | Action | Couvert |
 |---|---:|---|---:|
-| **Tables actives** (données live) | ~ 60% | Migration avec mapping | OUI (cœur retail + compta squelette) |
-| **Tables d'historique** (logs, audits) | ~ 20% | Migration optionnelle | PARTIEL (R11, R13, R14) |
-| **Tables obsolètes** (codes morts) | ~ 15% | À supprimer avant migration | NON |
-| **Tables intermédiaires** (batch, ETL) | ~ 5% | Réécriture propre | OUI (R14 pkg_etl_legacy) |
+| **Tables actives** (données live) | à mesurer | Migration avec mapping | non vérifié |
+| **Tables d'historique** (logs, audits) | à mesurer | Migration optionnelle | non vérifié |
+| **Tables obsolètes** (codes morts) | à mesurer | À supprimer avant migration | non vérifié |
+| **Tables intermédiaires** (batch, ETL) | à mesurer | Réécriture propre | partiel; dispatch GCBRDD absent |
 
 ### Mapping schémas
 
-| Legacy 11g (6 schémas) | Moderne 23ai (15 schémas) | Couverture |
+| Legacy 11g (6 schémas) | Moderne 23ai (17 schémas cibles) | État des données |
 |---|---|---|
-| `CAISSE` (200 tables) | `app_pos`, `app_sales`, `app_cash`, `app_party` (fidélité/vouchers) | ~ 70% (cœur retail) |
-| `KERNEL` (56 tables) | `app_sys`, `app_product`, `app_org` | ~ 60% |
-| `XCPTA` (94 tables — compta) | `app_gl` | ~ 15% (squelette OHADA posé, ~ 80 tables à faire) |
-| `TRANSFERT` (32 tables) | `app_inv` (R4) + `app_ship` (1E) | ~ 70% |
-| `CASH` (8 tables) | `app_cash` + `app_ar` | ~ 80% |
-| `ERP_APP` (1 table) | divers | 0% (sera migré dans la couche API) |
+| `CAISSE` (200 tables) | `app_pos`, `app_sales`, `app_cash`, `app_party` | ETL CSV partiel; tickets non vérifiés |
+| `KERNEL` (56 tables) | `app_sys`, `app_product`, `app_org` | mapping cible; import non mesuré |
+| `XCPTA` (94 tables — compta) | `app_gl` | squelette cible; ETL non vérifié |
+| `TRANSFERT` (32 tables) | `app_inv` + `app_ship` | dispatcher GCBRDD non implémenté |
+| `CASH` (8 tables) | `app_cash` + `app_ar` | mapping cible; import non mesuré |
+| `ERP_APP` (1 table) | divers | mapping non établi |
 
 ### Mapping champs-clés (exemples)
 
@@ -548,23 +548,26 @@ CALL app_sales.pkg_pos_sales.close_pos_session(
 
 ### Pré-requis
 - Oracle Database 23ai Free ou 26ai
-- Schéma `system` avec mot de passe `oracle`
+- SQLcl installé; connexion `SYS AS SYSDBA` autorisée
 - TNS : `localhost:1521/FREEPDB1`
 - Tablespace USERS
+- CSV requis présents dans `docs/`
 
-### Déploiement complet en 3 commandes
+### Déploiement complet
 
 ```bash
-cd scripts
+cd /home/oracle/erp-db-23ai
+export ORACLE_CONNECT='sys/oracle@localhost:1521/FREEPDB1 as sysdba'
 
-# 1. DDL complet + validation (29 scripts)
-./run_all.sh
+# Les deux runners suppriment/recréent tous les schémas APP_*.
+# Sauvegarder la base avant de confirmer cette opération.
+export ALLOW_DESTRUCTIVE_RESET=YES
 
-# 2. Reset + seeds + validation seed (22 seeds)
-./run_all_with_seeds.sh
+# DDL → seeds → import CSV → validation
+./scripts/run_all_with_seeds.sh
 
-# 3. Smoke test
-sqlplus system/oracle@localhost:1521/FREEPDB1
+# Smoke test SQLcl
+sql "$ORACLE_CONNECT"
 SELECT 'app_product.product' AS t, COUNT(*) FROM app_product.product
 UNION ALL SELECT 'app_sales.ticket', COUNT(*) FROM app_sales.ticket
 UNION ALL SELECT 'app_gl.gl_account_ohada', COUNT(*) FROM app_gl.gl_account_ohada;
@@ -573,8 +576,8 @@ UNION ALL SELECT 'app_gl.gl_account_ohada', COUNT(*) FROM app_gl.gl_account_ohad
 ### Déploiement détaillé par couche
 
 ```bash
-# Bootstrap (12 schémas)
-sqlplus system/oracle@localhost:1521/FREEPDB1 @00_init_schemas.sql
+# Bootstrap destructif (supprime tous les schémas APP_*)
+sql "$ORACLE_CONNECT" @scripts/00_init_schemas.sql
 
 # Schémas métier (1-12)
 @01_app_sys.sql
@@ -617,7 +620,7 @@ export DB_SERVICE=FREEPDB1
 
 ## 🌱 12. Données de seed
 
-22 fichiers `seed_data/S*.sql` couvrant :
+33 fichiers `seed_data/S*.sql` (S00-S32), couvrant :
 
 | Seed | Tables ciblées | Volumétrie |
 |---|---|---|
@@ -865,27 +868,18 @@ END;
 
 ## 🛣 17. Roadmap
 
-### ✅ Réalisé (cette session + sessions précédentes)
+### 🟡 État des scripts (la validation de bout en bout reste à faire)
 
 **Architecture & socle**
-- ✅ 17 schémas `APP_*` créés (00-12 + extensions)
-- ✅ 57 scripts DDL, 31 seeds
-- ✅ ~195 tables modernes (49% des 391 legacy)
-- ✅ 8 packages PL/SQL
-- ✅ 9 triggers (CDC + métier)
-- ✅ 5 Duality Views, 3 Materialized Views
-- ✅ 5 schedulers (DBMS_SCHEDULER)
+- 🟡 17 schémas et environ 195 tables définis dans les scripts; rebuild et validation complète non exécutés dans ce contrôle
+- 🟡 Scripts DDL, seeds, packages, triggers, vues et jobs présents; statut runtime à confirmer par `99_validation.sql`
+- ℹ La couverture des lignes legacy n'est pas mesurée par rapport à la source
 
 **Modules métier**
-- ✅ Catalogue 211K articles (ETL CSV depuis GCPART.csv)
-- ✅ Stock + Transferts (pkg_transfer_stock, workflow 6 étapes)
-- ✅ POS (pkg_pos_sales, ticket_line_v2 partitionné)
-- ✅ Facturation (Lot 1G : 5 tables AR, échéances, litiges)
-- ✅ Achats (Lot 1F : 4 tables)
-- ✅ Documents (Lot 1A-1D + pkg_doc)
-- ✅ OHADA (squelette + Immobilisations + Déclarations fiscales)
-- ✅ Module RH/Paie Congo (CNSS + IRPP 8 tranches)
-- ✅ Multi-sites (site_master, site_link, sync framework)
+- 🟡 Modèle cible défini pour POS, stock, AR, achats, documents, OHADA, RH et multi-sites
+- 🟡 ETL CSV défini pour articles, stocks, prix et tiers; exécution et rapprochement à valider
+- 🔴 Aucune migration GCBRDE/GCBRDD réelle : le dispatcher refuse les succès simulés
+- 🟡 Outbox/scheduler définis; transport DBLINK et application distante non réalisés par le code actuel
 
 **Performance & partitionnement**
 - ✅ 4 tables partitionnées (ticket_line_v2, transfer_line_v2, gl_entry_line_v2, payment_history_v2)
@@ -894,9 +888,9 @@ END;
 - ✅ fn_predict_growth() : projection 5 ans
 
 **ETL legacy**
-- ✅ 6 tables externes Oracle Loader pour CSV REGAL
-- ✅ pkg_etl_legacy v2 : dispatcher GCBRDD 54.7M par CODTBRD (9 types)
-- ✅ etl_run_progress : reprise après crash
+- 🟡 Tables externes Oracle Loader pour les CSV REGAL; chargement à valider sur les fichiers réels
+- 🔴 `pkg_etl_legacy` ne déplace pas les lignes GCBRDD vers les neuf cibles; ETL à développer
+- 🟡 `etl_run_progress` conserve le statut, mais la reprise réelle par PK/batch reste à vérifier
 
 **Localisation Congo Brazzaville**
 - ✅ TVA 18.9% (CEMAC), XAF (BEAC), 7 centres DGID

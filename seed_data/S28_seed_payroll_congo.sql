@@ -13,6 +13,8 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_hr/AppHr#2026@localhost:1521/FREEPDB1
 
@@ -41,7 +43,7 @@ INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
   social_security_no, marital_status, dependents_count)
 VALUES ('LIT-2024-001', 'PTY-LITOKO-E001', 'LITOKO', 'MALONGA Patrick', 'CDI',
         'Gérant LITOKO Pointe-Noire', 'DIRIGEANT',
-        DATE '2024-04-01', NULL, 'POS-PNR-01', 'DEP-PNR',
+        DATE '2024-04-01', NULL, 'LPNR01', 'LIT01',
         1800000, 10345, 'BANK_TRANSFER', 'BGFI-CG-PNR-001',
         'CNSS-CG-001-2024', 'MARRIED', 3);
 
@@ -51,7 +53,7 @@ INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
   monthly_salary_brut, marital_status, dependents_count)
 VALUES ('LIT-2024-002', 'PTY-LITOKO-E002', 'LITOKO', 'NGOMA Priscille', 'CDI',
         'Comptable senior (DAF)', 'CADRE',
-        DATE '2024-05-15', 1, 'POS-PNR-01', 'DEP-PNR',
+        DATE '2024-05-15', 1, 'LPNR01', 'LIT01',
         950000, 'SINGLE', 0);
 
 INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
@@ -60,7 +62,7 @@ INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
   monthly_salary_brut, marital_status, dependents_count)
 VALUES ('LIT-2024-003', 'PTY-LITOKO-E003', 'LITOKO', 'BITEMO Jean-Pierre', 'CDI',
         'Magasinier Pointe-Noire', 'AGENT',
-        DATE '2024-09-01', 1, 'DEP-PNR', 'DEP-PNR',
+        DATE '2024-09-01', 1, 'LIT01', 'LIT01',
         420000, 'MARRIED', 2);
 
 INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
@@ -69,7 +71,7 @@ INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
   monthly_salary_brut, marital_status, dependents_count)
 VALUES ('LIT-2024-004', 'PTY-LITOKO-E004', 'LITOKO', 'MBAMA Marie-Laure', 'CDI',
         'Caissière Brazzaville', 'AGENT',
-        DATE '2024-09-15', 1, 'POS-BZV-01', 'DEP-BZV',
+        DATE '2024-09-15', 1, 'LBZV01', 'LIT02',
         380000, 'SINGLE', 1);
 
 INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
@@ -78,7 +80,7 @@ INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
   monthly_salary_brut, marital_status)
 VALUES ('LIT-2025-001', 'PTY-LITOKO-E005', 'LITOKO', 'KIMINOU Sylvain', 'CDI',
         'Caissier Pointe-Noire', 'AGENT',
-        DATE '2025-03-15', 1, 'POS-PNR-01', 'DEP-PNR',
+        DATE '2025-03-15', 1, 'LPNR01', 'LIT01',
         360000, 'SINGLE');
 
 INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
@@ -88,7 +90,7 @@ INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
   contract_end_date)
 VALUES ('LIT-2026-001', 'PTY-LITOKO-E006', 'LITOKO', 'MOUKALA Elisée', 'CDD',
         'Vendeur saisonnier (Noël)', 'AGENT',
-        DATE '2026-09-01', 1, 'POS-PNR-02', 'DEP-PNR',
+        DATE '2026-09-01', 1, 'LPNR02', 'LIT01',
         280000, 'SINGLE',
         DATE '2027-01-31');
 

@@ -97,7 +97,12 @@ SELECT t.transfer_id, t.transfer_number, t.transfer_date,
        SUM(l.requested_qty)         AS total_requested_qty,
        SUM(l.sent_qty)              AS total_sent_qty,
        SUM(l.received_qty)          AS total_received_qty,
-       ROUND(SYSDATE - t.transfer_date, 1) AS days_in_process
+       CASE WHEN t.status = 'RECEIVED' THEN NULL
+            ELSE ROUND(SYSDATE - t.transfer_date, 1) END AS days_in_process,
+       (SELECT NVL(SUM(tl.requested_qty * p.standard_price), 0)
+          FROM app_inv.transfer_line tl
+          JOIN app_product.product p ON p.product_code = tl.product_code
+         WHERE tl.transfer_id = t.transfer_id) AS estimated_value_xaf
   FROM app_inv.transfer_header t
   LEFT JOIN app_inv.transfer_line l ON l.transfer_id = t.transfer_id
  WHERE t.status NOT IN ('CLOSED','CANCELLED')
@@ -138,20 +143,18 @@ END;
 /
 
 CREATE OR REPLACE VIEW v_gl_account_balance AS
-SELECT a.account_code,
+SELECT a.company_code,
+       a.account_code,
        a.account_name,
-       a.account_class,
-       a.normal_balance,
+       a.account_type AS account_class,
        SUM(NVL(el.company_debit, 0))  AS mvt_debit,
        SUM(NVL(el.company_credit, 0)) AS mvt_credit,
-       CASE a.normal_balance
-         WHEN 'DEBIT'  THEN SUM(NVL(el.company_debit, 0)) - SUM(NVL(el.company_credit, 0))
-         WHEN 'CREDIT' THEN SUM(NVL(el.company_credit, 0)) - SUM(NVL(el.company_debit, 0))
-         ELSE 0
-       END AS solde
-  FROM app_gl.gl_account_ohada a
-  LEFT JOIN app_gl.gl_entry_line el ON el.account_code = a.account_code
- GROUP BY a.account_code, a.account_name, a.account_class, a.normal_balance;
+       SUM(NVL(el.company_debit, 0)) - SUM(NVL(el.company_credit, 0)) AS solde
+  FROM app_gl.gl_account a
+  LEFT JOIN app_gl.gl_entry_line el
+    ON el.company_code = a.company_code
+   AND el.account_code = a.account_code
+ GROUP BY a.company_code, a.account_code, a.account_name, a.account_type;
 
 -- ═══ 6) v_general_ledger — adapter à PK composite gl_entry_line ═══
 PROMPT
@@ -164,18 +167,20 @@ END;
 
 CREATE OR REPLACE VIEW v_general_ledger AS
 SELECT e.entry_no, e.entry_date,
-       j.journal_code, j.journal_label,
-       e.doc_ref,
+       j.journal_code, j.journal_name AS journal_label,
+       e.document_no AS doc_ref,
        el.account_code, a.account_name,
        el.company_debit AS debit, el.company_credit AS credit,
        el.line_label AS description,
-       e.created_by, e.validated_by
+       e.created_by
   FROM app_gl.gl_entry e
   JOIN app_gl.gl_entry_line el ON el.company_code = e.company_code
                               AND el.entity_code  = e.entity_code
                               AND el.entry_no     = e.entry_no
-  LEFT JOIN app_gl.gl_account_ohada a ON a.account_code = el.account_code
-  LEFT JOIN app_gl.gl_journal j        ON j.journal_code = e.journal_code
+  LEFT JOIN app_gl.gl_account a ON a.company_code = el.company_code
+                               AND a.account_code = el.account_code
+  LEFT JOIN app_gl.gl_journal j ON j.company_code = e.company_code
+                               AND j.journal_code = e.journal_code
  ORDER BY e.entry_date DESC, e.entry_no DESC, el.line_no;
 
 -- ═══ 7) v_supplier_otd — vue simplifiée ═══
@@ -192,7 +197,7 @@ SELECT s.party_code, s.party_name, s.country,
        COUNT(DISTINCT po.po_id) AS total_orders,
        SUM(CASE WHEN po.status IN ('CLOSED','RECEIVED') THEN 1 ELSE 0 END) AS closed_orders,
        SUM(po.total_ttc) AS total_ytd
-  FROM app_purchase.purchase_order po
+  FROM app_purchase.purchase_order_header po
   JOIN app_party.party s ON s.party_code = po.supplier_code
  GROUP BY s.party_code, s.party_name, s.country;
 

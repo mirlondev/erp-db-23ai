@@ -14,7 +14,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 CONNECT app_api/AppApi#2026@localhost:1521/FREEPDB1
 
@@ -428,6 +428,6 @@ PROMPT   - get_dispatch_plan : SQL dynamique selon mode
 PROMPT   - dispatch_reference_table : resilient si legacy absent
 PROMPT   - resume_etl : vérifie status avant reprise
 PROMPT   - p_etl_run_id OUT param TOUJOURS initialisé
-PROMPT   - WHENEVER SQLERROR CONTINUE pour ne pas casser la pipeline
+PROMPT   - la pipeline doit échouer sur toute erreur SQL
 PROMPT ══════════════════════════════════════════════════════════
 EXIT;

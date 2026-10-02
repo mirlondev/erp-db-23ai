@@ -3,6 +3,8 @@
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_product/AppProduct#2026@localhost:1521/FREEPDB1
 
@@ -280,22 +282,6 @@ SELECT 'ADAPTER_USB_C', 'ADAPTER TYPE C', 'SAMSUNG TYPE C 2PIN ADAPTER 15W',
    AND s.subcategory_code = 'INF02'
    AND b.brand_code  = 'SMSNG'
    AND sh.shelf_code = 'R03';
-
--- Articles génériques
-INSERT INTO product (product_code, short_name, product_name,
-                     nature_id, category_id, subcategory_id, brand_id, shelf_id,
-                     stock_unit, status, is_stock_managed, created_by)
-SELECT '1641'||ROWNUM, 'ART1641'||ROWNUM, 'Article générique '||ROWNUM,
-       n.nature_id, c.category_id, s.subcategory_id, b.brand_id, sh.shelf_id,
-       'PCS', 'ACTIVE', TRUE, 'SQL'
-  FROM prod_nature n, prod_category c, prod_subcategory s, prod_brand b, prod_shelf sh
- WHERE n.nature_code  = 'ARN'
-   AND c.category_code = '999'
-   AND s.subcategory_code = 'SF999'
-   AND b.brand_code  = 'DIN'
-   AND sh.shelf_code = 'R99'
-   AND ROWNUM <= 5
- CONNECT BY ROWNUM <= 5;
 
 COMMIT;
 

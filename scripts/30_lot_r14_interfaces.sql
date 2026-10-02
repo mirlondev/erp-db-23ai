@@ -191,7 +191,7 @@ CREATE INDEX ix_export_config_active    ON export_config(is_active, target_syste
 
 PROMPT
 PROMPT ═══ Privilèges ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- app_api gère les interfaces (lecture/écriture complète)
 GRANT SELECT, INSERT, UPDATE ON app_sys.interface_endpoint  TO app_api;

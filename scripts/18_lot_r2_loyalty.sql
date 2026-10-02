@@ -191,7 +191,7 @@ CREATE INDEX ix_loyalty_log_at     ON loyalty_log(operation_at);
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 GRANT SELECT, INSERT, UPDATE ON app_party.loyalty_card          TO app_sales;
 GRANT SELECT, INSERT, UPDATE ON app_party.loyalty_operation     TO app_sales;
 GRANT SELECT, INSERT         ON app_party.loyalty_operation_type TO app_sales;

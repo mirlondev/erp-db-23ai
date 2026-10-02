@@ -10,6 +10,8 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_hr/AppHr#2026@localhost:1521/FREEPDB1
 
@@ -323,8 +325,8 @@ SELECT period_code, employee_count,
 
 PROMPT [Q4] Détail bulletin caissière (mars)
 SELECT ps.period_id, v_b.matricule, v_b.full_name,
-       ps.cnps_emp, ps.ipes_emp, ps.irpp, ps.net,
-       ps.cnps_patron, ps.ipes_patron
+  ps.cnps_employee, ps.ipes_employee, ps.irpp, ps.net,
+  ps.cnps_employer, ps.ipes_employer
   FROM v_payroll_bulletin v_b
   JOIN payroll_slip ps ON ps.slip_id = v_b.slip_id
  WHERE v_b.matricule = 'EMP-2025-001'

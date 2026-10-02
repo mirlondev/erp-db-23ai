@@ -40,7 +40,7 @@ SELECT ws.site_code,
        COUNT(DISTINCT s.product_code)        AS nb_references,
        SUM(s.stock_qty)                      AS total_units,
        SUM(s.stock_qty * p.standard_price)    AS total_value_xaf,
-       SUM(CASE WHEN s.stock_qty <= p.stock_min THEN 1 ELSE 0 END) AS nb_low_stock,
+      SUM(CASE WHEN s.stock_qty <= p.min_stock_qty THEN 1 ELSE 0 END) AS nb_low_stock,
        MAX(s.last_in_at)                      AS last_movement_at
   FROM app_inv.inv_stock s
   JOIN app_product.product  p ON p.product_code = s.product_code
@@ -62,16 +62,17 @@ SELECT t.transfer_id, t.transfer_number, t.transfer_date,
          WHEN t.status = 'RECEIVED' THEN NULL
          ELSE SYSDATE - t.transfer_date
        END AS days_in_process,
-       -- Estimation de la valeur (XAF)
-       app_inv.get_estimated_value(t.transfer_id) AS estimated_value_xaf
+       -- Estimation de la valeur (XAF), calculée sans dépendance au package
+       (SELECT NVL(SUM(tl.requested_qty * p.standard_price), 0)
+          FROM app_inv.transfer_line tl
+          JOIN app_product.product p ON p.product_code = tl.product_code
+         WHERE tl.transfer_id = t.transfer_id) AS estimated_value_xaf
   FROM app_inv.transfer_header t
   LEFT JOIN app_inv.transfer_line l ON l.transfer_id = t.transfer_id
  WHERE t.status NOT IN ('CLOSED','CANCELLED')
  GROUP BY t.transfer_id, t.transfer_number, t.transfer_date,
           t.source_warehouse, t.target_warehouse, t.status;
 
--- Synonyme si pkg_transfer_stock.get_estimated_value n'existe pas, on utilise la vue.
--- (le package existe — script 43)
 
 -- =================================================================
 -- BLOC 2 : Vues POS / Ventes (app 100)

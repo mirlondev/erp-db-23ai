@@ -150,6 +150,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_sync_hub AS
     p_target_site_code  IN VARCHAR2 DEFAULT NULL
   ) RETURN NUMBER IS
     v_count NUMBER := 0;
+    v_error_message VARCHAR2(4000);
   BEGIN
     -- Boucle sur les events PENDING
     FOR ev IN (
@@ -195,9 +196,10 @@ CREATE OR REPLACE PACKAGE BODY pkg_sync_hub AS
 
         v_count := v_count + 1;
       EXCEPTION WHEN OTHERS THEN
+        v_error_message := SQLERRM;
         UPDATE outbox_event
            SET status = 'FAILED', retry_count = retry_count + 1,
-               last_error = SQLERRM
+               last_error = v_error_message
          WHERE event_id = ev.event_id;
       END;
     END LOOP;

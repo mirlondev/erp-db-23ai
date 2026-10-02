@@ -146,9 +146,10 @@ CREATE OR REPLACE PACKAGE BODY pkg_pos_sales AS
     -- Pour simplifier : theoretical = opening_balance + total_sales cash (estimé)
     SELECT NVL(opening_balance, 0)
       INTO v_theoretical
-      FROM pos_session
-     WHERE terminal_id = (SELECT terminal_id FROM pos_terminal WHERE terminal_code = p_terminal_code)
-       AND session_no = p_session_no;
+      FROM app_pos.pos_session ps
+      JOIN app_pos.pos_terminal pt ON pt.terminal_id = ps.terminal_id
+     WHERE pt.terminal_code = p_terminal_code
+       AND ps.session_no = p_session_no;
 
     v_theoretical := v_theoretical + v_total_sales;
     v_difference := p_actual_cash - v_theoretical;

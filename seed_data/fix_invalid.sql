@@ -4,7 +4,7 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ═══════════════════════════════════════════════════════
 PROMPT   RÉPARATION DES OBJETS INVALIDES

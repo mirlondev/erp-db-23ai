@@ -2,6 +2,8 @@
 -- S08 : Seed app_cash — Codes mouvement
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_cash/AppCash#2026@localhost:1521/FREEPDB1
 

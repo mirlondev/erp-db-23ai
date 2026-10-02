@@ -43,7 +43,6 @@ CREATE TABLE gl_journal (
     REFERENCES gl_company(company_code)
 );
 
-PROMPT [3] Table gl_account
 CREATE TABLE gl_account (
   company_code      VARCHAR2(2)   NOT NULL,
   account_code      VARCHAR2(8)   NOT NULL,

@@ -2,6 +2,8 @@
 -- S01 : Seed app_sys — données SUPER SONIC
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 SET LINESIZE 200
 
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1

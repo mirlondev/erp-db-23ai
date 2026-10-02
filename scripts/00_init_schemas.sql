@@ -1,17 +1,21 @@
 -- ============================================================
 -- SCRIPT 00 : Nettoyage + Création des schémas modernes (26ai)
 -- ------------------------------------------------------------
--- Idempotent : peut être ré-exécuté sans erreur.
+-- DESTRUCTIF : supprime tous les utilisateurs APP_* non Oracle et leurs objets.
+-- Exécuter uniquement après validation d'une sauvegarde.
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET PAGESIZE 100
 SET FEEDBACK ON
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 PROMPT ═══════════════════════════════════════════════════════
 PROMPT   INITIALISATION — Schémas modernes
 PROMPT ═══════════════════════════════════════════════════════
+PROMPT   ATTENTION : suppression destructive de tous les schémas APP_*.
 
 -- ------------------------------------------------------------------
 -- [0] Bascule vers FREEPDB1 (tolérant : ne casse pas si déjà dedans)
@@ -59,6 +63,9 @@ BEGIN
   END LOOP;
   DBMS_OUTPUT.PUT_LINE('  → ' || v_count || ' schéma(s) supprimé(s), ' ||
                        v_fail || ' échec(s).');
+  IF v_fail > 0 THEN
+    RAISE_APPLICATION_ERROR(-20000, 'Suppression APP_* incomplète; création annulée.');
+  END IF;
 END;
 /
 
@@ -123,6 +130,9 @@ BEGIN
   DBMS_OUTPUT.PUT_LINE('  → ' || v_ok || ' créé(s), ' ||
                        v_skip || ' déjà présent(s), ' ||
                        v_fail || ' échec(s).');
+  IF v_fail > 0 THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Création APP_* incomplète; migration annulée.');
+  END IF;
 END;
 /
 

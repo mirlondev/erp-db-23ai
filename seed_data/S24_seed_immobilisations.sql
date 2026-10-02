@@ -13,6 +13,8 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_gl/AppGl#2026@localhost:1521/FREEPDB1
 
@@ -239,12 +241,13 @@ SELECT category,
  ORDER BY total_acquisition DESC;
 
 PROMPT [Q2] Plan d'amortissement du camion Mercedes (10 premières lignes)
-SELECT asset_name,
-       fiscal_year, period_no, period_end,
-       depr_amount, cumulative_depr, residual_value_at, status
-  FROM imm_depreciation
- WHERE asset_id = (SELECT asset_id FROM imm_asset WHERE asset_code = 'IMM-2026-001')
- ORDER BY fiscal_year, period_no
+SELECT a.asset_name,
+       d.fiscal_year, d.period_no, d.period_end,
+       d.depr_amount, d.cumulative_depr, d.residual_value_at, d.status
+  FROM imm_depreciation d
+  JOIN imm_asset a ON a.asset_id = d.asset_id
+ WHERE d.asset_id = (SELECT asset_id FROM imm_asset WHERE asset_code = 'IMM-2026-001')
+ ORDER BY d.fiscal_year, d.period_no
  FETCH FIRST 12 ROWS ONLY;
 
 PROMPT [Q3] Cumul annuel d'amortissement (par exercice fiscal)

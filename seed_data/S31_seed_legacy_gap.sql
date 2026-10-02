@@ -15,6 +15,8 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 -- ════════════════════════════════════════════════════════
 -- 1) Tables KERNEL.TT_* — file de transfert
@@ -106,7 +108,7 @@ SELECT t.tt_id, '401' || LPAD(MOD(t.tt_id, 100), 3, '0'),
   WHERE ROWNUM <= 100;
 
 INSERT INTO tt_ecr_let (tt_ecr_id, codlet)
-SELECT tt_id, 'LET' || LPAD(LEVEL, 6, '0')
+SELECT tt_id, 'LET' || LPAD(ROWNUM, 6, '0')
   FROM tt_ecr
   WHERE ROWNUM <= 30;
 COMMIT;
@@ -136,7 +138,7 @@ COMMIT;
 
 -- TT_BRDD, TT_BRDE : lignes/entêtes (en relation avec TT_BRD_OFFICE)
 INSERT INTO tt_brde (tt_brd_id, datbrd, coddep_src, coddep_tgt, codtbrd, transfer_state)
-SELECT tt_id, SYSDATE - MOD(tt_id, 30), 'DEP-PNR', 'DEP-BZV', codtbrd, transfer_state
+SELECT tt_id, SYSDATE - MOD(tt_id, 30), 'DEP01', 'DEP02', codtbrd, transfer_state
   FROM tt_brd_office
  WHERE ROWNUM <= 30;
 
@@ -246,13 +248,13 @@ PROMPT pos_format + zones LITOKO insérés.
 PROMPT
 PROMPT ═══ warehouse_pc_auth ═══
 INSERT INTO warehouse_pc_auth (warehouse_code, pc_name, pc_mac, is_authorized, authorized_by, authorized_at)
-VALUES ('DEP-PNR', 'PC-CAISSE-PNR-01', 'AA:BB:CC:DD:EE:01', 1, 'ADMIN', SYSTIMESTAMP);
+VALUES ('DEP01', 'PC-CAISSE-PNR-01', 'AA:BB:CC:DD:EE:01', 1, 'ADMIN', SYSTIMESTAMP);
 INSERT INTO warehouse_pc_auth (warehouse_code, pc_name, pc_mac, is_authorized, authorized_by, authorized_at)
-VALUES ('DEP-PNR', 'PC-CAISSE-PNR-02', 'AA:BB:CC:DD:EE:02', 1, 'ADMIN', SYSTIMESTAMP);
+VALUES ('DEP01', 'PC-CAISSE-PNR-02', 'AA:BB:CC:DD:EE:02', 1, 'ADMIN', SYSTIMESTAMP);
 INSERT INTO warehouse_pc_auth (warehouse_code, pc_name, pc_mac, is_authorized, authorized_by, authorized_at)
-VALUES ('DEP-BZV', 'PC-CAISSE-BZV-01', 'AA:BB:CC:DD:EE:03', 1, 'ADMIN', SYSTIMESTAMP);
+VALUES ('DEP02', 'PC-CAISSE-BZV-01', 'AA:BB:CC:DD:EE:03', 1, 'ADMIN', SYSTIMESTAMP);
 INSERT INTO warehouse_pc_auth (warehouse_code, pc_name, pc_mac, is_authorized, authorized_by, authorized_at)
-VALUES ('DEP-BZV', 'PC-CAISSE-BZV-02', 'AA:BB:CC:DD:EE:04', 0, 'ADMIN', SYSTIMESTAMP);
+VALUES ('DEP02', 'PC-CAISSE-BZV-02', 'AA:BB:CC:DD:EE:04', 0, 'ADMIN', SYSTIMESTAMP);
 COMMIT;
 
 -- ════════════════════════════════════════════════════════
@@ -403,7 +405,7 @@ PROMPT ═══ Demostrations ═══
 
 PROMPT [Q1] Volumétrie totale des nouvelles tables
 SELECT 'Tables legacy gap-filler' AS categorie,
-       (SELECT COUNT(*) FROM app_sys.tt_brd_office
+  (SELECT COUNT(*) FROM app_sys.tt_brd_office)
         + (SELECT COUNT(*) FROM app_sys.tt_brde)
         + (SELECT COUNT(*) FROM app_sys.tt_lum)
         + (SELECT COUNT(*) FROM app_purchase.supplier_product)
@@ -411,8 +413,7 @@ SELECT 'Tables legacy gap-filler' AS categorie,
         + (SELECT COUNT(*) FROM app_ar.payment_history)
         + (SELECT COUNT(*) FROM app_sys.sys_message)
         + (SELECT COUNT(*) FROM app_sys.sys_output)
-        + (SELECT COUNT(*) FROM app_pos.pos_format_zone)
-       ) AS total_rows
+        + (SELECT COUNT(*) FROM app_pos.pos_format_zone) AS total_rows
   FROM dual;
 
 PROMPT [Q2] État de la file de transfert TT_BRD_OFFICE

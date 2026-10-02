@@ -13,7 +13,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 CONNECT app_api/AppApi#2026@localhost:1521/FREEPDB1
 
@@ -154,10 +154,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     v_pk_min      NUMBER := 0;
     v_pk_max      NUMBER := 0;
     v_total_src   NUMBER := 0;
-    v_dispatched  NUMBER := 0;
-    v_batch       NUMBER := 0;
     v_legacy_ok   BOOLEAN;
-    v_cnt_line    NUMBER;
   BEGIN
     p_etl_run_id := NULL;
 
@@ -169,7 +166,6 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     DBMS_OUTPUT.PUT_LINE('  → Mode: ' || CASE WHEN v_legacy_ok THEN 'LEGACY' ELSE 'DEMO' END);
 
     IF v_legacy_ok THEN
-      -- ✅ RUNTIME : SQL dynamique pour éviter ORA-00942 à la compilation
       EXECUTE IMMEDIATE
         'SELECT NVL(MIN(idbrd), 0), NVL(MAX(idbrd), 0), COUNT(*) FROM caisse.gcbrdd'
         INTO v_pk_min, v_pk_max, v_total_src;
@@ -177,58 +173,32 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
                            ' (' || v_total_src || ' rows)');
 
       IF v_total_src > 0 THEN
-        LOOP
-          v_batch := v_batch + 1;
-          EXIT WHEN p_max_batches IS NOT NULL AND v_batch > p_max_batches;
-          EXIT WHEN v_batch * p_batch_size >= v_total_src;
-
-          FOR r IN (SELECT target_line_table FROM etl_brd_mapping
-                     WHERE target_line_table IS NOT NULL) LOOP
-            BEGIN
-              v_cnt_line := get_target_count(
-                REGEXP_SUBSTR(r.target_line_table, '^[^.]+'),
-                REGEXP_SUBSTR(r.target_line_table, '[^.]+$')
-              );
-            EXCEPTION WHEN OTHERS THEN
-              v_cnt_line := 0;
-            END;
-          END LOOP;
-
-          v_dispatched := LEAST(v_batch * p_batch_size, v_total_src);
-
-          UPDATE etl_run_progress
-             SET rows_processed = v_dispatched,
-                 last_pk_processed = v_pk_min + v_batch * p_batch_size
-           WHERE etl_id = p_etl_run_id;
-          COMMIT;
-        END LOOP;
+        UPDATE etl_run_progress
+           SET status = 'FAILED',
+               finished_at = SYSTIMESTAMP,
+               error_message = 'Legacy source exists, but no column-mapped GCBRDD loader is implemented.'
+         WHERE etl_id = p_etl_run_id;
+        COMMIT;
+        RAISE_APPLICATION_ERROR(-20551,
+          'GCBRDD is present, but this script does not migrate its rows. Use a validated source-to-target ETL.');
       END IF;
-    ELSE
-      FOR r IN (SELECT target_line_table FROM etl_brd_mapping
-                 WHERE target_line_table IS NOT NULL) LOOP
-        BEGIN
-          v_total_src := v_total_src + get_target_count(
-            REGEXP_SUBSTR(r.target_line_table, '^[^.]+'),
-            REGEXP_SUBSTR(r.target_line_table, '[^.]+$')
-          );
-        EXCEPTION WHEN OTHERS THEN NULL;
-        END;
-      END LOOP;
-
-      DBMS_OUTPUT.PUT_LINE('  → Mode demo : ' || v_total_src || ' rows dans tables modernes.');
-      v_dispatched := v_total_src;
 
       UPDATE etl_run_progress
-         SET rows_processed = v_dispatched
+         SET status = 'DONE', finished_at = SYSTIMESTAMP
+       WHERE etl_id = p_etl_run_id;
+    ELSE
+      DBMS_OUTPUT.PUT_LINE('  → Source legacy absente : aucun dispatch exécuté.');
+      UPDATE etl_run_progress
+         SET status = 'SKIPPED',
+             rows_processed = 0,
+             finished_at = SYSTIMESTAMP,
+             error_message = 'No CAISSE.GCBRDD source was available; no rows were migrated.'
        WHERE etl_id = p_etl_run_id;
     END IF;
 
-    UPDATE etl_run_progress
-       SET status = 'DONE', finished_at = SYSTIMESTAMP
-     WHERE etl_id = p_etl_run_id;
     COMMIT;
 
-    DBMS_OUTPUT.PUT_LINE('  ✅ Dispatch termine : ' || v_dispatched || ' rows.');
+    DBMS_OUTPUT.PUT_LINE('  → Run terminé sans transfert de données.');
   END dispatch_gcbrdd;
 
   -- ── 2) get_dispatch_plan ──
@@ -236,20 +206,15 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     v_cur     SYS_REFCURSOR;
     v_legacy  BOOLEAN;
   BEGIN
-    v_legacy := legacy_available('CAISSE', 'GCBRDE');
+    v_legacy := legacy_available('CAISSE', 'GCBRDE')
+                AND legacy_available('CAISSE', 'GCBRDD');
     IF v_legacy THEN
-      -- ✅ SQL dynamique pour éviter ORA-00942 à la compilation
       OPEN v_cur FOR
-        SELECT m.codtbrd,
-               m.target_header_table,
-               m.target_line_table,
-               m.description,
-               (SELECT COUNT(*) FROM caisse.gcbrde b WHERE b.codtbrd = m.codtbrd) AS nb_brd,
-               (SELECT COUNT(*) FROM caisse.gcbrdd l
-                  WHERE EXISTS (SELECT 1 FROM caisse.gcbrde b
-                                WHERE b.idbrd = l.idbrd AND b.codtbrd = m.codtbrd)) AS nb_brdd
-          FROM etl_brd_mapping m
-         ORDER BY nb_brd DESC NULLS LAST;
+        'SELECT m.codtbrd, m.target_header_table, m.target_line_table, m.description, ' ||
+        '(SELECT COUNT(*) FROM caisse.gcbrde b WHERE b.codtbrd = m.codtbrd) AS nb_brd, ' ||
+        '(SELECT COUNT(*) FROM caisse.gcbrdd l WHERE EXISTS ' ||
+        '(SELECT 1 FROM caisse.gcbrde b WHERE b.idbrd = l.idbrd AND b.codtbrd = m.codtbrd)) AS nb_brdd ' ||
+        'FROM etl_brd_mapping m ORDER BY nb_brd DESC NULLS LAST';
     ELSE
       OPEN v_cur FOR
         SELECT m.codtbrd,
@@ -284,7 +249,6 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     p_target_table IN VARCHAR2,
     p_pk_column    IN VARCHAR2
   ) IS
-    v_count    NUMBER := 0;
     v_src_ok   BOOLEAN;
     v_tgt_ok   BOOLEAN;
   BEGIN
@@ -292,17 +256,8 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     v_tgt_ok := legacy_available(p_target_owner, p_target_table);
 
     IF v_src_ok THEN
-      EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ' || p_source_owner || '.' || p_source_table
-        INTO v_count;
-      DBMS_OUTPUT.PUT_LINE('  → Source LEGACY ' || p_source_owner || '.' || p_source_table ||
-                           ' : ' || v_count || ' rows.');
-    ELSIF v_tgt_ok THEN
-      EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ' || p_target_owner || '.' || p_target_table
-        INTO v_count;
-      DBMS_OUTPUT.PUT_LINE('  → Source LEGACY absente. Cible ' || p_target_owner || '.' || p_target_table ||
-                           ' : ' || v_count || ' rows.');
-    ELSE
-      DBMS_OUTPUT.PUT_LINE('  → Source ET cible absentes (demo). Skip.');
+      RAISE_APPLICATION_ERROR(-20552,
+        'No row mapping is implemented for ' || p_source_owner || '.' || p_source_table || '.');
     END IF;
 
     INSERT INTO etl_run_progress (
@@ -310,11 +265,13 @@ CREATE OR REPLACE PACKAGE BODY pkg_etl_legacy AS
     ) VALUES (
       p_source_owner || '.' || p_source_table,
       p_target_owner || '.' || p_target_table,
-      v_count, 'DONE', SYSTIMESTAMP
+      0, CASE WHEN v_tgt_ok THEN 'SKIPPED' ELSE 'FAILED' END, SYSTIMESTAMP
     );
     COMMIT;
-  EXCEPTION WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('  ⚠ dispatch_reference_table : ' || SQLERRM);
+    IF NOT v_tgt_ok THEN
+      RAISE_APPLICATION_ERROR(-20553,
+        'Target table does not exist: ' || p_target_owner || '.' || p_target_table || '.');
+    END IF;
   END dispatch_reference_table;
 
   -- ── 5) resume_etl ──
@@ -400,36 +357,14 @@ BEGIN
 END;
 /
 
-PROMPT [T5] Dispatch demo
-DECLARE
-  v_run_id NUMBER;
-BEGIN
-  pkg_etl_legacy.dispatch_gcbrdd(
-    p_batch_size => 10000, p_max_batches => NULL, p_etl_run_id => v_run_id);
-  DBMS_OUTPUT.PUT_LINE('  Run ID = ' || v_run_id);
-END;
-/
-
-PROMPT [T6] Stats après dispatch
+PROMPT [T5] Stats ETL (aucun transfert exécuté par ce script)
 SELECT status, COUNT(*) AS nb_runs, SUM(rows_processed) AS total_rows
   FROM etl_run_progress GROUP BY status ORDER BY status;
 
-PROMPT [T7] dispatch_reference_table (resilience)
-BEGIN
-  pkg_etl_legacy.dispatch_reference_table(
-    p_source_owner => 'CAISSE',
-    p_source_table => 'GCPART',
-    p_target_owner => 'APP_PRODUCT',
-    p_target_table => 'PRODUCT',
-    p_pk_column    => 'PRODUCT_CODE');
-END;
-/
-
 PROMPT
 PROMPT ══════════════════════════════════════════════════════════
-PROMPT   ✅ FIX pkg_etl_legacy v3.1 — runtime SQL pour legacy
-PROMPT   - 0 erreur compilation
-PROMPT   - mode LEGACY/DEMO
-PROMPT   - dispatch_reference_table skip si legacy absent
+PROMPT   ✓ PKG_ETL_LEGACY compilé — aucun ETL de données exécuté
+PROMPT   - le plan lit les sources legacy dynamiquement
+PROMPT   - dispatch protégé contre les succès simulés
 PROMPT ══════════════════════════════════════════════════════════
 EXIT;

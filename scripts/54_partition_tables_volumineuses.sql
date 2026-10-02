@@ -26,7 +26,7 @@ SET DEFINE OFF
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 WHENEVER OSERROR  EXIT FAILURE
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   PARTITIONNEMENT 23ai — Tables volumineuses REGAL

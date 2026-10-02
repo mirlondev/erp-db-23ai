@@ -73,7 +73,7 @@ PROMPT ════════════════════════�
 
 PROMPT
 PROMPT Création du package ETL dans app_api (couche orchestration)
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT CREATE PROCEDURE, CREATE TYPE TO app_api;
 

@@ -6,6 +6,8 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_ar/AppAr#2026@localhost:1521/FREEPDB1
 
@@ -60,14 +62,14 @@ INSERT INTO payment_method_ref (method_code, method_name, method_type,
                                  journal_code, gl_account_code, is_active,
                                  requires_reference, max_amount, commission_rate,
                                  display_order, icon_code)
-VALUES ('MOBILE_OM', 'Orange Money', 'MOBILE', 'MOBILE_OM_ACC', '531100', TRUE,
+VALUES ('MOBILE_OM', 'Orange Money', 'MOBILE', 'MOM', '531100', TRUE,
         TRUE, 2000000, 1.0, 50, 'mobile_om');
 
 INSERT INTO payment_method_ref (method_code, method_name, method_type,
                                  journal_code, gl_account_code, is_active,
                                  requires_reference, max_amount, commission_rate,
                                  display_order, icon_code)
-VALUES ('MOBILE_MTN', 'MTN Mobile Money', 'MOBILE', 'MOBILE_MTN_ACC', '531200', TRUE,
+VALUES ('MOBILE_MTN', 'MTN Mobile Money', 'MOBILE', 'MTNM', '531200', TRUE,
         TRUE, 2000000, 1.0, 60, 'mobile_mtn');
 
 INSERT INTO payment_method_ref (method_code, method_name, method_type,

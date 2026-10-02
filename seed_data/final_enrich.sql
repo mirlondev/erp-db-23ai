@@ -73,7 +73,7 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW dv_product AS
 -- [4] Validation finale
 PROMPT
 PROMPT [4] Validation finale
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 SELECT 'PRODUCT_PRICE'  AS tbl, COUNT(*) AS nb FROM app_product.product_price
 UNION ALL SELECT 'TICKET_LINE',      COUNT(*) FROM app_sales.ticket_line

@@ -12,7 +12,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET DEFINE OFF
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   CORRECTION GRANTS CROSS-SCHÉMA
@@ -63,6 +63,7 @@ BEGIN
 
   -- ═══ APP_SALES (pkg_pos_sales + trg_ticket_audit) ═══
   add('APP_SALES','APP_PARTY',   'LOYALTY_CARD',     'SELECT, UPDATE');
+  add('APP_SALES','APP_POS',     'POS_SESSION',      'SELECT');
   add('APP_SALES','APP_PRODUCT', 'PRODUCT',          'SELECT');
   add('APP_SALES','APP_PRODUCT', 'PROMO_POS_CONFIG', 'SELECT');
   add('APP_SALES','APP_PRODUCT', 'PROMO_POS_PRODUCT','SELECT');
@@ -78,6 +79,20 @@ BEGIN
   add('APP_API',  'APP_ORG',     'ORG_WAREHOUSE',   'SELECT');
   add('APP_API',  'APP_POS',     'POS_TERMINAL',    'SELECT');
   add('APP_API',  'APP_SYS',     'SYS_AUDIT_TRAIL', 'SELECT');
+  add('APP_API',  'APP_SYS',     'SITE_MASTER',     'SELECT');
+  add('APP_API',  'APP_SYS',     'SYS_COUNTRY',     'SELECT');
+  add('APP_API',  'APP_SYS',     'CG_IRPP_BRACKET', 'SELECT');
+  add('APP_API',  'APP_SYS',     'SYS_MESSAGE',     'SELECT');
+  add('APP_API',  'APP_SYS',     'SYS_MESSAGE_LANG','SELECT');
+  add('APP_API',  'APP_GL',      'GL_ACCOUNT_OHADA', 'SELECT');
+  add('APP_API',  'APP_GL',      'GL_ACCOUNT',       'SELECT');
+  add('APP_API',  'APP_GL',      'GL_ENTRY',        'SELECT');
+  add('APP_API',  'APP_GL',      'GL_ENTRY_LINE',   'SELECT');
+  add('APP_API',  'APP_GL',      'GL_JOURNAL',      'SELECT');
+  add('APP_API',  'APP_GL',      'TAX_FORM_TYPE',   'SELECT');
+
+  -- ═══ Seeds / promotions cross-schema ═══
+  add('APP_PRODUCT', 'APP_ORG', 'ORG_POS', 'SELECT');
 
   -- ═══ APP_GL (déclarations fiscales + OHADA) ═══
   add('APP_GL',   'APP_AR',      'INVOICE',           'SELECT');
@@ -100,6 +115,7 @@ BEGIN
   add('APP_HR',   'APP_ORG',     'ORG_POS',           'SELECT');
   add('APP_HR',   'APP_GL',      'GL_ACCOUNT',        'SELECT');
   add('APP_HR',   'APP_SYS',     'SYS_AUDIT_TRAIL',   'INSERT, SELECT');
+  add('APP_HR',   'APP_SYS',     'FN_CG_IRPP',        'EXECUTE');
 
   -- ═══ APP_AUDIT (audit consolidé) ═══
   add('APP_AUDIT','APP_SYS',     'SYS_AUDIT_TRAIL',   'SELECT, INSERT, UPDATE, DELETE');
@@ -126,7 +142,7 @@ END;
 -- ═══ Synonymes publics pour faciliter les accès ═══
 PROMPT
 PROMPT ═══ Synonymes ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 BEGIN
   FOR u IN (SELECT username FROM dba_users

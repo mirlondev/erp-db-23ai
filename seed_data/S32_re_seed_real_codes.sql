@@ -15,7 +15,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 PROMPT ══════════════════════════════════════════════════════════
 PROMPT   RE-SEED avec codes RÉELS (W90, FP1, B01, ...)
@@ -98,7 +98,7 @@ BEGIN
   ) RETURNING transfer_id INTO v_tid;
 
   INSERT INTO transfer_line (transfer_id, line_no, product_code, requested_qty, sent_qty, received_qty, unit_code, status)
-  VALUES (v_tid, 1, 'ART001', 50, 50, 50, 'PCS', 'RECEIVED');
+  VALUES (v_tid, 1, '31275', 5, 5, 5, 'PCS', 'RECEIVED');
 
   -- Transfert 2 : DEP02 → W90
   INSERT INTO transfer_header (
@@ -109,9 +109,9 @@ BEGIN
   ) RETURNING transfer_id INTO v_tid;
 
   INSERT INTO transfer_line (transfer_id, line_no, product_code, requested_qty, sent_qty, received_qty, unit_code, status)
-  VALUES (v_tid, 1, 'ART001', 100, 100, 0, 'PCS', 'SENT');
+  VALUES (v_tid, 1, '31275', 5, 5, 0, 'PCS', 'SENT');
   INSERT INTO transfer_line (transfer_id, line_no, product_code, requested_qty, sent_qty, received_qty, unit_code, status)
-  VALUES (v_tid, 2, 'ART002', 100, 100, 0, 'PCS', 'SENT');
+  VALUES (v_tid, 2, '19889', 5, 5, 0, 'PCS', 'SENT');
 
   -- Transfert 3 : DEP01 → DEP02 (rééquilibrage)
   INSERT INTO transfer_header (
@@ -122,13 +122,13 @@ BEGIN
   ) RETURNING transfer_id INTO v_tid;
 
   INSERT INTO transfer_line (transfer_id, line_no, product_code, requested_qty, sent_qty, received_qty, unit_code, status)
-  VALUES (v_tid, 1, 'ART001', 150, 0, 0, 'PCS', 'PENDING');
+  VALUES (v_tid, 1, '31275', 5, 0, 0, 'PCS', 'PENDING');
 
   COMMIT;
   DBMS_OUTPUT.PUT_LINE('  → 3 transfers + 4 lignes créés.');
 EXCEPTION WHEN OTHERS THEN
-  DBMS_OUTPUT.PUT_LINE('  ⚠ Erreur seed transfer : ' || SQLERRM);
   ROLLBACK;
+  RAISE;
 END;
 /
 
@@ -203,8 +203,8 @@ BEGIN
   COMMIT;
   DBMS_OUTPUT.PUT_LINE('  → 3 immobilisations + 12 dotations créées.');
 EXCEPTION WHEN OTHERS THEN
-  DBMS_OUTPUT.PUT_LINE('  ⚠ Erreur immo : ' || SQLERRM);
   ROLLBACK;
+  RAISE;
 END;
 /
 
@@ -270,8 +270,8 @@ BEGIN
   COMMIT;
   DBMS_OUTPUT.PUT_LINE('  → 3 déclarations LITOKO créées.');
 EXCEPTION WHEN OTHERS THEN
-  DBMS_OUTPUT.PUT_LINE('  ⚠ Erreur tax : ' || SQLERRM);
   ROLLBACK;
+  RAISE;
 END;
 /
 
@@ -323,7 +323,7 @@ BEGIN
   COMMIT;
   DBMS_OUTPUT.PUT_LINE('  → 10 messages + traductions FR/EN.');
 EXCEPTION WHEN OTHERS THEN
-  DBMS_OUTPUT.PUT_LINE('  ⚠ Erreur sys_message : ' || SQLERRM);
+  RAISE;
 END;
 /
 
@@ -343,14 +343,14 @@ BEGIN
 
   INSERT INTO outbox_event (object_owner, object_name, primary_key_value, operation,
                               row_data_json, site_code_origin, status)
-  VALUES ('APP_PRODUCT', 'PRODUCT', 'ART001', 'UPDATE',
-          '{"product_code":"ART001","product_name":"Cahier 200 pages","standard_price":2500}',
+    VALUES ('APP_PRODUCT', 'PRODUCT', '31275', 'UPDATE',
+      '{"product_code":"31275","product_name":"TEFAL JUST CHEF CASS","standard_price":27500}',
           'PNR-OFC', 'PENDING');
 
   INSERT INTO outbox_event (object_owner, object_name, primary_key_value, operation,
                               row_data_json, site_code_origin, status, published_at)
-  VALUES ('APP_PRODUCT', 'PRODUCT', 'ART002', 'UPDATE',
-          '{"product_code":"ART002","standard_price":1200}',
+    VALUES ('APP_PRODUCT', 'PRODUCT', '19889', 'UPDATE',
+      '{"product_code":"19889","standard_price":2950}',
           'PNR-OFC', 'DONE', SYSTIMESTAMP - 1);
 
   INSERT INTO outbox_event (object_owner, object_name, primary_key_value, operation,
@@ -362,8 +362,8 @@ BEGIN
   COMMIT;
   DBMS_OUTPUT.PUT_LINE('  → 3 events CDC.');
 EXCEPTION WHEN OTHERS THEN
-  DBMS_OUTPUT.PUT_LINE('  ⚠ Erreur outbox : ' || SQLERRM);
   ROLLBACK;
+  RAISE;
 END;
 /
 
@@ -389,7 +389,7 @@ BEGIN
     payment_method, social_security_no, marital_status, dependents_count)
   VALUES ('LIT-2024-001', 'PTY-LITOKO-E001', 'LITOKO', 'MALONGA Patrick', 'CDI',
           'Gérant LITOKO Pointe-Noire', 'DIRIGEANT', DATE '2024-04-01',
-          'POS-PNR-01', 'DEP01', 1800000, 10345, 'BANK_TRANSFER', 'CNSS-CG-001-2024',
+          'LPNR01', 'LIT01', 1800000, 10345, 'BANK_TRANSFER', 'CNSS-CG-001-2024',
           'MARRIED', 3);
 
   INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
@@ -397,20 +397,20 @@ BEGIN
     location_code, warehouse_code, monthly_salary_brut, marital_status)
   VALUES ('LIT-2024-002', 'PTY-LITOKO-E002', 'LITOKO', 'NGOMA Priscille', 'CDI',
           'Comptable senior', 'CADRE', DATE '2024-05-15',
-          'POS-PNR-01', 'DEP01', 950000, 'SINGLE');
+          'LPNR01', 'LIT01', 950000, 'SINGLE');
 
   INSERT INTO mpf_employee (matricule, party_code, company_code, full_name,
     contract_type, position, category, hire_date,
     location_code, warehouse_code, monthly_salary_brut, marital_status, dependents_count)
   VALUES ('LIT-2024-003', 'PTY-LITOKO-E003', 'LITOKO', 'BITEMO Jean-Pierre', 'CDI',
           'Magasinier Pointe-Noire', 'AGENT', DATE '2024-09-01',
-          'DEP01', 'DEP01', 420000, 'MARRIED', 2);
+          'LIT01', 'LIT01', 420000, 'MARRIED', 2);
 
   COMMIT;
   DBMS_OUTPUT.PUT_LINE('  → 3 employés LITOKO créés.');
 EXCEPTION WHEN OTHERS THEN
-  DBMS_OUTPUT.PUT_LINE('  ⚠ Erreur RH : ' || SQLERRM);
   ROLLBACK;
+  RAISE;
 END;
 /
 
@@ -419,6 +419,7 @@ END;
 -- ============================================================
 PROMPT
 PROMPT [8/8] Volumétrie finale
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 SELECT 'transfer_header'      AS tbl, COUNT(*) AS nb FROM app_inv.transfer_header
 UNION ALL SELECT 'transfer_line',        COUNT(*) FROM app_inv.transfer_line
 UNION ALL SELECT 'imm_asset',            COUNT(*) FROM app_gl.imm_asset

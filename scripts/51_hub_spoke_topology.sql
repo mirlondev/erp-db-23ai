@@ -22,7 +22,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 CONNECT app_sys/AppSys#2026@localhost:1521/FREEPDB1
 
@@ -262,7 +262,7 @@ ON (sr.source_site_id = sm.site_id OR sr.target_site_id = sm.site_id)
 GROUP BY sm.site_code, sm.site_name, sm.site_type, sm.city;
 
 -- Privilèges
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT, INSERT, UPDATE ON app_sys.site_master         TO app_api;
 GRANT SELECT, INSERT, UPDATE ON app_sys.site_link           TO app_api;

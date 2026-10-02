@@ -10,7 +10,7 @@ PROMPT   FINALISATION DU SEED
 PROMPT ═══════════════════════════════════════════════════════
 
 -- 1. Réparer les objets invalides
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 EXEC UTL_RECOMP.RECOMP_SERIAL('APP_SALES');
 EXEC UTL_RECOMP.RECOMP_SERIAL('APP_API');
 
@@ -36,7 +36,7 @@ SELECT 'CL0005', 'TIMBRE ELECTRONIQUE CGO', nature_id, 'XAF', TRUE, 'ACTIVE', 'A
 COMMIT;
 
 -- 5. Validation finale
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT
 PROMPT [A] Objets invalides (doit être vide)

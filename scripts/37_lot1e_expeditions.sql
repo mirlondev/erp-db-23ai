@@ -204,7 +204,7 @@ CREATE INDEX ix_shipment_exception_unresolved
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_ship.shipment           TO app_api;
 GRANT SELECT ON app_ship.shipment_line      TO app_api;

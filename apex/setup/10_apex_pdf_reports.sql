@@ -268,7 +268,7 @@ CREATE OR REPLACE PACKAGE BODY apex_report_api AS
   BEGIN
     SELECT source_query INTO v_q
       FROM apex_report_template
-     WHERE template_code = p_template_code AND is_active = 'Y';
+     WHERE template_code = p_template_code AND is_active = TRUE;
     RETURN v_q;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     RETURN 'SELECT ''TEMPLATE_NOT_FOUND'' AS d FROM DUAL';
@@ -279,7 +279,7 @@ CREATE OR REPLACE PACKAGE BODY apex_report_api AS
   BEGIN
     SELECT layout_xml INTO v_l
       FROM apex_report_template
-     WHERE template_code = p_template_code AND is_active = 'Y';
+     WHERE template_code = p_template_code AND is_active = TRUE;
     RETURN v_l;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     RETURN NULL;
@@ -290,7 +290,7 @@ CREATE OR REPLACE PACKAGE BODY apex_report_api AS
   BEGIN
     SELECT layout_format INTO v_f
       FROM apex_report_template
-     WHERE template_code = p_template_code AND is_active = 'Y';
+     WHERE template_code = p_template_code AND is_active = TRUE;
     RETURN v_f;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     RETURN 'RTF';

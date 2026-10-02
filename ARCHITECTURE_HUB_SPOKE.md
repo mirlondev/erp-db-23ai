@@ -53,13 +53,13 @@ L'ERP **REGAL** (gestion commerciale du Congo) tourne sur **6 sites géographiqu
 
 ## 🎯 Modernisation — 3 phases
 
-### ✅ Phase 1 (déjà livrée) — Modernisation siège
-- `00_init_schemas.sql` : 17 schémas APP_* créés
-- Scripts 1-50 : **~165 tables modernes** créées
-- Migration 11g → 23ai Free sur le siège PNR-OFC
-- ETL legacy → moderne (`pkg_etl_legacy`)
+### 🟡 Phase 1 — Modèle cible et scripts siège
+- `00_init_schemas.sql` définit 17 schémas APP_* et les recrée de manière destructive.
+- Les scripts définissent environ 195 tables cibles; leur état doit être validé par un run complet.
+- La couverture des lignes source/cible n'est pas mesurée.
+- L'ETL CSV couvre un sous-ensemble; le dispatch de GCBRDE/GCBRDD n'est pas implémenté.
 
-### ✅ Phase 2 (nouveau) — Topologie multi-sites (S51-S52)
+### 🟡 Phase 2 — Modèle de topologie et prototype outbox (S51-S52)
 - **`site_master`** : registre des 7 sites REGAL
 - **`site_link`** : topologie réseau (latence, bande passante)
 - **`site_database`** : métadonnées BDs par site (21c XE, 23ai Free, etc.)
@@ -67,56 +67,56 @@ L'ERP **REGAL** (gestion commerciale du Congo) tourne sur **6 sites géographiqu
 - **`site_sync_run`** : journal d'exécution (durée, rows, conflits)
 - **`site_sync_conflict`** : détection de conflits (`MASTER_WINS`, `LAST_WRITE_WINS`)
 - **`outbox_event`** : **Outbox pattern** (events CDC transactionnels)
-- **`pkg_sync_hub`** : pousse les events vers sites distants
-- **`pkg_sync_boutique`** : reçoit et applique sur boutique
+- **`pkg_sync_hub`** : journalise les événements; ne transporte pas actuellement les lignes métier vers un site distant
+- **`pkg_sync_boutique`** : modèle de réception; transport et application distants à implémenter/valider
 - **Triggers `trg_outbox_product_***` : capture auto changements produit
 
-### 🔜 Phase 3 (à venir) — Déploiement progressif
+### 🔜 Phase 3 — Migration des données et déploiement progressif
 1. **Migration boutiques** Brazzaville (BZV-B01, BZV-B02) en premier (fibre stable)
 2. **Pilote Dolisie** (DLS-B01) en satellite (1 Mbps, sync nocturne uniquement)
 3. **Dépôts DEP-PNR, DEP-BZV** en parallèle (LAN rapide)
 4. **Mode dégradé** : si sync échoue > 3 fois, on bascule en mode "boutique autonome"
 
-## 🔄 Stratégie de synchronisation
+## 🔄 Stratégie de synchronisation cible (non opérationnelle)
 
 ### 🔹 Master → Boutiques (PUSH)
 - **Tables** : `product`, `party`, `tarif`, `promo_*`
-- **Méthode** : DBLINK + JSON_OBJECT + outbox event
-- **Fréquence** : NIGHTLY (02:00 heure locale)
+- **Méthode cible** : DBLINK + JSON_OBJECT + outbox event
+- **Fréquence cible** : NIGHTLY (02:00 heure locale)
 - **Stratégie** : `MASTER_WINS` (le siège a toujours raison)
 
 ### 🔹 Boutique → Master (PULL)
 - **Tables** : `ticket`, `session`, `cash_movement`, `transfer_line`
-- **Méthode** : DBLINK + Materialized View FAST REFRESH
-- **Fréquence** : NIGHTLY (04:30 heure locale)
+- **Méthode cible** : DBLINK + Materialized View FAST REFRESH
+- **Fréquence cible** : NIGHTLY (04:30 heure locale)
 - **Stratégie** : `LAST_WRITE_WINS` (le dernier gagne)
 
 ### 🔹 Inter-sites (BIDIRECTIONAL)
 - **Table** : `transfer_header`, `transfer_line`
-- **Méthode** : DBLINK + conflict resolution
-- **Fréquence** : NIGHTLY
+- **Méthode cible** : DBLINK + conflict resolution
+- **Fréquence cible** : NIGHTLY
 - **Stratégie** : `MANUAL_REVIEW` (car les deux bouts modifient)
 
 ## 📊 Mapping legacy → moderne
 
 | Legacy | Tables | Moderne | Tables | Statut |
 |---|---:|---|---:|---|
-| `CAISSE.CEPSESSION` | 1393 | `app_pos.pos_session` | (R3+) | ✅ migré |
-| `CAISSE.CETICKET` | 66854 | `app_sales.ticket` | (R0+) | ✅ migré |
-| `CAISSE.CEBON` | 1690 | `app_doc.doc_header` (BON_LIVRAISON) | (R0+) | ✅ migré |
-| `CAISSE.CECFLOT` | 0 | `app_cash.cash_register` | (R10+) | ✅ migré |
-| `TRANSFERT.TR_GCBRDE` | 65467 | `app_inv.transfer_header` | (R4+) | ✅ migré |
-| `TRANSFERT.TR_GCBRDD` | 201508 | `app_inv.transfer_line` | (R4+) | ✅ migré |
-| `TRANSFERT.TR_GCPART` | 0 | `app_product.product` | (R0+) | ✅ migré |
-| `XCPTA.CP_ECR` | 55615 | `app_gl.gl_entry` | (R0+) | ✅ migré |
-| `XCPTA.CP_ECR_ANA` | 44205 | `app_gl.gl_analytical_entry` | (R11+) | ✅ migré |
-| `KERNEL.KEUSERS` | (?) | `app_sys.sys_user` | (R0+) | ✅ migré |
-| `CASH.CASH_JOURNAL` | 8 | `app_cash.cash_journal` | (R10+) | ✅ migré |
+| `CAISSE.CEPSESSION` | à mesurer | `app_pos.pos_session` | R3+ | cible définie; chargement à vérifier |
+| `CAISSE.CETICKET` | à mesurer | `app_sales.ticket` | R0+ | cible définie; ETL réel à vérifier |
+| `CAISSE.CEBON` | à mesurer | `app_doc.doc_header` | R0+ | cible définie; ETL réel à vérifier |
+| `CAISSE.CECFLOT` | à mesurer | `app_cash.cash_register` | R10+ | cible définie; chargement à vérifier |
+| `TRANSFERT.TR_GCBRDE` | à mesurer | `app_inv.transfer_header` | R4+ | ETL réel non implémenté |
+| `TRANSFERT.TR_GCBRDD` | à mesurer | `app_inv.transfer_line` | R4+ | dispatcher non implémenté |
+| CSV `CAISSE.GCPART/GCSTOCK/GCPTARIF/GCPTIE` | snapshot CSV | `app_product/app_inv/app_party` | R0+ | ETL défini; import/réconciliation à valider |
+| `XCPTA.CP_ECR` | à mesurer | `app_gl.gl_entry` | R0+ | cible définie; ETL réel à vérifier |
+| `XCPTA.CP_ECR_ANA` | à mesurer | `app_gl.gl_analytical_entry` | R11+ | cible définie; chargement à vérifier |
+| `KERNEL.KEUSERS` | à mesurer | `app_sys.sys_user` | R0+ | cible définie; chargement à vérifier |
+| `CASH.CASH_JOURNAL` | à mesurer | `app_cash.cash_journal` | R10+ | cible définie; chargement à vérifier |
 
-**Couverture actuelle : 42% (165/391 tables)**
-- Tables migrées : ~70 (sessions, tickets, articles, écritures, transferts, RH, OHADA, fiscal CG)
-- Tables à migrer : ~50 (fidélité avancée, marketing, logistique détaillée, RH, CRM, paie)
-- Tables legacy à abandonner : ~270 (doublons, obsolètes, customs)
+**Couverture des données legacy : non mesurée.** Les 17 schémas et environ 195 tables
+décrivent le modèle cible; aucun inventaire de lignes source/cible ne justifie un taux
+de migration. Les lignes des dumps CSV ne sont comptées comme migrées qu’après une
+réconciliation source/cible exécutée et archivée. `GCBRDE/GCBRDD` reste à migrer.
 
 ## 🔁 Pattern Outbox — pourquoi et comment
 

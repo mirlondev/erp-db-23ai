@@ -18,7 +18,7 @@ SET SQLBLANKLINES ON
 -- ============================================================
 -- PHASE 1 : Privilèges cross-schéma (en SYSTEM)
 -- ============================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ==============================================================
 PROMPT   PHASE 1 : Attribution des privilèges
@@ -69,7 +69,7 @@ CREATE OR REPLACE SYNONYM ticket_line FOR app_sales.ticket_line;
 
 PROMPT Synonymes créés.
 
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 -- ============================================================
 -- [1] v_invoice_json — Vue JSON facture + lignes

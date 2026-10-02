@@ -71,7 +71,7 @@ PROMPT
 PROMPT ================================================================
 PROMPT   RECHERCHE DV_TICKET AILLEURS
 PROMPT ================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 SELECT owner, view_name
   FROM dba_views
  WHERE view_name LIKE 'DV\_%' ESCAPE '\'

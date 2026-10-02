@@ -328,7 +328,7 @@ END;
 -- ============================================================
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- app_sales peut lire les factures et paiements (suivi en caisse)
 GRANT SELECT ON app_ar.invoice             TO app_sales;

@@ -42,7 +42,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_doc AS
     ) RETURNING doc_id INTO v_doc_id;
 
     -- Audit
-    INSERT INTO sys_audit_trail (user_code, action_type, entity_type, entity_id, new_values)
+    INSERT INTO app_sys.sys_audit_trail (user_code, action_type, entity_type, entity_id, new_values)
     VALUES (p_user_code, 'CREATE', 'app_doc.doc_header', TO_CHAR(v_doc_id),
             JSON_OBJECT('doc_type' VALUE 'QUOTE', 'party' VALUE p_party_code));
 
@@ -114,7 +114,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_doc AS
     VALUES (p_quote_doc_id, 'QUOTE', v_new_doc_id, 'PURCHASE', 'TRANSFORM', p_user_code);
 
     -- Audit
-    INSERT INTO sys_audit_trail (user_code, action_type, entity_type, entity_id, new_values)
+    INSERT INTO app_sys.sys_audit_trail (user_code, action_type, entity_type, entity_id, new_values)
     VALUES (p_user_code, 'UPDATE', 'app_doc.doc_header', TO_CHAR(v_new_doc_id),
             JSON_OBJECT('from_doc' VALUE p_quote_doc_id, 'transformation' VALUE 'QUOTE_TO_PURCHASE'));
 
@@ -154,7 +154,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_doc AS
     -- (déjà géré par trg_ticket_line_after_insert si c'est un ticket)
 
     -- Audit
-    INSERT INTO sys_audit_trail (user_code, action_type, entity_type, entity_id, old_values, new_values)
+    INSERT INTO app_sys.sys_audit_trail (user_code, action_type, entity_type, entity_id, old_values, new_values)
     VALUES (p_user_code, 'UPDATE', 'app_doc.doc_header', TO_CHAR(p_doc_id),
             JSON_OBJECT('status' VALUE 'DRAFT'),
             JSON_OBJECT('status' VALUE 'VALID', 'total_ttc' VALUE v_total_ttc));
@@ -192,7 +192,7 @@ CREATE OR REPLACE PACKAGE BODY pkg_doc AS
     VALUES (p_doc_id, SYSDATE, p_user_code, 'ANNULÉ: ' || p_reason);
 
     -- Audit
-    INSERT INTO sys_audit_trail (user_code, action_type, entity_type, entity_id,
+    INSERT INTO app_sys.sys_audit_trail (user_code, action_type, entity_type, entity_id,
                                   old_values, new_values, severity)
     VALUES (p_user_code, 'CANCEL', 'app_doc.doc_header', TO_CHAR(p_doc_id),
             JSON_OBJECT('status' VALUE v_status),

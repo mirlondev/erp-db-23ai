@@ -1,8 +1,8 @@
 -- S00_reset.sql — Nettoyage complet avant seed
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET DEFINE OFF
-
-CONNECT system/oracle@localhost:1521/FREEPDB1
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 PROMPT Nettoyage des schémas de seed
 BEGIN

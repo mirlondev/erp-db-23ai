@@ -170,7 +170,7 @@ CREATE INDEX ix_pos_closure_terminal      ON pos_cash_closure(terminal_code);
 
 PROMPT
 PROMPT ═══ Privilèges croisés (FK vers app_party.loyalty_card) ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- app_sales a besoin de référencer loyalty_card : on autorise la FK
 GRANT SELECT ON app_party.loyalty_card          TO app_sales;

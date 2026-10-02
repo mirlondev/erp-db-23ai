@@ -4,14 +4,15 @@
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET DEFINE OFF
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ===============================================================
 PROMPT   PRIVILEGES POUR LES TRIGGERS
 PROMPT ===============================================================
 GRANT SELECT, UPDATE ON app_inv.inv_stock       TO app_sales;
 GRANT SELECT, UPDATE ON app_inv.inv_stock_alert TO app_sales;
-GRANT SELECT          ON app_pos.pos_terminal   TO app_sales;
+GRANT SELECT, UPDATE  ON app_pos.pos_terminal   TO app_sales;
+GRANT SELECT          ON app_pos.pos_session    TO app_sales;
 GRANT SELECT          ON app_product.product    TO app_sales;
 GRANT SELECT          ON app_party.party        TO app_sales;
 
@@ -117,7 +118,7 @@ END;
 /
 
 -- Validation
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT
 PROMPT [Validation]

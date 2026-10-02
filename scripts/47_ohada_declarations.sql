@@ -179,7 +179,7 @@ SELECT EXTRACT(YEAR  FROM d.period_end) AS fiscal_year,
  ORDER BY 1 DESC, 2 DESC;
 
 -- Privilèges
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_gl.tax_form_type         TO app_api;
 GRANT SELECT ON app_gl.tax_declaration       TO app_api;

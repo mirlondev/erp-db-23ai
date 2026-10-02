@@ -200,7 +200,7 @@ CREATE INDEX ix_stock_val_date           ON stock_valuation(valuation_date);
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 GRANT SELECT ON app_inv.transfer_header             TO app_api;
 GRANT SELECT ON app_inv.transfer_line               TO app_api;
 GRANT SELECT ON app_inv.replenishment_suggestion    TO app_api;

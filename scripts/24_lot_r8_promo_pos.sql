@@ -149,7 +149,7 @@ CREATE INDEX ix_loyalty_status_rule_pos    ON loyalty_status_rule(pos_code);
 
 PROMPT
 PROMPT ═══ Privilèges croisés ═══
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_product.promo_pos_config         TO app_sales;
 GRANT SELECT ON app_product.promo_pos_product       TO app_sales;

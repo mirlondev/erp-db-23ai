@@ -29,7 +29,7 @@ PROMPT   ETL LEGACY CSV -> SCHÉMA MODERNE 23ai
 PROMPT ══════════════════════════════════════════════════════════
 
 -- Configuration du répertoire de chargement
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 DECLARE
   v_exists NUMBER;

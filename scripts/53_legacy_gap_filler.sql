@@ -21,7 +21,7 @@ SET FEEDBACK ON
 SET DEFINE OFF
 WHENEVER SQLERROR EXIT SQL.SQLCODE
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 -- Fail before creating anything when the cross-schema FK targets are absent.
 DECLARE
@@ -401,7 +401,7 @@ SELECT tt_brd_office.tt_id,
 -- =================================================================
 -- Privilèges
 -- =================================================================
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT, INSERT ON app_sys.tt_brd_office      TO app_api;
 GRANT SELECT, INSERT ON app_sys.tt_brdd           TO app_api;

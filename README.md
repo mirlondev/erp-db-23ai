@@ -3,19 +3,19 @@
 > **REGAL** : ERP retail multi-sites du Congo Brazzaville (Pointe-Noire)
 > Migration 391 tables legacy (6 schémas) → Oracle 23ai/26ai Free + **APEX 26.1 UI**
 
-[![Coverage](https://img.shields.io/badge/coverage-49%25-yellow)] [![Schemas](https://img.shields.io/badge/schemas-17-blue)] [![Tables](https://img.shields.io/badge/tables-195-green)] [![APEX](https://img.shields.io/badge/APEX-26.1-red)]
+[![Legacy coverage](https://img.shields.io/badge/legacy%20coverage-not%20measured-lightgrey)] [![Schemas](https://img.shields.io/badge/schemas-17-blue)] [![APEX](https://img.shields.io/badge/APEX-26.1-red)]
 
 ## ⚡ Quickstart
 
 ```bash
-# Prérequis : Oracle 23ai Free + APEX 26.1, user system/oracle
-cd /workspace/erp-db-23ai
+# Prérequis : Oracle 23ai Free + APEX 26.1, SQLcl
+cd /home/oracle/erp-db-23ai
 
-# 1. DDL complet
-./run_all.sh                    # 62 scripts (00-57 + apex/setup)
+# Rebuild destructif : sauvegarder la base avant de confirmer.
+ALLOW_DESTRUCTIVE_RESET=YES ./scripts/run_all.sh
 
-# 2. + Seeds
-./run_all_with_seeds.sh         # + 40 seeds
+# DDL + seeds + chargement CSV + validation (supprime/recrée APP_*).
+ALLOW_DESTRUCTIVE_RESET=YES ./scripts/run_all_with_seeds.sh
 
 # 3. APEX : workspace REGAL + ORDS + auth
 sqlplus sys/oracle@FREEPDB1 as sysdba @apex/setup/01_apex_workspace.sql
@@ -32,7 +32,7 @@ sqlplus app_api/AppApi#2026 @apex/setup/05_apex_litoko_branding.sql
 | | Valeur | Évolution |
 |---|---:|---:|
 | Scripts SQL | **62** | 0 → 62 |
-| Tables modernes | **~195** | 0 → 195 |
+| Tables du modèle cible | **~195** | 0 → 195 |
 | Schémas APP_* | **17** | 0 → 17 |
 | Packages PL/SQL | **9** (+ `pkg_apex_auth`) | 0 → 9 |
 | Triggers CDC | **3** | nouveau |
@@ -46,7 +46,7 @@ sqlplus app_api/AppApi#2026 @apex/setup/05_apex_litoko_branding.sql
 | Tables externes (ETL) | **6** | nouveau |
 | **APEX 26.1 apps** | **5 specs + 12 vues partagées** | nouveau |
 | Deprecated 26ai fixes | **4 patterns** | 0 → 4 |
-| **Couverture legacy** | **49 %** | 0% → 49% |
+| **Couverture des données legacy** | **Non mesurée** | Inventaire source/cible à établir |
 
 ## 🏛️ Schémas (17)
 
@@ -108,18 +108,22 @@ sqlplus app_api/AppApi#2026 @apex/setup/05_apex_litoko_branding.sql
 
 Voir [ARCHITECTURE_HUB_SPOKE.md](./ARCHITECTURE_HUB_SPOKE.md) pour le détail.
 
-## 📈 Mapping legacy → moderne (49 %)
+## 📈 Mapping legacy → moderne (cibles, pas un taux de migration)
+
+Le nombre de tables et les mappings décrivent le modèle cible. Ils ne prouvent pas
+que les lignes legacy ont été chargées. Les seules sources CSV actuellement traitées
+par un ETL sont articles, stocks, listes/prix et tiers; leur exécution et leur
+réconciliation avec la source restent à valider. Le dispatch de `GCBRDE/GCBRDD`
+est explicitement non implémenté et ne doit pas être compté comme migration.
 
 | Legacy | Lignes | Moderne |
 |---|---:|---|
-| `CAISSE.GCPART` | 211K | `app_product.product` ✅ |
-| `CAISSE.GCSTOCK` | 1.6M | `app_inv.inv_stock` ✅ |
-| `CAISSE.CETICKETD` | 65.5M | `app_sales.ticket_line_v2` ✅ partitionné |
-| `CAISSE.GCBRDD` | 54.7M | dispatcher `pkg_etl_legacy v2` (9 types) |
-| `XCPTA.CP_ECR_GEN` | 2.8M | `app_gl.gl_entry_line_v2` ✅ partitionné |
-| `XCPTA.CP_HISTO_RGL` | 501K | `app_ar.payment_history_v2` ✅ partitionné |
-| `KERNEL.TT_BRD_OFFICE` | 228K | `app_sys.tt_brd_office` ✅ |
-| `KERNEL.UTLOG` | 444K | `app_sys.sys_audit_trail` ✅ |
+| `CAISSE.GCPART` | CSV présent | `app_product.product` | ETL défini, import à valider |
+| `CAISSE.GCSTOCK` | CSV présent | `app_inv.inv_stock` | ETL défini, import à valider |
+| `CAISSE.GCPTARIF*` | CSV présents | `app_product.prod_price_list/product_price` | ETL défini, import à valider |
+| `CAISSE.GCPTIE` | CSV présent | `app_party.party` | ETL défini, import à valider |
+| `CAISSE.CETICKET*`, `TRANSFERT.GCBRD*` | non mesuré | tables POS/doc/stock | ETL réel non vérifié; GCBRDD non implémenté |
+| `XCPTA.CP_ECR*`, `KERNEL.UTLOG` | non mesuré | `app_gl`, `app_sys` | Mapping cible seulement |
 
 ## 🚀 Déploiement
 
@@ -140,9 +144,13 @@ sqlplus system/oracle@localhost:1521/FREEPDB1
 
 Ou via les scripts bash :
 ```bash
-./run_all.sh                # 57 scripts DDL
-./run_all_with_seeds.sh     # + 31 seeds
+ALLOW_DESTRUCTIVE_RESET=YES ./scripts/run_all.sh
+ALLOW_DESTRUCTIVE_RESET=YES ./scripts/run_all_with_seeds.sh
 ```
+
+Le pipeline complet requiert SQLcl, `SYS AS SYSDBA`, les CSV sous `docs/` et
+reconstruit les schémas `APP_*`. La validation finale échoue s’il reste un objet
+APP_* invalide. Il ne faut pas exécuter le rebuild sur une base à conserver.
 
 ## ⚙️ Features Oracle 23ai exploitées
 

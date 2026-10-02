@@ -12,7 +12,7 @@ SET SERVEROUTPUT ON SIZE UNLIMITED
 SET LINESIZE 200
 SET FEEDBACK ON
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 PROMPT ===============================================================
 PROMPT   ATTRIBUTION DES PRIVILEGES A app_api
@@ -127,7 +127,7 @@ PROMPT ===============================================================
 PROMPT   JSON DUALITY VIEWS (uniquement PK simple)
 PROMPT ===============================================================
 
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 -- ============================================================
 -- dv_product — PK simple (product_id)

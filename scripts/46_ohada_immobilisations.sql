@@ -11,7 +11,7 @@ SET LINESIZE 200
 SET FEEDBACK ON
 SET DEFINE OFF
 
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 GRANT SELECT, INSERT, UPDATE ON app_gl.gl_entry TO app_gl;
 
 CONNECT app_gl/AppGl#2026@localhost:1521/FREEPDB1
@@ -205,7 +205,7 @@ SELECT a.asset_id, a.asset_code, a.asset_name, a.category,
 -- ------------------------------------------------------------------
 -- Privilèges
 -- ------------------------------------------------------------------
-CONNECT system/oracle@localhost:1521/FREEPDB1
+CONNECT sys/oracle@localhost:1521/FREEPDB1 AS SYSDBA
 
 GRANT SELECT ON app_gl.imm_asset            TO app_api;
 GRANT SELECT ON app_gl.imm_depreciation     TO app_api;

@@ -3,6 +3,8 @@
 -- ============================================================
 SET SERVEROUTPUT ON SIZE UNLIMITED
 SET DEFINE OFF
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+WHENEVER OSERROR EXIT FAILURE
 
 CONNECT app_org/AppOrg#2026@localhost:1521/FREEPDB1
 
