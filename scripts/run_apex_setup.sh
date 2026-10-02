@@ -29,7 +29,8 @@ for script in \
   08_apex_authorizations.sql \
   09_apex_nav_menus.sql \
   10_apex_pdf_reports.sql \
-  11_apex_congo_locale.sql
+  11_apex_congo_locale.sql \
+  12_apex_health_check.sql
 do
     echo ""
     echo "▶ APEX : $script"
@@ -45,12 +46,34 @@ EOF
     echo "✅ $script terminé"
 done
 
+# Étape 2 : installer les 5 apps APEX (programmatique via wwv_flow_api)
+APPS_DIR="$(cd "$(dirname "$0")/.." && pwd)/apex/apps"
+echo ""
+echo "▶ Apps APEX : installation programmatique (wwv_flow_api)"
+echo "───────────────────────────────────────────────────────────"
+
+sql "$CONN" <<EOF
+  WHENEVER SQLERROR EXIT SQL.SQLCODE
+@${APPS_DIR}/install_app100_pos.sql
+EXIT
+EOF
+echo "✅ install_app100_pos.sql terminé"
+
+sql "$CONN" <<EOF
+  WHENEVER SQLERROR EXIT SQL.SQLCODE
+@${APPS_DIR}/install_app200_300_400_500.sql
+EXIT
+EOF
+echo "✅ install_app200_300_400_500.sql terminé"
+
 echo ""
 echo "═══════════════════════════════════════════════════════════"
-echo "  ✅ APEX 26.1 SETUP TERMINÉ (11 scripts)"
+echo "  ✅ APEX 26.1 SETUP TERMINÉ (12 scripts setup + 5 apps)"
 echo ""
-echo "  Prochaines étapes (IDE APEX) :"
-echo "    1. http://localhost:8080/apex/f?p=4550:1 (admin)"
-echo "    2. Workspace REGAL → App Builder → Create Application"
-echo "    3. Importer apex/apps/SPEC_*.md comme templates pages"
+echo "  URLs d'accès (après démarrage ORDS) :"
+echo "    App 100 POS      : http://localhost:8080/apex/f?p=100:10"
+echo "    App 200 Stock    : http://localhost:8080/apex/f?p=200:10"
+echo "    App 300 Achats   : http://localhost:8080/apex/f?p=300:10"
+echo "    App 400 Compta   : http://localhost:8080/apex/f?p=400:10"
+echo "    App 500 Admin    : http://localhost:8080/apex/f?p=500:10"
 echo "═══════════════════════════════════════════════════════════"
