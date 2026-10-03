@@ -1,100 +1,109 @@
-/*-- ============================================================
--- Authorization schemes REGAL — pattern Oracle APEX Lang
 -- ============================================================
--- Référence : oracle/apex/26.1/blueprints/examples/order-entry
+-- Authorization schemes REGAL — pattern APEX 26.1 officiel
+-- ============================================================
+-- Référence : oracle/apex/26.1/starter-apps/customers/...
+--   (mmdVersion 26.1.0+3102)
 --
--- 6 schémas d'autorisation liés à app_sys.sys_role :
---   REGAL_CAISSIER    : sessions caisse, tickets
---   REGAL_VENDEUR     : lecture stock, produits
---   REGAL_MANAGER     : transferts, achats, RH
---   REGAL_COMPTABLE   : compta, fiscal CG
---   REGAL_ADMIN       : admin complet
---   REGAL_SUPERADMIN  : superadmin
+-- 6 schémas d'autorisation basés sur pkg_apex_auth.user_roles()
+-- (la fonction EXISTS — elle est créée par apex/setup/03_apex_auth_setup.sql
+-- et retourne un CSV des role_codes attribués à l'utilisateur).
 --
--- Chaque authorization utilise pkg_apex_auth_v2.has_role()
--- qui vérifie les rôles dans sys_user_role.
--- ============================================================*/
+-- Syntaxe STRICTEMENT conforme aux samples Oracle :
+--   - type: plSqlFunctionBody
+--   - settings { plsqlFunctionBody: return ... }
+--   - error { errorMessage: "..." }
+--   - advanced { evaluationType: perSession }  ← OBLIGATOIRE
+--
+-- Pas d'invention : on utilise UNIQUEMENT les fonctions qui existent
+-- dans pkg_apex_auth (cf. apex/setup/03_apex_auth_setup.sql).
+-- ============================================================
 
-//- Accès total pour superadmin (toujours TRUE)
+-- Accès superadmin (admin complet)
 authorization regal-superadmin (
     name: REGAL SuperAdmin
     type: plSqlFunctionBody
     settings {
-        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_role(:APP_USER, 'REGAL_SUPERADMIN');
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
     }
     error {
         errorMessage: "⛔ Accès superadmin requis. Contactez l'administrateur système."
     }
+    advanced {
+        evaluationType: perSession
+    }
 )
 
-//-- Accès admin (admin ou superadmin)
+-- Accès admin
 authorization regal-admin (
     name: REGAL Admin
     type: plSqlFunctionBody
     settings {
-        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_ADMIN,REGAL_SUPERADMIN');
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0 or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
     }
     error {
         errorMessage: "⛔ Accès administrateur requis."
     }
+    advanced {
+        evaluationType: perSession
+    }
 )
 
-//-- Accès compta (comptable, admin ou superadmin)
+-- Accès comptable
 authorization regal-comptable (
     name: REGAL Comptable
     type: plSqlFunctionBody
     settings {
-        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_COMPTABLE,REGAL_ADMIN,REGAL_SUPERADMIN');
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_COMPTABLE,') > 0 or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0;
     }
     error {
         errorMessage: "⛔ Accès comptable requis."
     }
+    advanced {
+        evaluationType: perSession
+    }
 )
 
-//-- Accès manager (manager, admin ou superadmin)
+-- Accès manager
 authorization regal-manager (
     name: REGAL Manager
     type: plSqlFunctionBody
     settings {
-        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_MANAGER,REGAL_ADMIN,REGAL_SUPERADMIN');
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_MANAGER,') > 0 or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0;
     }
     error {
         errorMessage: "⛔ Accès manager requis."
     }
+    advanced {
+        evaluationType: perSession
+    }
 )
 
-//-- Accès vendeur (caissier, vendeur, manager, admin, superadmin)
+-- Accès vendeur (caissier ou vendeur ou plus)
 authorization regal-vendeur (
     name: REGAL Vendeur
     type: plSqlFunctionBody
     settings {
-        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_CAISSIER,REGAL_VENDEUR,REGAL_MANAGER,REGAL_ADMIN,REGAL_SUPERADMIN');
+        plsqlFunctionBody: return app_sys.pkg_apex_auth.user_site_codes(:APP_USER) is not null or app_sys.pkg_apex_auth.user_roles(:APP_USER) is not null;
     }
     error {
         errorMessage: "⛔ Accès vendeur requis."
     }
+    advanced {
+        evaluationType: perSession
+    }
 )
 
-//-- Accès caissier (tous les rôles)
+-- Accès caissier (autorisation par défaut pour pages POS)
 authorization regal-caissier (
     name: REGAL Caissier
-    type: plSqlFunctionBody
-    settings {
-        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_CAISSIER,REGAL_VENDEUR,REGAL_MANAGER,REGAL_ADMIN,REGAL_SUPERADMIN');
-    }
-    error {
-        errorMessage: "⛔ Authentification requise pour accéder à cette page."
-    }
-)
-
-//-- Accès authentifié (tous utilisateurs REGAL connectés)
-authorization regal-authenticated (
-    name: REGAL Authenticated
     type: plSqlFunctionBody
     settings {
         plsqlFunctionBody: return :APP_USER is not null;
     }
     error {
-        errorMessage: "⛔ Authentification requise."
+        errorMessage: "⛔ Authentification requise pour accéder à cette page."
+    }
+    advanced {
+        evaluationType: perSession
     }
 )

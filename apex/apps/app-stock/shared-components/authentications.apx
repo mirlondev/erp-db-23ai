@@ -1,26 +1,30 @@
+-- ============================================================
+-- Authentication REGAL (app-stock) — pattern APEX 26.1 officiel
+-- ============================================================
+-- mmdVersion 26.1.0+3102 (GA)
+-- Type: custom + plsqlCode dans un block fenced
+-- Ref: oracle/apex/26.1/sample-apps (pattern custom auth)
+--
+-- ⚠️ Le user a fixé la syntaxe dans app-pos/authentications.apx
+-- (commit 68198bf) — on reproduit exactement la même ici.
+-- ============================================================
 authentication regal-auth (
     name: REGAL Authentication
-    type: plsql
+    type: custom
     settings {
-        plsqlCode: return app_sys.pkg_apex_auth.authenticate(:APP_USER, :APP_PASSWORD);
+        authFunctionName: regal_login
     }
-    cookie {
-        name: &WORKSPACE_COOKIE.
-    }
-    session {
-        sharing: workspace
-    }
-    security {
-        sessionTimeout: 28800
-        maximumSessions: 25
-    }
-    login {
-        procedure: null
-    }
-    logout {
-        procedure: null
-    }
-    postLogout {
-        procedure: null
+    source {
+        plsqlCode:
+            ```plsql
+            function regal_login (
+                p_username in varchar2,
+                p_password in varchar2 )
+                return boolean
+            is
+            begin
+                return app_sys.pkg_apex_auth.authenticate(p_username, p_password);
+            end regal_login;
+            ```
     }
 )

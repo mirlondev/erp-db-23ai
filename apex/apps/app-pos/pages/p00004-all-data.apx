@@ -10,6 +10,7 @@ page 4 (
         cursorFocus: doNotFocusCursor
     }
     security {
+        authorization: @regal-vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
