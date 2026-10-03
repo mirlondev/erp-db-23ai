@@ -1,0 +1,279 @@
+page 8 (
+    name: rapport
+    alias: RAPPORT
+    title: rapport
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region breadcrumb (
+        name: Breadcrumb
+        type: breadcrumb
+        source {
+            breadcrumb: @breadcrumb
+        }
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: [
+                #DEFAULT#
+                t-BreadcrumbRegion--useBreadcrumbTitle
+            ]
+        }
+        componentAppearance {
+            breadcrumbTemplate: @/breadcrumb
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region rapport (
+        name: rapport
+        type: interactiveGrid
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                SELECT terminal_code, terminal_name, status, hours_open, nb_tickets, ca_session_xaf
+                  FROM app_api.v_pos_session_kpi
+                 ORDER BY opened_at DESC
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+        toolbar {
+            controls: [
+                searchCol
+                searchField
+                actionsMenu
+                resetButton
+                saveButton
+            ]
+        }
+        download {
+            formats: [
+                csv
+                html
+                excel
+                pdf
+            ]
+        }
+        advanced {
+            savedReportMappingIdentifier: 2633467942082998
+        }
+
+        savedReport primary (
+            visibility: primary
+            view {
+                default: grid
+            }
+            singleRowView {
+                displayedColumns: true
+            }
+
+            displayColumn (
+                column: @TERMINAL_CODE
+                layout {
+                    sequence: 1
+                }
+            )
+
+            displayColumn (
+                column: @TERMINAL_NAME
+                layout {
+                    sequence: 2
+                }
+            )
+
+            displayColumn (
+                column: @STATUS
+                layout {
+                    sequence: 3
+                }
+            )
+
+            displayColumn (
+                column: @HOURS_OPEN
+                layout {
+                    sequence: 4
+                }
+            )
+
+            displayColumn (
+                column: @NB_TICKETS
+                layout {
+                    sequence: 5
+                }
+            )
+
+            displayColumn (
+                column: @CA_SESSION_XAF
+                layout {
+                    sequence: 6
+                }
+            )
+
+        )
+
+        column CA_SESSION_XAF (
+            type: numberField
+            heading {
+                heading: Ca Session Xaf
+                alignment: end
+            }
+            layout {
+                sequence: 60
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: CA_SESSION_XAF
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column HOURS_OPEN (
+            type: numberField
+            heading {
+                heading: Hours Open
+                alignment: end
+            }
+            layout {
+                sequence: 40
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: HOURS_OPEN
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column NB_TICKETS (
+            type: numberField
+            heading {
+                heading: Nb Tickets
+                alignment: end
+            }
+            layout {
+                sequence: 50
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: NB_TICKETS
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column STATUS (
+            type: textField
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 30
+            }
+            validation {
+                maxLength: 6
+            }
+            source {
+                databaseColumn: STATUS
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column TERMINAL_CODE (
+            type: textField
+            heading {
+                heading: Terminal Code
+            }
+            layout {
+                sequence: 10
+            }
+            validation {
+                valueRequired: true
+                maxLength: 12
+            }
+            source {
+                databaseColumn: TERMINAL_CODE
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column TERMINAL_NAME (
+            type: textField
+            heading {
+                heading: Terminal Name
+            }
+            layout {
+                sequence: 20
+            }
+            validation {
+                valueRequired: true
+                maxLength: 120
+            }
+            source {
+                databaseColumn: TERMINAL_NAME
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+    )
+
+)
+

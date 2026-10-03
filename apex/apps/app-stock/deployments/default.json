@@ -1,0 +1,11 @@
+{
+  "app" : {
+    "id" : 200,
+    "databaseSession" : {
+      "parsingSchema" : "APP_INV"
+    },
+    "runtime" : {
+      "debugging" : true
+    }
+  }
+}

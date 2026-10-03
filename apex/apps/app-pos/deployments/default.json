@@ -1,0 +1,11 @@
+{
+  "app" : {
+    "id" : 100,
+    "databaseSession" : {
+      "parsingSchema" : "APP_API"
+    },
+    "runtime" : {
+      "debugging" : true
+    }
+  }
+}

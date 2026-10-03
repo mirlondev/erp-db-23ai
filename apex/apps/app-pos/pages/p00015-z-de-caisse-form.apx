@@ -1,0 +1,619 @@
+page 15 (
+    name: Z de caisse Form
+    alias: Z-DE-CAISSE-FORM
+    title: Z de caisse Form
+    appearance {
+        pageMode: modalDialog
+        dialogTemplate: @/drawer
+        templateOptions: [
+            #DEFAULT#
+            js-dialog-class-t-Drawer--pullOutEnd
+        ]
+    }
+    dialog {
+        chained: false
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region buttons (
+        name: Buttons
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: dialogFooter
+        }
+        appearance {
+            template: @/buttons-container
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region z-de-caisse-form (
+        name: Z de caisse Form
+        type: form
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                
+                SELECT s.terminal_id, s.session_no, s.user_code,
+                       t.terminal_name, t.warehouse_code,
+                       TO_CHAR(s.opened_at, 'DD/MM/YYYY HH24:MI') AS opened,
+                       TO_CHAR(s.closed_at, 'DD/MM/YYYY HH24:MI') AS closed,
+                       CASE WHEN s.closed_at IS NULL THEN 'OUVERTE' ELSE 'FERMÉE' END AS status,
+                       s.opening_balance, s.closing_balance, s.theoretical_balance,
+                       (s.closing_balance - s.theoretical_balance) AS ecart,
+                       (SELECT COUNT(*) FROM app_sales.ticket tk
+                         WHERE tk.terminal_id = t.terminal_code
+                           AND tk.session_no  = s.session_no) AS nb_tickets,
+                       (SELECT NVL(SUM(total_ht), 0) FROM app_sales.ticket tk
+                         WHERE tk.terminal_id = t.terminal_code
+                           AND tk.session_no  = s.session_no) AS ca_ht,
+                       (SELECT NVL(SUM(total_ttc), 0) FROM app_sales.ticket tk
+                         WHERE tk.terminal_id = t.terminal_code
+                           AND tk.session_no  = s.session_no) AS ca_ttc
+                  FROM app_pos.pos_session s
+                  JOIN app_pos.pos_terminal t ON t.terminal_id = s.terminal_id
+                 WHERE s.terminal_id = :P40_TERMINAL_ID
+                   AND s.session_no  = :P40_SESSION_NO
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: contentBody
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        edit {
+            enabled: true
+            allowedOperations: [
+                add
+                update
+                delete
+            ]
+        }
+    )
+
+    pageItem P15_CA_HT (
+        type: numberField
+        label {
+            label: Ca Ht
+            alignment: right
+        }
+        layout {
+            sequence: 140
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: CA_HT
+            dataType: number
+        }
+    )
+
+    pageItem P15_CA_TTC (
+        type: numberField
+        label {
+            label: Ca Ttc
+            alignment: right
+        }
+        layout {
+            sequence: 150
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: CA_TTC
+            dataType: number
+        }
+    )
+
+    pageItem P15_CLOSED (
+        type: textField
+        label {
+            label: Closed
+            alignment: right
+        }
+        layout {
+            sequence: 70
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 16
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: CLOSED
+            dataType: varchar2
+        }
+    )
+
+    pageItem P15_CLOSING_BALANCE (
+        type: numberField
+        label {
+            label: Closing Balance
+            alignment: right
+        }
+        layout {
+            sequence: 100
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: CLOSING_BALANCE
+            dataType: number
+        }
+    )
+
+    pageItem P15_ECART (
+        type: numberField
+        label {
+            label: Ecart
+            alignment: right
+        }
+        layout {
+            sequence: 120
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: ECART
+            dataType: number
+        }
+    )
+
+    pageItem P15_NB_TICKETS (
+        type: numberField
+        label {
+            label: Nb Tickets
+            alignment: right
+        }
+        layout {
+            sequence: 130
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: NB_TICKETS
+            dataType: number
+        }
+    )
+
+    pageItem P15_OPENED (
+        type: textField
+        label {
+            label: Opened
+            alignment: right
+        }
+        layout {
+            sequence: 60
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 16
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: OPENED
+            dataType: varchar2
+        }
+    )
+
+    pageItem P15_OPENING_BALANCE (
+        type: numberField
+        label {
+            label: Opening Balance
+            alignment: right
+        }
+        layout {
+            sequence: 90
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            valueRequired: true
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: OPENING_BALANCE
+            dataType: number
+        }
+    )
+
+    pageItem P15_SESSION_NO (
+        type: hidden
+        layout {
+            sequence: 20
+            region: @z-de-caisse-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: SESSION_NO
+            dataType: number
+            primaryKey: true
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P15_STATUS (
+        type: textField
+        label {
+            label: Status
+            alignment: right
+        }
+        layout {
+            sequence: 80
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: STATUS
+            dataType: varchar2
+        }
+    )
+
+    pageItem P15_TERMINAL_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @z-de-caisse-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: TERMINAL_ID
+            dataType: number
+            primaryKey: true
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P15_TERMINAL_NAME (
+        type: textField
+        label {
+            label: Terminal Name
+            alignment: right
+        }
+        layout {
+            sequence: 40
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            valueRequired: true
+            maxLength: 120
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: TERMINAL_NAME
+            dataType: varchar2
+        }
+    )
+
+    pageItem P15_THEORETICAL_BALANCE (
+        type: numberField
+        label {
+            label: Theoretical Balance
+            alignment: right
+        }
+        layout {
+            sequence: 110
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 7
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: THEORETICAL_BALANCE
+            dataType: number
+        }
+    )
+
+    pageItem P15_USER_CODE (
+        type: textField
+        label {
+            label: User Code
+            alignment: right
+        }
+        layout {
+            sequence: 30
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            valueRequired: true
+            maxLength: 20
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: USER_CODE
+            dataType: varchar2
+        }
+    )
+
+    pageItem P15_WAREHOUSE_CODE (
+        type: textField
+        label {
+            label: Warehouse Code
+            alignment: right
+        }
+        layout {
+            sequence: 50
+            region: @z-de-caisse-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 32
+        }
+        validation {
+            maxLength: 5
+        }
+        source {
+            formRegion: @z-de-caisse-form
+            column: WAREHOUSE_CODE
+            dataType: varchar2
+        }
+    )
+
+    button cancel (
+        buttonName: CANCEL
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @buttons
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: triggerAction
+        }
+
+        triggerAction native-dialog-cancel (
+            action: cancelDialog
+            execution {
+                sequence: 10
+            }
+        )
+
+    )
+
+    button create (
+        buttonName: CREATE
+        label: Create
+        layout {
+            sequence: 40
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: insert
+        }
+        serverSideCondition {
+            type: expression
+            language: sql
+            sqlExpression: :P15_TERMINAL_ID is null or :P15_SESSION_NO is null
+        }
+    )
+
+    button delete (
+        buttonName: DELETE
+        label: Delete
+        layout {
+            sequence: 20
+            region: @buttons
+            slot: delete
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            executeValidations: false
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: delete
+            requiresConfirmation: true
+        }
+        confirmation {
+            message: &APP_TEXT$DELETE_MSG!RAW.
+            style: danger
+        }
+        serverSideCondition {
+            type: expression
+            language: sql
+            sqlExpression: :P15_TERMINAL_ID is not null and :P15_SESSION_NO is not null
+        }
+    )
+
+    button save (
+        buttonName: SAVE
+        label: Apply Changes
+        layout {
+            sequence: 30
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: update
+        }
+        serverSideCondition {
+            type: expression
+            language: sql
+            sqlExpression: :P15_TERMINAL_ID is not null and :P15_SESSION_NO is not null
+        }
+    )
+
+    process close-dialog (
+        name: Close Dialog
+        type: closeDialog
+        execution {
+            sequence: 50
+        }
+        advanced {
+            executionMappingIdentifier: 2682670383216945
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: CREATE,SAVE,DELETE
+        }
+    )
+
+    process initialize-form-z-de-caisse-form (
+        name: Initialize form Z de caisse Form
+        type: formInitialization
+        formRegion: @z-de-caisse-form
+        execution {
+            sequence: 10
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 2681825890216944
+        }
+    )
+
+    process process-form-z-de-caisse-form (
+        name: Process form Z de caisse Form
+        type: formAutoRowProcessing
+        formRegion: @z-de-caisse-form
+        execution {
+            sequence: 10
+        }
+        advanced {
+            executionMappingIdentifier: 2682268433216945
+        }
+    )
+
+)
+

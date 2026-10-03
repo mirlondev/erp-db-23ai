@@ -1,0 +1,625 @@
+page 14 (
+    name: Z de caisse
+    alias: Z-DE-CAISSE
+    title: Z de caisse
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region breadcrumb (
+        name: Breadcrumb
+        type: breadcrumb
+        source {
+            breadcrumb: @breadcrumb
+        }
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: [
+                #DEFAULT#
+                t-BreadcrumbRegion--useBreadcrumbTitle
+            ]
+        }
+        componentAppearance {
+            breadcrumbTemplate: @/breadcrumb
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region z-de-caisse (
+        name: Z de caisse
+        type: interactiveGrid
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                
+                SELECT s.terminal_id, s.session_no, s.user_code,
+                       t.terminal_name, t.warehouse_code,
+                       TO_CHAR(s.opened_at, 'DD/MM/YYYY HH24:MI') AS opened,
+                       TO_CHAR(s.closed_at, 'DD/MM/YYYY HH24:MI') AS closed,
+                       CASE WHEN s.closed_at IS NULL THEN 'OUVERTE' ELSE 'FERMÉE' END AS status,
+                       s.opening_balance, s.closing_balance, s.theoretical_balance,
+                       (s.closing_balance - s.theoretical_balance) AS ecart,
+                       (SELECT COUNT(*) FROM app_sales.ticket tk
+                         WHERE tk.terminal_id = t.terminal_code
+                           AND tk.session_no  = s.session_no) AS nb_tickets,
+                       (SELECT NVL(SUM(total_ht), 0) FROM app_sales.ticket tk
+                         WHERE tk.terminal_id = t.terminal_code
+                           AND tk.session_no  = s.session_no) AS ca_ht,
+                       (SELECT NVL(SUM(total_ttc), 0) FROM app_sales.ticket tk
+                         WHERE tk.terminal_id = t.terminal_code
+                           AND tk.session_no  = s.session_no) AS ca_ttc
+                  FROM app_pos.pos_session s
+                  JOIN app_pos.pos_terminal t ON t.terminal_id = s.terminal_id
+                 WHERE s.terminal_id = :P40_TERMINAL_ID
+                   AND s.session_no  = :P40_SESSION_NO
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        toolbar {
+            controls: [
+                searchCol
+                searchField
+                actionsMenu
+                resetButton
+                saveButton
+            ]
+        }
+        download {
+            formats: [
+                csv
+                html
+                excel
+                pdf
+            ]
+        }
+        advanced {
+            savedReportMappingIdentifier: 2683879615217259
+        }
+
+        savedReport primary (
+            visibility: primary
+            view {
+                default: grid
+            }
+            singleRowView {
+                displayedColumns: true
+            }
+
+            displayColumn (
+                column: @APEX$LINK
+                layout {
+                    sequence: 1
+                }
+            )
+
+            displayColumn (
+                column: @TERMINAL_ID
+                layout {
+                    sequence: 2
+                }
+            )
+
+            displayColumn (
+                column: @SESSION_NO
+                layout {
+                    sequence: 3
+                }
+            )
+
+            displayColumn (
+                column: @USER_CODE
+                layout {
+                    sequence: 4
+                }
+            )
+
+            displayColumn (
+                column: @TERMINAL_NAME
+                layout {
+                    sequence: 5
+                }
+            )
+
+            displayColumn (
+                column: @WAREHOUSE_CODE
+                layout {
+                    sequence: 6
+                }
+            )
+
+            displayColumn (
+                column: @OPENED
+                layout {
+                    sequence: 7
+                }
+            )
+
+            displayColumn (
+                column: @CLOSED
+                layout {
+                    sequence: 8
+                }
+            )
+
+            displayColumn (
+                column: @STATUS
+                layout {
+                    sequence: 9
+                }
+            )
+
+            displayColumn (
+                column: @OPENING_BALANCE
+                layout {
+                    sequence: 10
+                }
+            )
+
+            displayColumn (
+                column: @CLOSING_BALANCE
+                layout {
+                    sequence: 11
+                }
+            )
+
+            displayColumn (
+                column: @THEORETICAL_BALANCE
+                layout {
+                    sequence: 12
+                }
+            )
+
+            displayColumn (
+                column: @ECART
+                layout {
+                    sequence: 13
+                }
+            )
+
+            displayColumn (
+                column: @NB_TICKETS
+                layout {
+                    sequence: 14
+                }
+            )
+
+            displayColumn (
+                column: @CA_HT
+                layout {
+                    sequence: 15
+                }
+            )
+
+            displayColumn (
+                column: @CA_TTC
+                layout {
+                    sequence: 16
+                }
+            )
+
+        )
+
+        column APEX$LINK (
+            type: link
+            heading {
+                alignment: center
+            }
+            layout {
+                sequence: 10
+                columnAlignment: center
+            }
+            link {
+                target: {
+                    page: 15
+                    items: {
+                        P15_TERMINAL_ID: \&TERMINAL_ID.\
+                        P15_SESSION_NO: \&SESSION_NO.\
+                    }
+                    clearCache: 15
+                    action: resetPagination
+                }
+                linkText: <span role="img" aria-label="Edit" class="fa fa-edit" title="Edit"></span>
+            }
+            source {
+                type: none
+            }
+        )
+
+        column CA_HT (
+            type: numberField
+            heading {
+                heading: Ca Ht
+                alignment: end
+            }
+            layout {
+                sequence: 150
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: CA_HT
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column CA_TTC (
+            type: numberField
+            heading {
+                heading: Ca Ttc
+                alignment: end
+            }
+            layout {
+                sequence: 160
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: CA_TTC
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column CLOSED (
+            type: textField
+            heading {
+                heading: Closed
+            }
+            layout {
+                sequence: 80
+            }
+            validation {
+                maxLength: 16
+            }
+            source {
+                databaseColumn: CLOSED
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column CLOSING_BALANCE (
+            type: numberField
+            heading {
+                heading: Closing Balance
+                alignment: end
+            }
+            layout {
+                sequence: 110
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: CLOSING_BALANCE
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column ECART (
+            type: numberField
+            heading {
+                heading: Ecart
+                alignment: end
+            }
+            layout {
+                sequence: 130
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: ECART
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column NB_TICKETS (
+            type: numberField
+            heading {
+                heading: Nb Tickets
+                alignment: end
+            }
+            layout {
+                sequence: 140
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: NB_TICKETS
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column OPENED (
+            type: textField
+            heading {
+                heading: Opened
+            }
+            layout {
+                sequence: 70
+            }
+            validation {
+                maxLength: 16
+            }
+            source {
+                databaseColumn: OPENED
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column OPENING_BALANCE (
+            type: numberField
+            heading {
+                heading: Opening Balance
+                alignment: end
+            }
+            layout {
+                sequence: 100
+                columnAlignment: end
+            }
+            validation {
+                valueRequired: true
+            }
+            source {
+                databaseColumn: OPENING_BALANCE
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column SESSION_NO (
+            type: hidden
+            layout {
+                sequence: 30
+            }
+            source {
+                databaseColumn: SESSION_NO
+                dataType: number
+                primaryKey: true
+            }
+            exportPrinting {
+                includeInExportPrint: false
+            }
+        )
+
+        column STATUS (
+            type: textField
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 90
+            }
+            validation {
+                maxLength: 7
+            }
+            source {
+                databaseColumn: STATUS
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column TERMINAL_ID (
+            type: hidden
+            layout {
+                sequence: 20
+            }
+            source {
+                databaseColumn: TERMINAL_ID
+                dataType: number
+                primaryKey: true
+            }
+            exportPrinting {
+                includeInExportPrint: false
+            }
+        )
+
+        column TERMINAL_NAME (
+            type: textField
+            heading {
+                heading: Terminal Name
+            }
+            layout {
+                sequence: 50
+            }
+            validation {
+                valueRequired: true
+                maxLength: 120
+            }
+            source {
+                databaseColumn: TERMINAL_NAME
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column THEORETICAL_BALANCE (
+            type: numberField
+            heading {
+                heading: Theoretical Balance
+                alignment: end
+            }
+            layout {
+                sequence: 120
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: THEORETICAL_BALANCE
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column USER_CODE (
+            type: textField
+            heading {
+                heading: User Code
+            }
+            layout {
+                sequence: 40
+            }
+            validation {
+                valueRequired: true
+                maxLength: 20
+            }
+            source {
+                databaseColumn: USER_CODE
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column WAREHOUSE_CODE (
+            type: textField
+            heading {
+                heading: Warehouse Code
+            }
+            layout {
+                sequence: 60
+            }
+            validation {
+                maxLength: 5
+            }
+            source {
+                databaseColumn: WAREHOUSE_CODE
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+    )
+
+    button create (
+        buttonName: CREATE
+        label: Create
+        layout {
+            sequence: 10
+            region: @z-de-caisse
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 15
+                clearCache: 15
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction edit-report-dialog-closed (
+        name: Edit Report - Dialog Closed
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @z-de-caisse
+        }
+
+        action native-refresh (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @z-de-caisse
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+)
+

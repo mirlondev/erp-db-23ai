@@ -1,0 +1,408 @@
+page 12 (
+    name: Historique tickets
+    alias: HISTORIQUE-TICKETS
+    title: Historique tickets
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region breadcrumb (
+        name: Breadcrumb
+        type: breadcrumb
+        source {
+            breadcrumb: @breadcrumb
+        }
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: [
+                #DEFAULT#
+                t-BreadcrumbRegion--useBreadcrumbTitle
+            ]
+        }
+        componentAppearance {
+            breadcrumbTemplate: @/breadcrumb
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region historique-tickets (
+        name: Historique tickets
+        type: interactiveGrid
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                SELECT t.terminal_id,
+                       t.ticket_no,
+                       TO_CHAR(t.ticket_date, 'DD/MM/YYYY HH24:MI') AS ticket_at,
+                       t.invoice_no,
+                       t.customer_name,
+                       t.user_code,
+                       t.total_ht,
+                       t.total_ttc,
+                       t.tax_amount_1 AS total_tva,
+                       t.status
+                  FROM app_sales.ticket t
+                 WHERE TRUNC(t.ticket_date) >= TRUNC(SYSDATE) - 30
+                 ORDER BY t.ticket_date DESC, t.ticket_no DESC
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+        toolbar {
+            controls: [
+                searchCol
+                searchField
+                actionsMenu
+                resetButton
+                saveButton
+            ]
+        }
+        download {
+            formats: [
+                csv
+                html
+                excel
+                pdf
+            ]
+        }
+        advanced {
+            savedReportMappingIdentifier: 2656925254190300
+        }
+
+        savedReport primary (
+            visibility: primary
+            view {
+                default: grid
+            }
+            singleRowView {
+                displayedColumns: true
+            }
+
+            displayColumn (
+                column: @TERMINAL_ID
+                layout {
+                    sequence: 1
+                }
+            )
+
+            displayColumn (
+                column: @TICKET_NO
+                layout {
+                    sequence: 2
+                }
+            )
+
+            displayColumn (
+                column: @TICKET_AT
+                layout {
+                    sequence: 3
+                }
+            )
+
+            displayColumn (
+                column: @INVOICE_NO
+                layout {
+                    sequence: 4
+                }
+            )
+
+            displayColumn (
+                column: @CUSTOMER_NAME
+                layout {
+                    sequence: 5
+                }
+            )
+
+            displayColumn (
+                column: @USER_CODE
+                layout {
+                    sequence: 6
+                }
+            )
+
+            displayColumn (
+                column: @TOTAL_HT
+                layout {
+                    sequence: 7
+                }
+            )
+
+            displayColumn (
+                column: @TOTAL_TTC
+                layout {
+                    sequence: 8
+                }
+            )
+
+            displayColumn (
+                column: @TOTAL_TVA
+                layout {
+                    sequence: 9
+                }
+            )
+
+            displayColumn (
+                column: @STATUS
+                layout {
+                    sequence: 10
+                }
+            )
+
+        )
+
+        column CUSTOMER_NAME (
+            type: textField
+            heading {
+                heading: Customer Name
+            }
+            layout {
+                sequence: 50
+            }
+            validation {
+                maxLength: 120
+            }
+            source {
+                databaseColumn: CUSTOMER_NAME
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column INVOICE_NO (
+            type: numberField
+            heading {
+                heading: Invoice No
+                alignment: end
+            }
+            layout {
+                sequence: 40
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: INVOICE_NO
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column STATUS (
+            type: textField
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 100
+            }
+            validation {
+                maxLength: 4
+            }
+            source {
+                databaseColumn: STATUS
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column TERMINAL_ID (
+            type: textField
+            heading {
+                heading: Terminal Id
+            }
+            layout {
+                sequence: 10
+            }
+            validation {
+                valueRequired: true
+                maxLength: 12
+            }
+            source {
+                databaseColumn: TERMINAL_ID
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column TICKET_AT (
+            type: textField
+            heading {
+                heading: Ticket At
+            }
+            layout {
+                sequence: 30
+            }
+            validation {
+                maxLength: 16
+            }
+            source {
+                databaseColumn: TICKET_AT
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        column TICKET_NO (
+            type: numberField
+            heading {
+                heading: Ticket No
+                alignment: end
+            }
+            layout {
+                sequence: 20
+                columnAlignment: end
+            }
+            validation {
+                valueRequired: true
+            }
+            source {
+                databaseColumn: TICKET_NO
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column TOTAL_HT (
+            type: numberField
+            heading {
+                heading: Total Ht
+                alignment: end
+            }
+            layout {
+                sequence: 70
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: TOTAL_HT
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column TOTAL_TTC (
+            type: numberField
+            heading {
+                heading: Total Ttc
+                alignment: end
+            }
+            layout {
+                sequence: 80
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: TOTAL_TTC
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column TOTAL_TVA (
+            type: numberField
+            heading {
+                heading: Total Tva
+                alignment: end
+            }
+            layout {
+                sequence: 90
+                columnAlignment: end
+            }
+            source {
+                databaseColumn: TOTAL_TVA
+                dataType: number
+            }
+            columnFilter {
+                lovType: none
+            }
+        )
+
+        column USER_CODE (
+            type: textField
+            heading {
+                heading: User Code
+            }
+            layout {
+                sequence: 60
+            }
+            validation {
+                valueRequired: true
+                maxLength: 20
+            }
+            source {
+                databaseColumn: USER_CODE
+                dataType: varchar2
+            }
+            columnFilter {
+                performanceImpactingOperators: [
+                    contains
+                    startsWith
+                    caseInsensitive
+                    regexp
+                ]
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+    )
+
+)
+
