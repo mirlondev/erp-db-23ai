@@ -17,7 +17,7 @@ page 15 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorization: @regal-manager
+        authorizationScheme: @regal-manager
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -73,8 +73,8 @@ page 15 (
                            AND tk.session_no  = s.session_no) AS ca_ttc
                   FROM app_pos.pos_session s
                   JOIN app_pos.pos_terminal t ON t.terminal_id = s.terminal_id
-                 WHERE s.terminal_id = :P40_TERMINAL_ID
-                   AND s.session_no  = :P40_SESSION_NO
+                 WHERE s.terminal_id = :P15_TERMINAL_ID
+                   AND s.session_no  = :P15_SESSION_NO
                 ```
         }
         layout {

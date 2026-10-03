@@ -10,7 +10,7 @@ page 14 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorization: @regal-manager
+        authorizationScheme: @regal-manager
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }

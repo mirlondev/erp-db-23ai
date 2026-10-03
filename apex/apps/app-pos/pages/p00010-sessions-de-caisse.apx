@@ -10,7 +10,7 @@ page 10 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorization: @regal-caissier
+        authorizationScheme: @regal-caissier
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }

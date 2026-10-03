@@ -1,4 +1,4 @@
--- ============================================================
+/*-- ============================================================
 -- Authorization schemes REGAL — pattern Oracle APEX Lang
 -- ============================================================
 -- Référence : oracle/apex/26.1/blueprints/examples/order-entry
@@ -14,8 +14,8 @@
 -- Chaque authorization utilise pkg_apex_auth_v2.has_role()
 -- qui vérifie les rôles dans sys_user_role.
 -- ============================================================
-
--- Accès total pour superadmin (toujours TRUE)
+*/
+//-- Accès total pour superadmin (toujours TRUE)
 authorization regal-superadmin (
     name: REGAL SuperAdmin
     type: plSqlFunctionBody
@@ -27,7 +27,7 @@ authorization regal-superadmin (
     }
 )
 
--- Accès admin (admin ou superadmin)
+//-- Accès admin (admin ou superadmin)
 authorization regal-admin (
     name: REGAL Admin
     type: plSqlFunctionBody
@@ -39,7 +39,7 @@ authorization regal-admin (
     }
 )
 
--- Accès compta (comptable, admin ou superadmin)
+//-- Accès compta (comptable, admin ou superadmin)
 authorization regal-comptable (
     name: REGAL Comptable
     type: plSqlFunctionBody
@@ -51,7 +51,7 @@ authorization regal-comptable (
     }
 )
 
--- Accès manager (manager, admin ou superadmin)
+//-- Accès manager (manager, admin ou superadmin)
 authorization regal-manager (
     name: REGAL Manager
     type: plSqlFunctionBody
@@ -63,7 +63,7 @@ authorization regal-manager (
     }
 )
 
--- Accès vendeur (caissier, vendeur, manager, admin, superadmin)
+//-- Accès vendeur (caissier, vendeur, manager, admin, superadmin)
 authorization regal-vendeur (
     name: REGAL Vendeur
     type: plSqlFunctionBody
@@ -75,7 +75,6 @@ authorization regal-vendeur (
     }
 )
 
--- Accès caissier (tous les rôles)
 authorization regal-caissier (
     name: REGAL Caissier
     type: plSqlFunctionBody
@@ -87,7 +86,6 @@ authorization regal-caissier (
     }
 )
 
--- Accès authentifié (tous utilisateurs REGAL connectés)
 authorization regal-authenticated (
     name: REGAL Authenticated
     type: plSqlFunctionBody
