@@ -17,6 +17,7 @@ page 15 (
         cursorFocus: doNotFocusCursor
     }
     security {
+        authorization: @regal-manager
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }

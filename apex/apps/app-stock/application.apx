@@ -37,7 +37,7 @@ app APP-STOCK (
         timestampTimeZone: DS
     }
     authentication {
-        scheme: @oracle-apex-accounts
+        scheme: @regal-auth
     }
     sessionStateProtection {
         checksumSalt: 110272B749097AF9A4EE501DCA2DA283018367A1FC1298DB9A0FDE3486EEFFF3
@@ -45,10 +45,27 @@ app APP-STOCK (
     runtime {
         allowFeedback: true
     }
+    globalization {
+        primaryLanguage: fr
+        languageDerivedFrom: session
+        automaticTimeZone: true
+    }
 
     substitution APP_NAME (
         value {
-            staticValue: APP_STOCK
+            staticValue: REGAL Stock
+        }
+    )
+
+    substitution COMPANY_NAME (
+        value {
+            staticValue: LITOKO SARL — Pointe-Noire
+        }
+    )
+
+    substitution CURRENCY_CODE (
+        value {
+            staticValue: XAF
         }
     )
 

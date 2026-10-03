@@ -1,11 +1,100 @@
-authorization administration-rights (
-    name: Administration Rights
+-- ============================================================
+-- Authorization schemes REGAL — pattern Oracle APEX Lang
+-- ============================================================
+-- Référence : oracle/apex/26.1/blueprints/examples/order-entry
+--
+-- 6 schémas d'autorisation liés à app_sys.sys_role :
+--   REGAL_CAISSIER    : sessions caisse, tickets
+--   REGAL_VENDEUR     : lecture stock, produits
+--   REGAL_MANAGER     : transferts, achats, RH
+--   REGAL_COMPTABLE   : compta, fiscal CG
+--   REGAL_ADMIN       : admin complet
+--   REGAL_SUPERADMIN  : superadmin
+--
+-- Chaque authorization utilise pkg_apex_auth_v2.has_role()
+-- qui vérifie les rôles dans sys_user_role.
+-- ============================================================
+
+-- Accès total pour superadmin (toujours TRUE)
+authorization regal-superadmin (
+    name: REGAL SuperAdmin
     type: plSqlFunctionBody
     settings {
-        plsqlFunctionBody: return true;
+        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_role(:APP_USER, 'REGAL_SUPERADMIN');
     }
     error {
-        errorMessage: Insufficient privileges, user is not an Administrator
+        errorMessage: "⛔ Accès superadmin requis. Contactez l'administrateur système."
     }
 )
 
+-- Accès admin (admin ou superadmin)
+authorization regal-admin (
+    name: REGAL Admin
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_ADMIN,REGAL_SUPERADMIN');
+    }
+    error {
+        errorMessage: "⛔ Accès administrateur requis."
+    }
+)
+
+-- Accès compta (comptable, admin ou superadmin)
+authorization regal-comptable (
+    name: REGAL Comptable
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_COMPTABLE,REGAL_ADMIN,REGAL_SUPERADMIN');
+    }
+    error {
+        errorMessage: "⛔ Accès comptable requis."
+    }
+)
+
+-- Accès manager (manager, admin ou superadmin)
+authorization regal-manager (
+    name: REGAL Manager
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_MANAGER,REGAL_ADMIN,REGAL_SUPERADMIN');
+    }
+    error {
+        errorMessage: "⛔ Accès manager requis."
+    }
+)
+
+-- Accès vendeur (caissier, vendeur, manager, admin, superadmin)
+authorization regal-vendeur (
+    name: REGAL Vendeur
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_CAISSIER,REGAL_VENDEUR,REGAL_MANAGER,REGAL_ADMIN,REGAL_SUPERADMIN');
+    }
+    error {
+        errorMessage: "⛔ Accès vendeur requis."
+    }
+)
+
+-- Accès caissier (tous les rôles)
+authorization regal-caissier (
+    name: REGAL Caissier
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return app_sys.pkg_apex_auth_v2.has_any_role(:APP_USER, 'REGAL_CAISSIER,REGAL_VENDEUR,REGAL_MANAGER,REGAL_ADMIN,REGAL_SUPERADMIN');
+    }
+    error {
+        errorMessage: "⛔ Authentification requise pour accéder à cette page."
+    }
+)
+
+-- Accès authentifié (tous utilisateurs REGAL connectés)
+authorization regal-authenticated (
+    name: REGAL Authenticated
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return :APP_USER is not null;
+    }
+    error {
+        errorMessage: "⛔ Authentification requise."
+    }
+)

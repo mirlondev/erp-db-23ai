@@ -37,7 +37,7 @@ app APP-POS (
         timestampTimeZone: DS
     }
     authentication {
-        scheme: @oracle-apex-accounts
+        scheme: @regal-auth
     }
     sessionStateProtection {
         checksumSalt: 58E6B26020C5433C56B28A117E16A025CA3209AA2E24C6C88767CF0F29C98E75
@@ -45,10 +45,27 @@ app APP-POS (
     runtime {
         allowFeedback: true
     }
+    globalization {
+        primaryLanguage: fr
+        languageDerivedFrom: session
+        automaticTimeZone: true
+    }
 
     substitution APP_NAME (
         value {
-            staticValue: APP_POS
+            staticValue: REGAL POS
+        }
+    )
+
+    substitution COMPANY_NAME (
+        value {
+            staticValue: LITOKO SARL — Pointe-Noire
+        }
+    )
+
+    substitution CURRENCY_CODE (
+        value {
+            staticValue: XAF
         }
     )
 

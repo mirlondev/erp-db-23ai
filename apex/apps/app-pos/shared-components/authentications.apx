@@ -1,5 +1,36 @@
-authentication oracle-apex-accounts (
-    name: Oracle APEX Accounts
-    type: oracleApexAccounts
+-- ============================================================
+-- Authentication custom REGAL — pattern Oracle APEX Lang
+-- ============================================================
+-- Référence : oracle/apex/26.1/blueprints/examples/order-entry
+--   (mmdVersion 26.1.0+3102)
+--
+-- Authentication custom PL/SQL au lieu de oracleApexAccounts.
+-- L'utilisateur est authentifié via app_sys.pkg_apex_auth.authenticate()
+-- qui hash PBKDF2 le mot de passe et compare à sys_user.password_hash.
+-- ============================================================
+authentication regal-auth (
+    name: REGAL Authentication
+    type: plsql
+    settings {
+        plsqlCode: return app_sys.pkg_apex_auth.authenticate(:APP_USER, :APP_PASSWORD);
+    }
+    cookie {
+        name: &WORKSPACE_COOKIE.
+    }
+    session {
+        sharing: workspace
+    }
+    security {
+        sessionTimeout: 28800
+        maximumSessions: 25
+    }
+    login {
+        procedure: null
+    }
+    logout {
+        procedure: null
+    }
+    postLogout {
+        procedure: null
+    }
 )
-
