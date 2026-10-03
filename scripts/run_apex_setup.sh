@@ -25,6 +25,7 @@ for script in \
   04_apex_components.sql \
   05_apex_litoko_branding.sql \
   06_apex_components_fix.sql \
+  14_bootstrap_users.sql \
   07_apex_lovs.sql \
   08_apex_authorizations.sql \
   09_apex_nav_menus.sql \

@@ -96,6 +96,10 @@ WHEN NOT MATCHED THEN INSERT (user_id, role_code, assigned_by, is_active)
   VALUES (source.user_id, source.role_code, 'SYSTEM', TRUE);
 COMMIT;
 
+PROMPT
+PROMPT [NOTE] Les users CAISSIER_PNR, MANAGER_PNR, etc. doivent exister.
+PROMPT        Exécuter apex/setup/14_bootstrap_users.sql AVANT 08 si nécessaire.
+
 -- 3. Helper VIEW : roles + level pour APEX (utilise UNIQUEMENT pkg_apex_auth.user_roles)
 PROMPT
 PROMPT [3/3] Vue helper regal_auth_user_roles
