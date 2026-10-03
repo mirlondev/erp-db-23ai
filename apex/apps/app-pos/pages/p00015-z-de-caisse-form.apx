@@ -43,13 +43,24 @@ page 15 (
             sqlQuery:
                 ```sql
                 
+                -- FIX audit 2026-10-03 (CRITIQUE — Z de caisse fin de journée)
                 SELECT s.terminal_id, s.session_no, s.user_code,
                        t.terminal_name, t.warehouse_code,
                        TO_CHAR(s.opened_at, 'DD/MM/YYYY HH24:MI') AS opened,
                        TO_CHAR(s.closed_at, 'DD/MM/YYYY HH24:MI') AS closed,
                        CASE WHEN s.closed_at IS NULL THEN 'OUVERTE' ELSE 'FERMÉE' END AS status,
-                       s.opening_balance, s.closing_balance, s.theoretical_balance,
-                       (s.closing_balance - s.theoretical_balance) AS ecart,
+                       -- NVL obligatoire sur les balances (règle d'or: pas de NULL dans l'argent)
+                       NVL(s.opening_balance,    0) AS opening_balance,
+                       NVL(s.closing_balance,    0) AS closing_balance,
+                       NVL(s.theoretical_balance,0) AS theoretical_balance,
+                       -- Écart calculé TOUJOURS, jamais NULL
+                       NVL(s.closing_balance, 0) - NVL(s.theoretical_balance, 0) AS ecart,
+                       CASE
+                         WHEN s.closed_at IS NULL THEN '⚠️ Session non clôturée'
+                         WHEN ABS(NVL(s.closing_balance,0) - NVL(s.theoretical_balance,0)) > 100
+                           THEN '⚠️ ÉCART > 100 XAF'
+                         ELSE 'OK'
+                       END AS alerte,
                        (SELECT COUNT(*) FROM app_sales.ticket tk
                          WHERE tk.terminal_id = t.terminal_code
                            AND tk.session_no  = s.session_no) AS nb_tickets,

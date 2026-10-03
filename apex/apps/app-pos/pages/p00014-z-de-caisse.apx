@@ -46,13 +46,28 @@ page 14 (
             sqlQuery:
                 ```sql
                 
+                -- FIX audit 2026-10-03 (CRITIQUE — manipulation d'argent)
+                -- Règle d'or : JAMAIS de NULL dans une colonne monétaire
+                -- affichée à un utilisateur. NVL(col, 0) partout.
+                -- L'écart est calculé TOUJOURS, jamais NULL.
                 SELECT s.terminal_id, s.session_no, s.user_code,
                        t.terminal_name, t.warehouse_code,
                        TO_CHAR(s.opened_at, 'DD/MM/YYYY HH24:MI') AS opened,
                        TO_CHAR(s.closed_at, 'DD/MM/YYYY HH24:MI') AS closed,
                        CASE WHEN s.closed_at IS NULL THEN 'OUVERTE' ELSE 'FERMÉE' END AS status,
-                       s.opening_balance, s.closing_balance, s.theoretical_balance,
-                       (s.closing_balance - s.theoretical_balance) AS ecart,
+                       -- Balances protégées (NVL sur chaque colonne nullable)
+                       NVL(s.opening_balance,    0) AS opening_balance,
+                       NVL(s.closing_balance,    0) AS closing_balance,
+                       NVL(s.theoretical_balance,0) AS theoretical_balance,
+                       -- Écart JAMAIS NULL : NVL(closing,0) - NVL(theoretical,0)
+                       NVL(s.closing_balance,    0) - NVL(s.theoretical_balance, 0) AS ecart,
+                       -- Alerte automatique : > 100 XAF = suspect
+                       CASE
+                         WHEN s.closed_at IS NULL THEN '⚠️ Session non clôturée'
+                         WHEN ABS(NVL(s.closing_balance,0) - NVL(s.theoretical_balance,0)) > 100
+                           THEN '⚠️ ÉCART > 100 XAF'
+                         ELSE 'OK'
+                       END AS alerte,
                        (SELECT COUNT(*) FROM app_sales.ticket tk
                          WHERE tk.terminal_id = t.terminal_code
                            AND tk.session_no  = s.session_no) AS nb_tickets,

@@ -53,12 +53,17 @@ page 10 (
                        TO_CHAR(s.opened_at, 'DD/MM/YYYY HH24:MI') AS opened,
                        TO_CHAR(s.closed_at, 'DD/MM/YYYY HH24:MI') AS closed,
                        CASE WHEN s.closed_at IS NULL THEN 'OUVERTE' ELSE 'FERMEE' END AS status,
-                       s.opening_balance,
-                       s.closing_balance,
+                       -- FIX audit 2026-10-03 : NVL sur balances nullable
+                       NVL(s.opening_balance, 0) AS opening_balance,
+                       NVL(s.closing_balance, 0) AS closing_balance,
                        (SELECT COUNT(*) FROM app_sales.ticket tk
                          WHERE tk.terminal_id = t.terminal_code
                            AND tk.session_no  = s.session_no) AS nb_tickets,
-                       ROUND((NVL(s.closed_at, SYSDATE) - s.opened_at) * 24, 1) AS hours
+                       -- FIX audit : CA session protégée par NVL
+                       (SELECT NVL(SUM(total_ttc), 0) FROM app_sales.ticket tk
+                          WHERE tk.terminal_id = t.terminal_code
+                            AND tk.session_no  = s.session_no) AS ca_ttc,
+                       ROUND((NVL(s.closed_at, SYSDATE) - NVL(s.opened_at, SYSDATE)) * 24, 1) AS hours
                   FROM app_pos.pos_session s
                   JOIN app_pos.pos_terminal t ON t.terminal_id = s.terminal_id
                  ORDER BY s.opened_at DESC

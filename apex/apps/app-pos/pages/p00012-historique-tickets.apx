@@ -51,9 +51,19 @@ page 12 (
                        t.invoice_no,
                        t.customer_name,
                        t.user_code,
-                       t.total_ht,
-                       t.total_ttc,
-                       t.tax_amount_1 AS total_tva,
+                       -- FIX audit 2026-10-03 : NVL obligatoire sur montants nullable
+                       -- (un ticket annulé ou non totalisé peut avoir NULL)
+                       NVL(t.total_ht,    0) AS total_ht,
+                       NVL(t.total_ttc,   0) AS total_ttc,
+                       NVL(t.tax_amount_1, 0) AS total_tva,
+                       -- Montant net calculé sécurisé
+                       NVL(t.total_ttc, 0) - NVL(t.tax_amount_1, 0) AS net_ht_calc,
+                       CASE t.status
+                         WHEN 'V' THEN 'Validé'
+                         WHEN 'A' THEN 'Annulé'
+                         WHEN 'R' THEN 'Retour'
+                         ELSE 'Inconnu'
+                       END AS status_label,
                        t.status
                   FROM app_sales.ticket t
                  WHERE TRUNC(t.ticket_date) >= TRUNC(SYSDATE) - 30
