@@ -1,0 +1,250 @@
+page 30 (
+    name: Customers
+    alias: CUSTOMERS
+    title: Customers
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-vendeur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region customers-kpi (
+        name: Customer KPIs
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+                t-Region--removeHeader js-removeLandmark
+            ]
+        }
+    )
+
+    pageItem P30_KPI_TOTAL (
+        type: displayOnly
+        label {
+            label: Total customers
+        }
+        layout {
+            sequence: 10
+            region: @customers-kpi
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+        }
+        source {
+            type: functionBody
+            functionBody:
+                ```plsql
+                return to_char(app_api.apex_kpi_customer_count, 'FM999,999');
+                ```
+            used: always
+        }
+    )
+
+    pageItem P30_KPI_BLOCKED (
+        type: displayOnly
+        label {
+            label: Blocked
+        }
+        layout {
+            sequence: 20
+            region: @customers-kpi
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+        }
+        source {
+            type: functionBody
+            functionBody:
+                ```plsql
+                return to_char(app_api.apex_kpi_customer_blocked_count, 'FM999,999');
+                ```
+            used: always
+        }
+    )
+
+    region customers-list (
+        name: Customer List
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select p.party_code,
+                       p.party_name,
+                       p.city,
+                       p.country,
+                       p.phone,
+                       p.email,
+                       p.payment_terms,
+                       p.credit_days,
+                       case when p.is_blocked = 'Y' then 'BLOCKED' else 'OK' end as status
+                  from app_party.party p
+                 where p.nature_id = 1
+                 order by p.party_name
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column PARTY_CODE (
+            type: plainText
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PARTY_NAME (
+            type: plainText
+            heading {
+                heading: Name
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column CITY (
+            type: plainText
+            heading {
+                heading: City
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column COUNTRY (
+            type: plainText
+            heading {
+                heading: Country
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PHONE (
+            type: plainText
+            heading {
+                heading: Phone
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column EMAIL (
+            type: plainText
+            heading {
+                heading: Email
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PAYMENT_TERMS (
+            type: plainText
+            heading {
+                heading: Terms
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column CREDIT_DAYS (
+            type: plainText
+            heading {
+                heading: Credit days
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column STATUS (
+            type: plainText
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        savedReport default-customers (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 25
+            }
+        )
+    )
+)

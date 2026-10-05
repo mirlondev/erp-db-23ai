@@ -1,0 +1,296 @@
+page 40 (
+    name: Bulk Import
+    alias: BULK-IMPORT
+    title: Bulk Import
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-manager
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region help-text (
+        name: How to import
+        type: staticContent
+        source {
+            htmlCode: <p>Select the data type and upload the CSV file. Format expected: codart,libart,tarifstd for products; codtie,nomtie,adrtie1 for customers.</p>
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/collapsible
+            templateOptions: [
+                #DEFAULT#
+                is-collapsed
+                t-Region--scrollBody
+            ]
+        }
+    )
+
+    region upload-region (
+        name: Upload CSV
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+    )
+
+    pageItem P40_DATA_TYPE (
+        type: selectList
+        label {
+            label: Data type
+            alignment: left
+        }
+        settings {
+            noOfCols: 1
+        }
+        lov {
+            type: staticValues
+            staticValues: [
+                PRODUCTS (Products)
+                CUSTOMERS (Customers)
+            ]
+        }
+        layout {
+            sequence: 10
+            region: @upload-region
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 30
+        }
+        default {
+            type: static
+            staticValue: PRODUCTS
+        }
+        validation {
+            valueRequired: true
+        }
+    )
+
+    pageItem P40_CSV_FILE (
+        type: fileUpload
+        label {
+            label: CSV file
+            alignment: left
+        }
+        display {
+            displayAs: blockDropzone
+            dropzoneDesc: Drop CSV file here or click to browse (max 50 MB)
+        }
+        storage {
+            type: appTempFiles
+            maxFileSize: 50000
+        }
+        layout {
+            sequence: 20
+            region: @upload-region
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 64
+        }
+        validation {
+            valueRequired: true
+        }
+    )
+
+    button import-csv (
+        buttonName: IMPORT
+        label: Import CSV
+        layout {
+            sequence: 30
+            region: @upload-region
+            slot: regionBody
+            startNewRow: true
+        }
+        appearance {
+            buttonTemplate: @/text-with-icon
+            templateOptions: [
+                #DEFAULT#
+                t-Button--large
+            ]
+            hot: true
+        }
+        behavior {
+            action: submit
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    region import-result (
+        name: Import results
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select etl_id,
+                       source_table,
+                       target_table,
+                       rows_processed,
+                       status,
+                       to_char(started_at, 'DD/MM/YYYY HH24:MI:SS') as started_at,
+                       substr(error_message, 1, 200) as error
+                  from app_api.etl_run_progress
+                 where started_at >= trunc(sysdate)
+                ```
+        }
+        layout {
+            sequence: 30
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column ETL_ID (
+            heading {
+                heading: ETL ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column SOURCE_TABLE (
+            heading {
+                heading: Source
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column TARGET_TABLE (
+            heading {
+                heading: Target
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ROWS_PROCESSED (
+            heading {
+                heading: Rows
+                alignment: end
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column STATUS (
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column STARTED_AT (
+            heading {
+                heading: Started
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ERROR (
+            heading {
+                heading: Error
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: STRING
+            }
+        )
+    )
+
+    process do-import-csv (
+        name: Run CSV import
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                if :P40_DATA_TYPE = 'PRODUCTS' then
+                    app_api.pkg_etl_legacy.dispatch_gcbrdd(
+                        p_batch_size => 10000, p_max_batches => 10, p_etl_run_id => :P40_RUN_ID);
+                elsif :P40_DATA_TYPE = 'CUSTOMERS' then
+                    app_api.pkg_etl_legacy.dispatch_reference_table(
+                        p_source_owner => 'CAISSE', p_source_table => 'GCPTIE',
+                        p_target_owner => 'APP_PARTY', p_target_table => 'PARTY',
+                        p_pk_column => 'PARTY_CODE');
+                end if;
+                ```
+        }
+        execution {
+            sequence: 10
+        }
+        successMessage {
+            successMessage: Import terminé.
+        }
+        error {
+            errorMessage: #SQLERRM_TEXT#
+        }
+        serverSideCondition {
+            whenButtonPressed: @import-csv
+        }
+    )
+)

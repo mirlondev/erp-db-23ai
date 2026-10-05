@@ -1,0 +1,173 @@
+page 20 (
+    name: Low Stock
+    alias: LOW-STOCK
+    title: Low Stock Alerts
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-manager
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region low-stock-list (
+        name: Products to reorder
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select s.warehouse_code,
+                       s.product_code,
+                       p.product_name,
+                       nvl(s.stock_qty, 0) as stock_qty,
+                       nvl(p.min_stock_qty, 0) as min_stock_qty,
+                       nvl(p.min_stock_qty, 0) - nvl(s.stock_qty, 0) as qty_to_order,
+                       nvl(p.standard_price, 0) as unit_cost_xaf,
+                       round(
+                         (nvl(p.min_stock_qty, 0) - nvl(s.stock_qty, 0))
+                         * nvl(p.standard_price, 0), 0
+                       ) as reorder_cost_xaf,
+                       case
+                         when nvl(s.stock_qty, 0) = 0                       then 'RUPTURE'
+                         when nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0)  then 'BAS'
+                         else 'OK'
+                       end as alert
+                  from app_inv.inv_stock s
+                  join app_product.product p on p.product_code = s.product_code
+                 where nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0)
+                 order by stock_qty asc, qty_to_order desc
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column WAREHOUSE_CODE (
+            heading {
+                heading: Warehouse
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PRODUCT_CODE (
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PRODUCT_NAME (
+            heading {
+                heading: Product
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column STOCK_QTY (
+            heading {
+                heading: Stock
+                alignment: end
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column MIN_STOCK_QTY (
+            heading {
+                heading: Min
+                alignment: end
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column QTY_TO_ORDER (
+            heading {
+                heading: To order
+                alignment: end
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column UNIT_COST_XAF (
+            heading {
+                heading: Unit cost
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column REORDER_COST_XAF (
+            heading {
+                heading: Reorder cost
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column ALERT (
+            heading {
+                heading: Alert
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: STRING
+            }
+        )
+    )
+)

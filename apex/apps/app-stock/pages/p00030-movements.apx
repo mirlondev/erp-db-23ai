@@ -1,0 +1,250 @@
+page 30 (
+    name: Stock Movements
+    alias: MOVEMENTS
+    title: Stock Movements
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-vendeur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region movement-filters (
+        name: Filters
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+            ]
+        }
+    )
+
+    pageItem P30_DATE_FROM (
+        type: datePicker
+        label {
+            label: From
+            alignment: left
+        }
+        layout {
+            sequence: 10
+            region: @movement-filters
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 12
+        }
+        default {
+            type: static
+            staticValue: TRUNC(SYSDATE) - 7
+        }
+    )
+
+    pageItem P30_DATE_TO (
+        type: datePicker
+        label {
+            label: To
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @movement-filters
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 12
+        }
+        default {
+            type: static
+            staticValue: TRUNC(SYSDATE)
+        }
+    )
+
+    pageItem P30_WAREHOUSE (
+        type: selectList
+        label {
+            label: Warehouse
+            alignment: left
+        }
+        lov {
+            type: sharedComponent
+            lov: @WAREHOUSES
+        }
+        layout {
+            sequence: 30
+            region: @movement-filters
+            slot: regionBody
+            column: 3
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 16
+        }
+    )
+
+    region movements-list (
+        name: Movements
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select s.warehouse_code,
+                       s.product_code,
+                       p.product_name,
+                       nvl(s.stock_qty, 0) as current_stock,
+                       to_char(s.last_in_at,  'DD/MM/YYYY HH24:MI') as last_in,
+                       to_char(s.last_out_at, 'DD/MM/YYYY HH24:MI') as last_out,
+                       round(
+                         (nvl(s.last_in_at, sysdate) - nvl(s.last_out_at, sysdate)) * 24
+                       , 1) as hours_since_last_move,
+                       nvl(p.standard_price, 0) as unit_cost
+                  from app_inv.inv_stock s
+                  join app_product.product p on p.product_code = s.product_code
+                 where (:P30_WAREHOUSE is null or s.warehouse_code = :P30_WAREHOUSE)
+                   and (s.last_in_at  >= nvl(:P30_DATE_FROM, s.last_in_at)
+                     or s.last_out_at >= nvl(:P30_DATE_FROM, s.last_out_at))
+                 order by greatest(nvl(s.last_in_at, date '1900-01-01'),
+                                    nvl(s.last_out_at, date '1900-01-01')) desc
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column WAREHOUSE_CODE (
+            heading {
+                heading: Warehouse
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PRODUCT_CODE (
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PRODUCT_NAME (
+            heading {
+                heading: Product
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column CURRENT_STOCK (
+            heading {
+                heading: Stock
+                alignment: end
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column LAST_IN (
+            heading {
+                heading: Last in
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column LAST_OUT (
+            heading {
+                heading: Last out
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column HOURS_SINCE_LAST_MOVE (
+            heading {
+                heading: Hours since
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column UNIT_COST (
+            heading {
+                heading: Unit cost
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: number
+            }
+        )
+    )
+)

@@ -1,0 +1,243 @@
+page 50 (
+    name: Bulk Stock Import
+    alias: BULK-STOCK-IMPORT
+    title: Bulk Stock Import
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-manager
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region help-text (
+        name: How to import
+        type: staticContent
+        source {
+            htmlCode: <p>Upload a stock CSV with columns: codart, coddep, qte_stock, pmp. Maximum file size: 50 MB.</p>
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/collapsible
+            templateOptions: [
+                #DEFAULT#
+                is-collapsed
+                t-Region--scrollBody
+            ]
+        }
+    )
+
+    region upload-region (
+        name: Upload stock CSV
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+    )
+
+    pageItem P50_CSV_FILE (
+        type: fileUpload
+        label {
+            label: CSV file
+            alignment: left
+        }
+        display {
+            displayAs: blockDropzone
+            dropzoneDesc: Drop stock CSV here or click to browse
+        }
+        storage {
+            type: appTempFiles
+            maxFileSize: 50000
+        }
+        layout {
+            sequence: 10
+            region: @upload-region
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 64
+        }
+        validation {
+            valueRequired: true
+        }
+    )
+
+    button import-stock (
+        buttonName: IMPORT_STOCK
+        label: Import stock
+        layout {
+            sequence: 20
+            region: @upload-region
+            slot: regionBody
+            startNewRow: true
+        }
+        appearance {
+            buttonTemplate: @/text-with-icon
+            templateOptions: [
+                #DEFAULT#
+                t-Button--large
+            ]
+            hot: true
+        }
+        behavior {
+            action: submit
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    region import-result (
+        name: Import results
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select etl_id,
+                       source_table,
+                       target_table,
+                       rows_processed,
+                       status,
+                       to_char(started_at, 'DD/MM/YYYY HH24:MI') as started
+                  from app_api.etl_run_progress
+                 where source_table = 'CAISSE.GCSTOCK'
+                   and started_at >= trunc(sysdate)
+                 order by started_at desc
+                ```
+        }
+        layout {
+            sequence: 30
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column ETL_ID (
+            heading {
+                heading: ETL ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column SOURCE_TABLE (
+            heading {
+                heading: Source
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column TARGET_TABLE (
+            heading {
+                heading: Target
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ROWS_PROCESSED (
+            heading {
+                heading: Rows
+                alignment: end
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column STATUS (
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column STARTED (
+            heading {
+                heading: Started
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+        )
+    )
+
+    process do-import-stock (
+        name: Run stock import
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                app_api.pkg_etl_legacy.dispatch_reference_table(
+                    p_source_owner => 'CAISSE',
+                    p_source_table => 'GCSTOCK',
+                    p_target_owner => 'APP_INV',
+                    p_target_table => 'INV_STOCK',
+                    p_pk_column    => 'PRODUCT_CODE');
+                ```
+        }
+        execution {
+            sequence: 10
+        }
+        successMessage {
+            successMessage: Import stock terminé.
+        }
+        error {
+            errorMessage: #SQLERRM_TEXT#
+        }
+        serverSideCondition {
+            whenButtonPressed: @import-stock
+        }
+    )
+)
