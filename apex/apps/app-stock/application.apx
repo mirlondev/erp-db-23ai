@@ -48,7 +48,6 @@ app APP-STOCK (
     globalization {
         primaryLanguage: fr
         languageDerivedFrom: session
-        automaticTimeZone: true
     }
 
     substitution APP_NAME (

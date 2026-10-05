@@ -1,24 +1,3 @@
--- ============================================================
--- Authorization schemes REGAL — pattern APEX 26.1 officiel
--- ============================================================
--- Référence : oracle/apex/26.1/starter-apps/customers/...
---   (mmdVersion 26.1.0+3102)
---
--- 6 schémas d'autorisation basés sur pkg_apex_auth.user_roles()
--- (la fonction EXISTS — elle est créée par apex/setup/03_apex_auth_setup.sql
--- et retourne un CSV des role_codes attribués à l'utilisateur).
---
--- Syntaxe STRICTEMENT conforme aux samples Oracle :
---   - type: plSqlFunctionBody
---   - settings { plsqlFunctionBody: return ... }
---   - error { errorMessage: "..." }
---   - advanced { evaluationType: perSession }  ← OBLIGATOIRE
---
--- Pas d'invention : on utilise UNIQUEMENT les fonctions qui existent
--- dans pkg_apex_auth (cf. apex/setup/03_apex_auth_setup.sql).
--- ============================================================
-
--- Accès superadmin (admin complet)
 authorization regal-superadmin (
     name: REGAL SuperAdmin
     type: plSqlFunctionBody
@@ -33,7 +12,6 @@ authorization regal-superadmin (
     }
 )
 
--- Accès admin
 authorization regal-admin (
     name: REGAL Admin
     type: plSqlFunctionBody
@@ -48,7 +26,6 @@ authorization regal-admin (
     }
 )
 
--- Accès comptable
 authorization regal-comptable (
     name: REGAL Comptable
     type: plSqlFunctionBody
@@ -63,7 +40,6 @@ authorization regal-comptable (
     }
 )
 
--- Accès manager
 authorization regal-manager (
     name: REGAL Manager
     type: plSqlFunctionBody
@@ -78,7 +54,6 @@ authorization regal-manager (
     }
 )
 
--- Accès vendeur (caissier ou vendeur ou plus)
 authorization regal-vendeur (
     name: REGAL Vendeur
     type: plSqlFunctionBody
@@ -93,7 +68,6 @@ authorization regal-vendeur (
     }
 )
 
--- Accès caissier (autorisation par défaut pour pages POS)
 authorization regal-caissier (
     name: REGAL Caissier
     type: plSqlFunctionBody
