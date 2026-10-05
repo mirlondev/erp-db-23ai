@@ -101,6 +101,7 @@ BEGIN
 
   v_ok := app_sys.pkg_apex_auth.authenticate('MANAGER_PNR', 'ManagerPNR#2026');
   DBMS_OUTPUT.PUT_LINE('  MANAGER_PNR      / ManagerPNR#2026     = ' || CASE WHEN v_ok THEN 'OK' ELSE 'KO' END);
+END;
 /
 
 PROMPT
