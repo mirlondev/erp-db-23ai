@@ -1,0 +1,298 @@
+page 20 (
+    name: Quick Billing
+    alias: QUICK-BILLING
+    title: ⚡ Encaissement rapide
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: [
+            #DEFAULT#
+            t-PageHero--iconic
+        ]
+    }
+    navigation {
+        cursorFocus: scanField
+        warnOnUnsavedChanges: true
+    }
+    security {
+        authorization: @regal-caissier
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region quick-billing-header (
+        name: Quick Billing — scannez un produit
+        type: hero
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/hero
+            templateOptions: [
+                #DEFAULT#
+                u-color-1
+            ]
+        }
+    )
+
+    region scan-product (
+        name: Scanner code-barres
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        serverSideCondition {
+            type: userIsAuthenticated
+        }
+    )
+
+    pageItem P20_BARCODE (
+        type: textField
+        label {
+            label: 📷 Scannez ou tapez le code-barres
+            alignment: left
+        }
+        layout {
+            sequence: 10
+            region: @scan-product
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+                u-color-1
+            ]
+            width: 30
+            icon: fa-barcode
+        }
+        serverSideCondition {
+            type: userIsAuthenticated
+        }
+    )
+
+    pageItem P20_QUANTITY (
+        type: numberField
+        label {
+            label: Quantité
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @scan-product
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 6
+            icon: fa-cubes
+        }
+        default {
+            staticValue: 1
+        }
+        valueRequired: false
+    )
+
+    button add-line (
+        name: ➕ Ajouter au panier
+        label: ➕ Ajouter
+        layout {
+            sequence: 30
+            region: @scan-product
+            slot: regionBody
+            startNewRow: false
+        }
+        appearance {
+            template: @/text-with-icon
+            templateOptions: [
+                #DEFAULT#
+                t-Button--large
+                t-Button--primary
+                u-color-1
+            ]
+            hot: true
+            icon: fa-cart-plus
+        }
+    )
+
+    region current-cart (
+        name: Panier en cours
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                -- Panier temporaire (session state)
+                SELECT rownum AS line_no,
+                       p.product_code,
+                       p.product_name,
+                       p.standard_price AS unit_price_xaf,
+                       :P20_QUANTITY AS qty,
+                       ROUND(p.standard_price * :P20_QUANTITY, 0) AS subtotal_xaf
+                  FROM app_product.product p
+                 WHERE p.product_code = :P20_BARCODE
+                   AND p.status = 'ACTIVE'
+                ```
+        }
+        layout {
+            sequence: 30
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+        download {
+            formats: [
+                csv
+                html
+            ]
+        }
+        serverSideCondition {
+            type: userIsAuthenticated
+        }
+    )
+
+    region cart-summary (
+        name: Totaux
+        type: staticContent
+        layout {
+            sequence: 40
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+            ]
+        }
+    )
+
+    pageItem P20_TOTAL_HT (
+        type: displayOnly
+        label {
+            label: Total HT
+        }
+        layout {
+            sequence: 10
+            region: @cart-summary
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            valueAlignment: end
+        }
+    )
+
+    pageItem P20_TOTAL_TVA (
+        type: displayOnly
+        label {
+            label: TVA 18.9%
+        }
+        layout {
+            sequence: 20
+            region: @cart-summary
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            valueAlignment: end
+        }
+    )
+
+    pageItem P20_TOTAL_TTC (
+        type: displayOnly
+        label {
+            label: Total TTC
+        }
+        layout {
+            sequence: 30
+            region: @cart-summary
+            slot: regionBody
+            column: 3
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                u-color-1
+            ]
+            valueAlignment: end
+        }
+    )
+
+    button settle (
+        name: Valider et encaisser
+        label: 💳 Encaisser
+        layout {
+            sequence: 50
+            region: @cart-summary
+            slot: regionBody
+            startNewRow: true
+        }
+        appearance {
+            template: @/text-with-icon
+            templateOptions: [
+                #DEFAULT#
+                t-Button--large
+                t-Button--success
+            ]
+            hot: true
+            icon: fa-credit-card
+        }
+    )
+
+    process validate-billing (
+        name: Valider la vente
+        type: executePlsql
+        serverSideCondition {
+            type: requestEquals
+            value: SETTLE
+        }
+        plsqlCode:
+            ```plsql
+            -- Appelle pkg_pos_sales pour créer le ticket
+            :P20_TOTAL_TTC := app_api.apex_pos_totals(:APP_USER);
+            INSERT INTO app_sales.ticket (
+                terminal_id, ticket_no, ticket_date, session_no,
+                customer_code, customer_name, user_code,
+                total_ht, total_ttc, tax_amount_1, status
+            ) VALUES (
+                :APP_USER, seq_ticket_no.NEXTVAL, SYSDATE, 1,
+                'CLI-WALK', 'Client comptoir', :APP_USER,
+                :P20_TOTAL_HT, :P20_TOTAL_TTC, :P20_TOTAL_TVA, 'V'
+            );
+            COMMIT;
+            ```
+    )
+
+    breadcrumb quick-billing-bc (
+        name: Quick Billing
+        entry (
+            label: ⚡ Encaissement rapide
+            page: 20
+        )
+    )
+)

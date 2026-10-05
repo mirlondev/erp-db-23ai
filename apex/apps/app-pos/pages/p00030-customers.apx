@@ -1,0 +1,153 @@
+page 30 (
+    name: Customers
+    alias: CUSTOMERS
+    title: 👥 Clients & Fidélité
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorization: @regal-vendeur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region customers-kpi (
+        name: KPI Clients
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+                t-Region--removeHeader
+            ]
+        }
+    )
+
+    pageItem P30_KPI_TOTAL (
+        type: displayOnly
+        label {
+            label: 👥 Total clients
+        }
+        layout {
+            sequence: 10
+            region: @customers-kpi
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+                u-color-1
+            ]
+            valueAlignment: center
+        }
+    )
+
+    pageItem P30_KPI_ACTIVE (
+        type: displayOnly
+        label {
+            label: ✅ Actifs
+        }
+        layout {
+            sequence: 20
+            region: @customers-kpi
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+                u-color-2
+            ]
+            valueAlignment: center
+        }
+    )
+
+    pageItem P30_KPI_BLOCKED (
+        type: displayOnly
+        label {
+            label: ⛔ Bloqués
+        }
+        layout {
+            sequence: 30
+            region: @customers-kpi
+            slot: regionBody
+            column: 3
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+                u-color-4
+            ]
+            valueAlignment: center
+        }
+    )
+
+    region customers-list (
+        name: Liste des clients
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                SELECT p.party_code,
+                       p.party_name,
+                       p.city,
+                       p.country,
+                       p.tax_regime,
+                       p.payment_terms,
+                       p.credit_days,
+                       NVL(p.credit_limit, 0) AS credit_limit,
+                       CASE WHEN p.is_blocked = 'Y' THEN '⛔ BLOQUÉ' ELSE '✅ OK' END AS status,
+                       p.phone,
+                       p.email,
+                       p.created_at
+                  FROM app_party.party p
+                 WHERE p.nature_id = 1  -- clients
+                 ORDER BY p.party_name
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+        download {
+            formats: [
+                csv
+                excel
+                pdf
+            ]
+        }
+    )
+
+    breadcrumb customers-bc (
+        name: Customers
+        entry (
+            label: 👥 Clients
+            page: 30
+        )
+    )
+)

@@ -1,0 +1,197 @@
+page 40 (
+    name: Transfers
+    alias: TRANSFERS
+    title: 🚚 Transferts inter-dépôts
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorization: @regal-manager
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region transfer-kpi (
+        name: KPI Transferts
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+            ]
+        }
+    )
+
+    pageItem P40_KPI_DRAFT (
+        type: displayOnly
+        label {
+            label: 📝 Brouillons
+        }
+        layout {
+            sequence: 10
+            region: @transfer-kpi
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            valueAlignment: center
+        }
+    )
+
+    pageItem P40_KPI_INTRANSIT (
+        type: displayOnly
+        label {
+            label: 🚚 En transit
+        }
+        layout {
+            sequence: 20
+            region: @transfer-kpi
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+                u-color-1
+            ]
+            valueAlignment: center
+        }
+    )
+
+    pageItem P40_KPI_RECEIVED (
+        type: displayOnly
+        label {
+            label: ✅ Reçus
+        }
+        layout {
+            sequence: 30
+            region: @transfer-kpi
+            slot: regionBody
+            column: 3
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+                u-color-3
+            ]
+            valueAlignment: center
+        }
+    )
+
+    pageItem P40_KPI_LATE (
+        type: displayOnly
+        label {
+            label: ⚠️ En retard (>7j)
+        }
+        layout {
+            sequence: 40
+            region: @transfer-kpi
+            slot: regionBody
+            column: 4
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+                u-color-4
+            ]
+            valueAlignment: center
+        }
+    )
+
+    region transfer-list (
+        name: Pipeline transferts (vue)
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                SELECT transfer_id,
+                       transfer_number,
+                       TO_CHAR(transfer_date, 'DD/MM/YYYY HH24:MI') AS transfer_at,
+                       source_warehouse,
+                       target_warehouse,
+                       status,
+                       nb_lines,
+                       total_requested_qty,
+                       total_sent_qty,
+                       total_received_qty,
+                       days_in_process,
+                       CASE
+                         WHEN days_in_process > 7  THEN '🔴 > 7 jours'
+                         WHEN days_in_process > 3  THEN '🟠 > 3 jours'
+                         WHEN days_in_process > 0  THEN '🟢 normal'
+                         ELSE '—'
+                       END AS age_alerte
+                  FROM app_api.v_transfer_pipeline
+                 ORDER BY transfer_date DESC
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+        download {
+            formats: [
+                csv
+                excel
+            ]
+        }
+    )
+
+    button new-transfer (
+        name: ➕ Nouveau transfert
+        label: Nouveau transfert
+        layout {
+            sequence: 30
+            region: @transfer-list
+            slot: regionBody
+            startNewRow: true
+        }
+        appearance {
+            template: @/text-with-icon
+            templateOptions: [
+                #DEFAULT#
+                t-Button--large
+                t-Button--primary
+            ]
+            hot: true
+            icon: fa-truck-loading
+        }
+    )
+
+    breadcrumb transfers-bc (
+        name: Transfers
+        entry (
+            label: 🚚 Transferts
+            page: 40
+        )
+    )
+)

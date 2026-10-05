@@ -1,0 +1,172 @@
+page 50 (
+    name: Bulk Stock Import
+    alias: BULK-IMPORT
+    title: 📥 Import stock en masse
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorization: @regal-manager
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region csv-help (
+        name: Comment importer
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                u-color-2
+            ]
+        }
+    )
+
+    pageItem P50_HELP (
+        type: displayOnly
+        label {
+            label: CSV stock
+        }
+        layout {
+            sequence: 10
+            region: @csv-help
+            slot: regionBody
+        }
+        appearance {
+            template: @/hidden
+        }
+        value:
+            ```html
+            <p><strong>Format CSV :</strong> <code>codart,coddep,qte_stock,pmp</code></p>
+            <p>Colonnes : codart (ref article), coddep (warehouse), qte_stock (quantité), pmp (prix moyen pondéré)</p>
+            ```
+    )
+
+    region csv-upload (
+        name: 1️⃣ Charger le fichier
+        type: fileUpload
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+    )
+
+    pageItem P50_CSV_FILE (
+        type: fileBrowse
+        label {
+            label: Fichier CSV stock
+        }
+        layout {
+            sequence: 10
+            region: @csv-upload
+            slot: regionBody
+        }
+        appearance {
+            template: @/required
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+        }
+        storage {
+            type: apexCollections
+            collectionName: CSV_STOCK_UPLOAD
+        }
+    )
+
+    button import (
+        name: 📥 Importer le stock
+        label: Importer
+        layout {
+            sequence: 20
+            region: @csv-upload
+            slot: regionBody
+            startNewRow: true
+        }
+        appearance {
+            template: @/text-with-icon
+            templateOptions: [
+                #DEFAULT#
+                t-Button--large
+                t-Button--primary
+            ]
+            hot: true
+            icon: fa-upload
+        }
+    )
+
+    process import-csv-stock (
+        name: Import CSV stock
+        type: executePlsql
+        serverSideCondition {
+            type: requestEquals
+            value: IMPORT
+        }
+        plsqlCode:
+            ```plsql
+            BEGIN
+                -- Délègue au package ETL
+                app_api.pkg_etl_legacy.dispatch_reference_table(
+                    p_source_owner => 'CAISSE',
+                    p_source_table => 'GCSTOCK',
+                    p_target_owner => 'APP_INV',
+                    p_target_table => 'INV_STOCK',
+                    p_pk_column    => 'PRODUCT_CODE');
+                COMMIT;
+            END;
+            ```
+    )
+
+    region import-result (
+        name: 2️⃣ Résultats
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                SELECT etl_id, source_table, target_table, rows_processed,
+                       status, TO_CHAR(started_at, 'DD/MM/YYYY HH24:MI') AS started
+                  FROM app_api.etl_run_progress
+                 WHERE source_table = 'CAISSE.GCSTOCK'
+                   AND started_at >= TRUNC(SYSDATE)
+                 ORDER BY started_at DESC
+                ```
+        }
+        layout {
+            sequence: 30
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+    )
+
+    breadcrumb bulk-stock-bc (
+        name: Stock Import
+        entry (
+            label: 📥 Import stock
+            page: 50
+        )
+    )
+)
