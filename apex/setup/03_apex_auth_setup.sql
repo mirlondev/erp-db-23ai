@@ -27,6 +27,11 @@ CREATE OR REPLACE PACKAGE pkg_apex_auth AS
     p_password IN VARCHAR2
   ) RETURN BOOLEAN;
 
+  -- Hash SHA-256 hex du mot de passe (EXPOSÉ pour bootstrap)
+  -- ⚠️ Appelé depuis apex/setup/14_bootstrap_users.sql
+  --   pour poser sys_user.password_hash à partir d'un mot de passe en clair.
+  FUNCTION hash_pw(p_plain IN VARCHAR2) RETURN VARCHAR2;
+
   -- Rôles actifs d'un utilisateur (liste CSV pour APEX "Is In Role/Group")
   FUNCTION user_roles(p_username IN VARCHAR2) RETURN VARCHAR2;
 
