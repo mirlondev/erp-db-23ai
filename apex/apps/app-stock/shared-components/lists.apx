@@ -63,7 +63,7 @@ list navigation-menu (
     name: Navigation Menu
 
     entry home (
-        label: Home
+        label: 🏠 Accueil
         icon {
             imageIconCssClasses: fa-home
         }
@@ -78,9 +78,9 @@ list navigation-menu (
     )
 
     entry stcoc (
-        label: stcoc
+        label: 📦 Vue stock (legacy)
         icon {
-            imageIconCssClasses: fa-table-pointer
+            imageIconCssClasses: fa-table
         }
         layout {
             sequence: 20
@@ -91,6 +91,101 @@ list navigation-menu (
             }
         }
     )
+
+    entry inventory (
+        label: 📊 Inventaire
+        icon {
+            imageIconCssClasses: fa-warehouse
+        }
+        layout {
+            sequence: 30
+        }
+        isCurrent {
+            type: pages
+            pages: 10
+        }
+        link {
+            target: {
+                page: 10
+            }
+        }
+    )
+
+    entry low-stock (
+        label: ⚠️ Stock bas
+        icon {
+            imageIconCssClasses: fa-exclamation-triangle
+        }
+        layout {
+            sequence: 40
+        }
+        isCurrent {
+            type: pages
+            pages: 20
+        }
+        link {
+            target: {
+                page: 20
+            }
+        }
+    )
+
+    entry movements (
+        label: 🔄 Mouvements
+        icon {
+            imageIconCssClasses: fa-exchange-alt
+        }
+        layout {
+            sequence: 50
+        }
+        isCurrent {
+            type: pages
+            pages: 30
+        }
+        link {
+            target: {
+                page: 30
+            }
+        }
+    )
+
+    entry transfers (
+        label: 🚚 Transferts
+        icon {
+            imageIconCssClasses: fa-truck-loading
+        }
+        layout {
+            sequence: 60
+        }
+        isCurrent {
+            type: pages
+            pages: 40
+        }
+        link {
+            target: {
+                page: 40
+            }
+        }
+    )
+
+    entry bulk-import (
+        label: 📥 Import CSV
+        icon {
+            imageIconCssClasses: fa-file-csv
+        }
+        layout {
+            sequence: 70
+        }
+        isCurrent {
+            type: pages
+            pages: 50
+        }
+        link {
+            target: {
+                page: 50
+            }
+        }
+    }
 
 )
 
@@ -112,5 +207,34 @@ list page-navigation (
         }
     )
 
-)
+    entry inventory (
+        label: Inventaire
+        icon {
+            imageIconCssClasses: fa-warehouse
+        }
+        layout {
+            sequence: 30
+        }
+        link {
+            target: {
+                page: 10
+            }
+        }
+    )
 
+    entry transfers (
+        label: Transferts
+        icon {
+            imageIconCssClasses: fa-truck-loading
+        }
+        layout {
+            sequence: 60
+        }
+        link {
+            target: {
+                page: 40
+            }
+        }
+    }
+
+)

@@ -62,10 +62,44 @@ list navigation-bar (
 list navigation-menu (
     name: Navigation Menu
 
-    entry all-data (
-        label: ALL_DATA
+    entry home (
+        label: 🏠 Accueil
         icon {
-            imageIconCssClasses: fa-table
+            imageIconCssClasses: fa-home
+        }
+        layout {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 1
+            }
+        }
+    )
+
+    entry quick-billing (
+        label: ⚡ Encaissement rapide
+        icon {
+            imageIconCssClasses: fa-bolt
+        }
+        layout {
+            sequence: 15
+        }
+        isCurrent {
+            type: pages
+            pages: 20
+        }
+        link {
+            target: {
+                page: 20
+            }
+        }
+    )
+
+    entry all-data (
+        label: 📊 Données POS
+        icon {
+            imageIconCssClasses: fa-database
         }
         layout {
             sequence: 20
@@ -81,44 +115,10 @@ list navigation-menu (
         }
     )
 
-    entry historique-tickets (
-        label: Historique tickets
-        icon {
-            imageIconCssClasses: fa-table-pointer
-        }
-        layout {
-            sequence: 50
-        }
-        isCurrent {
-            type: pages
-            pages: 12
-        }
-        link {
-            target: {
-                page: 12
-            }
-        }
-    )
-
-    entry home (
-        label: Home
-        icon {
-            imageIconCssClasses: fa-home
-        }
-        layout {
-            sequence: 10
-        }
-        link {
-            target: {
-                page: 1
-            }
-        }
-    )
-
     entry rapport (
-        label: rapport
+        label: 📈 Rapports
         icon {
-            imageIconCssClasses: fa-table-pointer
+            imageIconCssClasses: fa-chart-line
         }
         layout {
             sequence: 30
@@ -135,9 +135,9 @@ list navigation-menu (
     )
 
     entry sessions-de-caisse (
-        label: Sessions de caisse
+        label: 🛒 Sessions de caisse
         icon {
-            imageIconCssClasses: fa-table-pointer
+            imageIconCssClasses: fa-cash-register
         }
         layout {
             sequence: 40
@@ -153,10 +153,29 @@ list navigation-menu (
         }
     )
 
-    entry z-de-caisse (
-        label: Z de caisse
+    entry historique-tickets (
+        label: 🧾 Historique tickets
         icon {
-            imageIconCssClasses: fa-table-pointer
+            imageIconCssClasses: fa-receipt
+        }
+        layout {
+            sequence: 50
+        }
+        isCurrent {
+            type: pages
+            pages: 12
+        }
+        link {
+            target: {
+                page: 12
+            }
+        }
+    )
+
+    entry z-de-caisse (
+        label: 💰 Z de caisse
+        icon {
+            imageIconCssClasses: fa-money-bill
         }
         layout {
             sequence: 60
@@ -175,5 +194,42 @@ list navigation-menu (
         }
     )
 
-)
+    entry customers (
+        label: 👥 Clients
+        icon {
+            imageIconCssClasses: fa-users
+        }
+        layout {
+            sequence: 70
+        }
+        isCurrent {
+            type: pages
+            pages: 30
+        }
+        link {
+            target: {
+                page: 30
+            }
+        }
+    )
 
+    entry bulk-import (
+        label: 📥 Import CSV
+        icon {
+            imageIconCssClasses: fa-file-csv
+        }
+        layout {
+            sequence: 80
+        }
+        isCurrent {
+            type: pages
+            pages: 40
+        }
+        link {
+            target: {
+                page: 40
+            }
+        }
+    }
+
+)
