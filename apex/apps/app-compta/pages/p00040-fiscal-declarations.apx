@@ -1,0 +1,257 @@
+page 40 (
+    name: Fiscal Declarations
+    alias: FISCAL-DECLARATIONS
+    title: Declarations fiscales Congo (CEMAC)
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-comptable
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region fiscal-info (
+        name: Fiscalite Congo Brazzaville
+        type: staticContent
+        source {
+            htmlCode:
+                ```html
+                <p>Regime fiscal: <strong>CEMAC (BEAC/XAF)</strong> &mdash; Republique du Congo, Pointe-Noire / Brazzaville.</p>
+                <ul>
+                  <li>TVA: 18.9% (taux normal)</li>
+                  <li>IRPP: 8 tranches (0%, 5%, 10%, 15%, 20%, 25%, 30%, 35%)</li>
+                  <li>CNSS: 5% part salariale + 10% part patronale (plafond mensuel)</li>
+                  <li>Patente / licences: annuel</li>
+                  <li>Declaration TVA: mensuelle (DGE)</li>
+                </ul>
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/collapsible
+            templateOptions: [
+                #DEFAULT#
+                is-expanded
+                t-Region--scrollBody
+            ]
+        }
+    }
+
+    region fiscal-tva (
+        name: Declaration TVA
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select declaration_id,
+                       company_code,
+                       period_code,
+                       period_start,
+                       period_end,
+                       tva_collected,
+                       tva_deductible,
+                       tva_due,
+                       tva_credit,
+                       submission_date,
+                       payment_date,
+                       case status
+                         when 'DRAFT'    then 'Brouillon'
+                         when 'SUBMITTED' then 'Soumise'
+                         when 'PAID'     then 'Payee'
+                         when 'LATE'     then 'En retard'
+                         else status
+                       end as status
+                  from app_tax.tva_declaration
+                 order by period_start desc
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column DECLARATION_ID (
+            type: plainText
+            heading {
+                heading: ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column COMPANY_CODE (
+            type: plainText
+            heading {
+                heading: Soc.
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PERIOD_CODE (
+            type: plainText
+            heading {
+                heading: Periode
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PERIOD_START (
+            type: plainText
+            heading {
+                heading: Debut
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PERIOD_END (
+            type: plainText
+            heading {
+                heading: Fin
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column TVA_COLLECTED (
+            type: plainText
+            heading {
+                heading: TVA collectee (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column TVA_DEDUCTIBLE (
+            type: plainText
+            heading {
+                heading: TVA deductible
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column TVA_DUE (
+            type: plainText
+            heading {
+                heading: TVA due
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column TVA_CREDIT (
+            type: plainText
+            heading {
+                heading: Credit
+                alignment: end
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column SUBMISSION_DATE (
+            type: plainText
+            heading {
+                heading: Soumise le
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column PAYMENT_DATE (
+            type: plainText
+            heading {
+                heading: Payee le
+            }
+            layout {
+                sequence: 110
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column STATUS (
+            type: plainText
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 120
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        savedReport default-fiscal (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 25
+            }
+        )
+    )
+)

@@ -1,0 +1,71 @@
+app APP-COMPTA (
+    name: APP_COMPTA
+    logo {
+        type: text
+        text: APP_COMPTA
+    }
+    navigation {
+        homeUrl: {
+            page: 1
+        }
+        loginUrl: {
+            page: LOGIN
+        }
+    }
+    navigationMenu {
+        listTemplate: @/side-navigation-menu
+        templateOptions: [
+            #DEFAULT#
+            t-TreeNav--styleA
+            js-navCollapsed--hidden
+        ]
+        list: @navigation-menu
+    }
+    navigationBar {
+        list: @navigation-bar
+        listTemplate: @/navigation-bar
+        templateOptions: #DEFAULT#
+    }
+    userInterface {
+        currentTheme: @universal-theme
+        globalPage: 0
+        addBuiltWithApexToFooter: false
+    }
+    appFormatMasks {
+        date: DS
+        timestamp: DS
+        timestampTimeZone: DS
+    }
+    authentication {
+        scheme: @regal-auth
+    }
+    sessionStateProtection {
+        checksumSalt: 99A3F1B27C48D8E4567F1A9B0C8D3E4F5678901ABCDEF1234567890ABCDEF12
+    }
+    runtime {
+        allowFeedback: true
+    }
+    globalization {
+        primaryLanguage: fr
+        languageDerivedFrom: session
+    }
+
+    substitution APP_NAME (
+        value {
+            staticValue: REGAL Comptabilite
+        }
+    )
+
+    substitution COMPANY_NAME (
+        value {
+            staticValue: LITOKO SARL
+        }
+    )
+
+    substitution CURRENCY_CODE (
+        value {
+            staticValue: XAF
+        }
+    )
+
+)

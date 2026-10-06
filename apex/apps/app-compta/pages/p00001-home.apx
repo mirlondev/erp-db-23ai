@@ -1,7 +1,7 @@
 page 1 (
     name: Home
     alias: HOME
-    title: Stock Dashboard
+    title: Comptabilite Dashboard
     appearance {
         pageTemplate: @/standard
         templateOptions: #DEFAULT#
@@ -10,7 +10,7 @@ page 1 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-vendeur
+        authorizationScheme: @regal-comptable
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -21,8 +21,8 @@ page 1 (
         source {
             htmlCode:
                 ```html
-                <h1 style="margin:0;font-size:24px;font-weight:600;">REGAL Inventory &mdash; Hub-and-Spoke</h1>
-                <p style="margin:4px 0 0;font-size:14px;opacity:.9;">Multi-sites: Pointe-Noire, Brazzaville &mdash; <span id="todayDate"></span></p>
+                <h1 style="margin:0;font-size:24px;font-weight:600;">REGAL Comptabilite &mdash; OHADA / CEMAC</h1>
+                <p style="margin:4px 0 0;font-size:14px;opacity:.9;">Pointe-Noire / Brazzaville &mdash; <span id="todayDate"></span></p>
                 <script>
                   document.getElementById('todayDate').innerText = new Date().toLocaleDateString('fr-FR', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
                 </script>
@@ -36,22 +36,22 @@ page 1 (
             template: @/hero
             templateOptions: [
                 #DEFAULT#
-                u-color-2
+                u-color-3
             ]
-            icon: fa-warehouse
+            icon: fa-calculator
         }
     )
 
-    region stock-kpis (
-        name: Stock KPIs
+    region compta-kpis (
+        name: Comptabilite KPIs
         type: plugin/badgeList
         source {
             sqlQuery:
                 ```sql
-                select label, valeur as value, 'f?p='||:APP_ID||':10:'||:APP_SESSION as url
-                  from v_top_kpi_dashboard
-                 where label in ('Ruptures stock','Lots < 30j','Encours total','Encours echu')
-                 order by decode(label,'Ruptures stock',1,'Lots < 30j',2,'Encours total',3,'Encours echu',4)
+                select label, valeur as value, null as url
+                    from v_top_kpi_dashboard
+                   where label in ('Encours total','Encours echu','CA MTD','Alertes critiques')
+                   order by decode(label,'Encours total',1,'Encours echu',2,'CA MTD',3,'Alertes critiques',4)
                 ```
         }
         layout {
@@ -70,31 +70,28 @@ page 1 (
         settings {
             value: VALUE
             bottomLabel: LABEL
-            linkTarget: {
-                type: url
-                url: &URL.
-            }
             layout: 4Columns
         }
     )
 
-    region stock-by-warehouse (
-        name: Stock by warehouse
+    region top-balances (
+        name: Top soldes (Balance generale)
         type: classicReport
         source {
             location: localDatabase
             type: sqlQuery
             sqlQuery:
                 ```sql
-                select warehouse_code,
-                       warehouse_name,
-                       nb_references,
-                       total_units,
-                       total_value_xaf,
-                       nb_low_stock,
-                       to_char(last_movement_at, 'DD/MM/YYYY HH24:MI') as last_movement_at
-                  from v_inv_stock_kpi
-                 order by total_value_xaf desc
+                select company_code,
+                       account_code,
+                       account_name,
+                       account_class,
+                       mvt_debit,
+                       mvt_credit,
+                       solde
+                  from v_gl_account_balance
+                 order by abs(solde) desc
+                 fetch first 15 rows only
                 ```
         }
         layout {
@@ -109,9 +106,9 @@ page 1 (
             ]
         }
 
-        column WAREHOUSE_CODE (
+        column COMPANY_CODE (
             heading {
-                heading: Warehouse
+                heading: Co.
             }
             layout {
                 sequence: 10
@@ -121,9 +118,9 @@ page 1 (
             }
         )
 
-        column WAREHOUSE_NAME (
+        column ACCOUNT_CODE (
             heading {
-                heading: Name
+                heading: Account
             }
             layout {
                 sequence: 20
@@ -133,35 +130,33 @@ page 1 (
             }
         )
 
-        column NB_REFERENCES (
+        column ACCOUNT_NAME (
             heading {
-                heading: References
-                alignment: end
+                heading: Libelle
             }
             layout {
                 sequence: 30
             }
             source {
-                dataType: number
+                dataType: STRING
             }
         )
 
-        column TOTAL_UNITS (
+        column ACCOUNT_CLASS (
             heading {
-                heading: Units
-                alignment: end
+                heading: Class
             }
             layout {
                 sequence: 40
             }
             source {
-                dataType: number
+                dataType: STRING
             }
         )
 
-        column TOTAL_VALUE_XAF (
+        column MVT_DEBIT (
             heading {
-                heading: Value (XAF)
+                heading: Debit (XAF)
                 alignment: end
             }
             layout {
@@ -172,9 +167,9 @@ page 1 (
             }
         )
 
-        column NB_LOW_STOCK (
+        column MVT_CREDIT (
             heading {
-                heading: Low stock
+                heading: Credit (XAF)
                 alignment: end
             }
             layout {
@@ -185,15 +180,16 @@ page 1 (
             }
         )
 
-        column LAST_MOVEMENT_AT (
+        column SOLDE (
             heading {
-                heading: Last movement
+                heading: Solde (XAF)
+                alignment: end
             }
             layout {
                 sequence: 70
             }
             source {
-                dataType: STRING
+                dataType: number
             }
         )
     )
@@ -206,16 +202,16 @@ page 1 (
                 ```html
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:8px 0;">
                   <a href="f?p=&APP_ID.:10:&APP_SESSION." class="t-Button t-Button--large t-Button--primary" style="text-align:center;text-decoration:none;">
-                    <span class="fa-warehouse"></span>&nbsp;Inventory
+                    <span class="fa-sitemap"></span>&nbsp;Plan comptable
                   </a>
                   <a href="f?p=&APP_ID.:20:&APP_SESSION." class="t-Button t-Button--large" style="text-align:center;text-decoration:none;">
-                    <span class="fa-exclamation-triangle"></span>&nbsp;Low stock
+                    <span class="fa-book"></span>&nbsp;Journal
+                  </a>
+                  <a href="f?p=&APP_ID.:30:&APP_SESSION." class="t-Button t-Button--large" style="text-align:center;text-decoration:none;">
+                    <span class="fa-balance-scale"></span>&nbsp;Balance
                   </a>
                   <a href="f?p=&APP_ID.:40:&APP_SESSION." class="t-Button t-Button--large" style="text-align:center;text-decoration:none;">
-                    <span class="fa-truck-loading"></span>&nbsp;Transfers
-                  </a>
-                  <a href="f?p=&APP_ID.:50:&APP_SESSION." class="t-Button t-Button--large" style="text-align:center;text-decoration:none;">
-                    <span class="fa-file-csv"></span>&nbsp;Bulk import
+                    <span class="fa-file-invoice"></span>&nbsp;Declarations
                   </a>
                 </div>
                 ```

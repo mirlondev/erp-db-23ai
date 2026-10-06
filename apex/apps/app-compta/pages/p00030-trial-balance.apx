@@ -1,0 +1,212 @@
+page 30 (
+    name: Trial Balance
+    alias: TRIAL-BALANCE
+    title: Balance generale
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-comptable
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region trial-balance-filters (
+        name: Filtres
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+            ]
+        }
+    )
+
+    pageItem P30_COMPANY (
+        type: textField
+        label {
+            label: Societe
+            alignment: left
+        }
+        layout {
+            sequence: 10
+            region: @trial-balance-filters
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 8
+        }
+        validation {
+            maxLength: 2
+        }
+    )
+
+    region trial-balance-totals (
+        name: Totaux balance
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region trial-balance-list (
+        name: Balance generale
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select company_code,
+                       account_code,
+                       account_name,
+                       account_class,
+                       mvt_debit,
+                       mvt_credit,
+                       solde,
+                       case
+                         when solde > 0 and account_class in ('Actif immobilise','Bilan','Tresorerie') then 'Debiteur'
+                         when solde < 0 and account_class in ('Actif immobilise','Bilan','Tresorerie') then 'Crediteur'
+                         when solde > 0 and account_class in ('Passif')                              then 'Crediteur'
+                         when solde < 0 and account_class in ('Passif')                              then 'Debiteur'
+                         when account_class in ('Charges')                                          then 'Debiteur'
+                         when account_class in ('Produits')                                         then 'Crediteur'
+                         else '-'
+                       end as sens
+                  from v_gl_account_balance
+                 where (:P30_COMPANY is null or company_code = :P30_COMPANY)
+                 order by company_code, account_code
+                ```
+        }
+        layout {
+            sequence: 30
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column COMPANY_CODE (
+            heading {
+                heading: Soc.
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ACCOUNT_CODE (
+            heading {
+                heading: Compte
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ACCOUNT_NAME (
+            heading {
+                heading: Libelle
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ACCOUNT_CLASS (
+            heading {
+                heading: Classe
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column MVT_DEBIT (
+            heading {
+                heading: Debit (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column MVT_CREDIT (
+            heading {
+                heading: Credit (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column SOLDE (
+            heading {
+                heading: Solde (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: number
+            }
+        }
+
+        column SENS (
+            heading {
+                heading: Sens
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: STRING
+            }
+        }
+    )
+)

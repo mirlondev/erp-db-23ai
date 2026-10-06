@@ -1,0 +1,271 @@
+page 20 (
+    name: Journal
+    alias: JOURNAL
+    title: Journal des ecritures
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-comptable
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region journal-filters (
+        name: Filtres
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+            ]
+        }
+    )
+
+    pageItem P20_DATE_FROM (
+        type: datePicker
+        label {
+            label: Du
+            alignment: left
+        }
+        layout {
+            sequence: 10
+            region: @journal-filters
+            slot: regionBody
+            column: 1
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 12
+        }
+        default {
+            type: static
+            staticValue: TRUNC(SYSDATE, 'MM')
+        }
+    )
+
+    pageItem P20_DATE_TO (
+        type: datePicker
+        label {
+            label: Au
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @journal-filters
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 12
+        }
+        default {
+            type: static
+            staticValue: TRUNC(SYSDATE)
+        }
+    )
+
+    pageItem P20_ACCOUNT (
+        type: textField
+        label {
+            label: Compte
+            alignment: left
+        }
+        layout {
+            sequence: 30
+            region: @journal-filters
+            slot: regionBody
+            column: 3
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+            width: 12
+        }
+        validation {
+            maxLength: 8
+        }
+    )
+
+    region journal-list (
+        name: Journal des ecritures
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select to_char(entry_date, 'DD/MM/YYYY') as entry_date,
+                       entry_no,
+                       journal_code,
+                       doc_ref,
+                       account_code,
+                       account_name,
+                       debit,
+                       credit,
+                       description,
+                       created_by
+                  from v_general_ledger
+                 where (entry_date >= :P20_DATE_FROM or :P20_DATE_FROM is null)
+                   and (entry_date <= :P20_DATE_TO   or :P20_DATE_TO   is null)
+                   and (:P20_ACCOUNT is null or account_code like :P20_ACCOUNT || '%')
+                 order by entry_date desc, entry_no desc, account_code
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column ENTRY_DATE (
+            heading {
+                heading: Date
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ENTRY_NO (
+            heading {
+                heading: N° ecriture
+                alignment: end
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column JOURNAL_CODE (
+            heading {
+                heading: Journal
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column DOC_REF (
+            heading {
+                heading: Ref doc
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ACCOUNT_CODE (
+            heading {
+                heading: Compte
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column ACCOUNT_NAME (
+            heading {
+                heading: Libelle
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column DEBIT (
+            heading {
+                heading: Debit (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column CREDIT (
+            heading {
+                heading: Credit (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column DESCRIPTION (
+            heading {
+                heading: Description
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column CREATED_BY (
+            heading {
+                heading: User
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: STRING
+            }
+        }
+    )
+)

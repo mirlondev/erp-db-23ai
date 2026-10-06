@@ -1,0 +1,261 @@
+page 50 (
+    name: AR Receivables
+    alias: AR-RECEIVABLES
+    title: Comptes clients (encours)
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-comptable
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region ar-kpis (
+        name: AR KPIs
+        type: plugin/badgeList
+        source {
+            sqlQuery:
+                ```sql
+                select label, valeur as value, null as url
+                    from v_top_kpi_dashboard
+                   where label in ('Encours total','Encours echu','Lots < 30j','Lots expire')
+                   order by decode(label,'Encours total',1,'Encours echu',2,'Lots < 30j',3,'Lots expire',4)
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+                t-Region--hideHeader js-addHiddenHeadingRoleDesc
+                t-Region--hiddenOverflow
+            ]
+        }
+        settings {
+            value: VALUE
+            bottomLabel: LABEL
+            layout: 4Columns
+        }
+    }
+
+    region ar-list (
+        name: Factures clients
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select invoice_id,
+                       invoice_no,
+                       to_char(invoice_date, 'DD/MM/YYYY') as invoice_date,
+                       to_char(due_date, 'DD/MM/YYYY') as due_date,
+                       customer_code,
+                       customer_name,
+                       total_ht,
+                       tva_amount,
+                       total_ttc,
+                       balance,
+                       case status
+                         when 'OPEN'    then 'Ouverte'
+                         when 'PARTIAL' then 'Partielle'
+                         when 'OVERDUE' then 'En retard'
+                         when 'PAID'    then 'Payee'
+                         else status
+                       end as status,
+                       days_overdue
+                  from app_ar.invoice
+                 where status in ('OPEN','PARTIAL','OVERDUE')
+                 order by due_date asc
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column INVOICE_ID (
+            type: plainText
+            heading {
+                heading: ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column INVOICE_NO (
+            type: plainText
+            heading {
+                heading: N° facture
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column INVOICE_DATE (
+            type: plainText
+            heading {
+                heading: Date
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column DUE_DATE (
+            type: plainText
+            heading {
+                heading: Echeance
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+        }
+
+        column CUSTOMER_CODE (
+            type: plainText
+            heading {
+                heading: Client
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column CUSTOMER_NAME (
+            type: plainText
+            heading {
+                heading: Nom
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column TOTAL_HT (
+            type: plainText
+            heading {
+                heading: HT (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column TVA_AMOUNT (
+            type: plainText
+            heading {
+                heading: TVA
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column TOTAL_TTC (
+            type: plainText
+            heading {
+                heading: TTC
+                alignment: end
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        column BALANCE (
+            type: plainText
+            heading {
+                heading: Solde (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: number
+            }
+        }
+
+        column STATUS (
+            type: plainText
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 110
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column DAYS_OVERDUE (
+            type: plainText
+            heading {
+                heading: J retard
+                alignment: end
+            }
+            layout {
+                sequence: 120
+            }
+            source {
+                dataType: number
+            }
+        )
+
+        savedReport default-ar (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 25
+            }
+        )
+    )
+)

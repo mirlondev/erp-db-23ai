@@ -1,0 +1,75 @@
+authorization regal-superadmin (
+    name: REGAL SuperAdmin
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
+    }
+    error {
+        errorMessage: "Acces superadmin requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-admin (
+    name: REGAL Admin
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0
+                          or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
+    }
+    error {
+        errorMessage: "Acces administrateur requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-comptable (
+    name: REGAL Comptable
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_COMPTABLE,') > 0
+                          or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0
+                          or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
+    }
+    error {
+        errorMessage: "Acces comptable requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-manager (
+    name: REGAL Manager
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_MANAGER,') > 0
+                          or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_COMPTABLE,') > 0
+                          or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0
+                          or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
+    }
+    error {
+        errorMessage: "Acces manager ou superieur requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-authenticated (
+    name: REGAL Authenticated
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return :APP_USER is not null;
+    }
+    error {
+        errorMessage: "Authentification requise."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
