@@ -1,6 +1,6 @@
 page 50 (
     name: Bulk Stock Import
-    alias: BULK-STOCK-IMPORT
+    alias: BULK-IMPORT
     title: Bulk Stock Import
     appearance {
         pageTemplate: @/standard
@@ -102,7 +102,7 @@ page 50 (
             hot: true
         }
         behavior {
-            action: submit
+            action: submitPage
             warnOnUnsavedChanges: doNotCheck
         }
     )
@@ -138,6 +138,9 @@ page 50 (
                 t-Region--scrollBody
             ]
         }
+        componentAppearance {
+            template: @/standard
+        }
 
         column ETL_ID (
             heading {
@@ -147,7 +150,6 @@ page 50 (
                 sequence: 10
             }
             source {
-                dataType: number
             }
         )
 
@@ -159,7 +161,6 @@ page 50 (
                 sequence: 20
             }
             source {
-                dataType: STRING
             }
         )
 
@@ -171,7 +172,6 @@ page 50 (
                 sequence: 30
             }
             source {
-                dataType: STRING
             }
         )
 
@@ -184,7 +184,6 @@ page 50 (
                 sequence: 40
             }
             source {
-                dataType: number
             }
         )
 
@@ -196,7 +195,6 @@ page 50 (
                 sequence: 50
             }
             source {
-                dataType: STRING
             }
         )
 
@@ -208,7 +206,6 @@ page 50 (
                 sequence: 60
             }
             source {
-                dataType: STRING
             }
         )
     )

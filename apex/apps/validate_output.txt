@@ -1,0 +1,21 @@
+=== Copying zips into container ===
+
+=== apex validate  app-pos ===
+
+
+SQLcl: Release 25.3 Production on Mon Oct 05 17:38:14 2026
+
+Copyright (c) 1982, 2026, Oracle.  All rights reserved.
+
+'validate' at column 5: Expected a subcommand, use 'apex [TAB]' for a list of subcommands or enter 'help apex'
+
+=== apex validate  app-stock ===
+
+
+SQLcl: Release 25.3 Production on Mon Oct 05 17:38:20 2026
+
+Copyright (c) 1982, 2026, Oracle.  All rights reserved.
+
+'validate' at column 5: Expected a subcommand, use 'apex [TAB]' for a list of subcommands or enter 'help apex'
+
+=== DONE ===

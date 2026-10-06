@@ -56,6 +56,9 @@ page 20 (
                 t-Region--scrollBody
             ]
         }
+        componentAppearance {
+            template: @/standard
+        }
 
         column WAREHOUSE_CODE (
             heading {
@@ -65,7 +68,6 @@ page 20 (
                 sequence: 10
             }
             source {
-                dataType: STRING
             }
         )
 
@@ -77,7 +79,6 @@ page 20 (
                 sequence: 20
             }
             source {
-                dataType: STRING
             }
         )
 
@@ -89,7 +90,6 @@ page 20 (
                 sequence: 30
             }
             source {
-                dataType: STRING
             }
         )
 
@@ -102,7 +102,6 @@ page 20 (
                 sequence: 40
             }
             source {
-                dataType: number
             }
         )
 
@@ -115,7 +114,6 @@ page 20 (
                 sequence: 50
             }
             source {
-                dataType: number
             }
         )
 
@@ -128,7 +126,6 @@ page 20 (
                 sequence: 60
             }
             source {
-                dataType: number
             }
         )
 
@@ -141,7 +138,6 @@ page 20 (
                 sequence: 70
             }
             source {
-                dataType: number
             }
         )
 
@@ -154,7 +150,6 @@ page 20 (
                 sequence: 80
             }
             source {
-                dataType: number
             }
         )
 
@@ -166,7 +161,6 @@ page 20 (
                 sequence: 90
             }
             source {
-                dataType: STRING
             }
         )
     )

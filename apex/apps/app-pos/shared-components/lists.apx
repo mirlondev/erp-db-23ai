@@ -230,6 +230,6 @@ list navigation-menu (
                 page: 40
             }
         }
-    }
+    )
 
 )

@@ -18,3 +18,23 @@ lov boolean (
 
 )
 
+lov WAREHOUSES (
+    name: WAREHOUSES
+    source {
+        location: localDatabase
+        type: sqlQuery
+        sqlQuery:
+            ```sql
+            select warehouse_code as d,
+                   warehouse_code as r
+              from app_inv.inv_stock
+             group by warehouse_code
+             order by warehouse_code
+            ```
+    }
+    columnMapping {
+        display: d
+        return: r
+    }
+)
+

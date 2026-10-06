@@ -166,7 +166,7 @@ list navigation-menu (
                 page: 40
             }
         }
-    }
+    )
 
     entry bulk-import (
         label: Bulk Import
@@ -185,7 +185,7 @@ list navigation-menu (
                 page: 50
             }
         }
-    }
+    )
 
 )
 
