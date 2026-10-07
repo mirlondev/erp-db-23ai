@@ -1,6 +1,6 @@
 page 4 (
     name: ALL_DATA
-    alias: ALL_DATA
+    alias: ALL-DATA
     title: ALL_DATA
     appearance {
         pageTemplate: @/standard
@@ -10,7 +10,7 @@ page 4 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal_vendeur
+        authorizationScheme: @regal-vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -53,11 +53,11 @@ page 4 (
             reportColumnQueryId: 1
             derivedColumn: N
             heading {
-        heading: Data
-    }
+                heading: Data
+            }
             layout {
-        sequence: 1
-    }
+                sequence: 1
+            }
             sorting {
                 sortable: false
             }
@@ -69,8 +69,8 @@ page 4 (
         name: Breadcrumb
         type: breadcrumb
         source {
-        breadcrumb: @breadcrumb
-    }
+            breadcrumb: @breadcrumb
+        }
         layout {
             sequence: 10
             slot: breadcrumbBar

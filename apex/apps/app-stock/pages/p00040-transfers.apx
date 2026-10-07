@@ -1,322 +1,227 @@
 page 40 (
-    name: 'Transfers'
+    name: Transfers
     alias: TRANSFERS
-    title: 'Pipeline Transferts Inter-Sites'
-    security {
-        authorizationScheme: @regal_manager
-        pageAccessProtection: argumentsMustHaveChecksum
+    title: Inter-Warehouse Transfers
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
     }
     navigation {
         cursorFocus: doNotFocusCursor
     }
-
-    region breadcrumb (
-        type: breadcrumb
-        slot: breadcrumbBar
-        template: @/title-bar
-        templateOptions: t-BreadcrumbRegion--useBreadcrumbTitle
-    )
-
-    region transfer-kpi (
-        type: staticContent
-        name: 'KPI Transferts'
-        slot: body
-        seq: 10
-        template: @/standard
-        templateOptions: t-Region--noPadding t-Region--removeHeader js-removeLandmark
-        
-        pageItem P40_KPI_REQUESTED (
-            type: displayOnly
-            label: 'Demandés'
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''
-                    to_char(nvl((select count(*) from app_inv.transfer_header where status='REQUESTED'),0),'FM9,999')
-                '''
-                used: always
-            }
-            layout {
-                region: @transfer_kpi
-                column: 1
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: t-Form-fieldContainer--large
-            }
-        )
-
-        pageItem P40_KPI_APPROVED (
-            type: displayOnly
-            label: 'Approuvés'
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''
-                    to_char(nvl((select count(*) from app_inv.transfer_header where status='APPROVED'),0),'FM9,999')
-                '''
-                used: always
-            }
-            layout {
-                region: @transfer_kpi
-                column: 2
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: t-Form-fieldContainer--large
-            }
-        )
-
-        pageItem P40_KPI_PACKED (
-            type: displayOnly
-            label: 'En préparation'
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''
-                    to_char(nvl((select count(*) from app_inv.transfer_header where status='PACKED'),0),'FM9,999')
-                '''
-                used: always
-            }
-            layout {
-                region: @transfer_kpi
-                column: 3
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: t-Form-fieldContainer--large
-            }
-        )
-
-        pageItem P40_KPI_TRANSIT (
-            type: displayOnly
-            label: 'En transit'
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''
-                    to_char(nvl((select count(*) from app_inv.transfer_header where status='IN_TRANSIT'),0),'FM9,999')
-                '''
-                used: always
-            }
-            layout {
-                region: @transfer_kpi
-                column: 4
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: t-Form-fieldContainer--large
-            }
-        )
-    )
+    security {
+        authorizationScheme: @regal-manager
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
 
     region transfer-list (
+        name: Transfer pipeline
         type: interactiveReport
-        name: 'Pipeline transferts'
-        slot: body
-        seq: 20
-        template: @/interactive-report
-        templateOptions: t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
         source {
+            location: localDatabase
             type: sqlQuery
-            sqlQuery: ```sql
+            sqlQuery:
+                ```sql
                 select transfer_id,
                        transfer_number,
                        to_char(transfer_date, 'DD/MM/YYYY HH24:MI') as transfer_at,
                        source_warehouse,
                        target_warehouse,
                        status,
-                       case status
-                         when 'DRAFT'      then '<span class="t-Badge t-Badge--neutral">DRAFT</span>'
-                         when 'REQUESTED'  then '<span class="t-Badge t-Badge--info">DEMANDÉ</span>'
-                         when 'APPROVED'   then '<span class="t-Badge t-Badge--success u-color-4">APPROUVÉ</span>'
-                         when 'PACKED'     then '<span class="t-Badge t-Badge--warning">PRÉPARÉ</span>'
-                         when 'IN_TRANSIT' then '<span class="t-Badge t-Badge--warning u-color-14">EN TRANSIT</span>'
-                         when 'RECEIVED'   then '<span class="t-Badge t-Badge--success">REÇU</span>'
-                         when 'CLOSED'     then '<span class="t-Badge t-Badge--success">CLÔTURÉ</span>'
-                         when 'CANCELLED'  then '<span class="t-Badge t-Badge--danger">ANNULÉ</span>'
-                         else '<span class="t-Badge t-Badge--neutral">' || status || '</span>'
-                       end as status_badge,
                        nb_lines,
                        total_requested_qty,
                        total_sent_qty,
                        total_received_qty,
                        days_in_process,
                        case
-                         when days_in_process > 7 then '<span class="t-Badge t-Badge--danger">&gt; 7 jours</span>'
-                         when days_in_process > 3 then '<span class="t-Badge t-Badge--warning">&gt; 3 jours</span>'
-                         when days_in_process > 0 then '<span class="t-Badge t-Badge--success">Normal</span>'
-                         else '<span class="t-Badge t-Badge--neutral">—</span>'
-                       end as age_badge
+                         when days_in_process > 7  then '> 7 days'
+                         when days_in_process > 3  then '> 3 days'
+                         when days_in_process > 0  then 'normal'
+                         else '-'
+                       end as age_alerte
                   from app_api.v_transfer_pipeline
                  order by transfer_date desc
-            ```
+                ```
         }
-        
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
         column TRANSFER_ID (
             type: plainText
             heading {
-        heading: 'ID'
-    }
+                heading: ID
+            }
             layout {
-        seq: 10
-    }
+                sequence: 10
+            }
             source {
-        dataType: NUMBER
-    }
+                dataType: NUMBER
+            }
         )
+
         column TRANSFER_NUMBER (
             type: plainText
             heading {
-        heading: 'Numéro'
-    }
+                heading: Number
+            }
             layout {
-        seq: 20
-    }
+                sequence: 20
+            }
             source {
-        dataType: STRING
-    }
+                dataType: VARCHAR2
+            }
         )
+
         column TRANSFER_AT (
             type: plainText
             heading {
-        heading: 'Date'
-    }
+                heading: Date
+            }
             layout {
-        seq: 30
-    }
+                sequence: 30
+            }
             source {
-        dataType: STRING
-    }
+                dataType: VARCHAR2
+            }
         )
+
         column SOURCE_WAREHOUSE (
             type: plainText
             heading {
-        heading: 'De'
-    }
+                heading: From
+            }
             layout {
-        seq: 40
-    }
+                sequence: 40
+            }
             source {
-        dataType: STRING
-    }
+                dataType: VARCHAR2
+            }
         )
+
         column TARGET_WAREHOUSE (
             type: plainText
             heading {
-        heading: 'Vers'
-    }
+                heading: To
+            }
             layout {
-        seq: 50
-    }
+                sequence: 50
+            }
             source {
-        dataType: STRING
-    }
+                dataType: VARCHAR2
+            }
         )
+
         column STATUS (
             type: plainText
             heading {
-        heading: 'Statut (raw)'
-    }
+                heading: Status
+            }
             layout {
-        seq: 55
-    }
+                sequence: 60
+            }
             source {
-        dataType: STRING
-    }
-            appearance {
-        hidden: true
-    }
+                dataType: VARCHAR2
+            }
         )
-        column STATUS_BADGE (
-            type: htmlContent
-            heading {
-        heading: 'Statut'
-    }
-            layout {
-        seq: 60
-    }
-            source {
-        dataType: STRING
-    }
-        )
+
         column NB_LINES (
             type: plainText
             heading {
-        heading: 'Lignes'
-        alignment: end
-    }
+                heading: Lines
+                alignment: end
+            }
             layout {
-        seq: 70
-    }
+                sequence: 70
+            }
             source {
-        dataType: NUMBER
-    }
+                dataType: NUMBER
+            }
         )
+
         column TOTAL_REQUESTED_QTY (
             type: plainText
             heading {
-        heading: 'Demandé'
-        alignment: end
-    }
+                heading: Requested
+                alignment: end
+            }
             layout {
-        seq: 80
-    }
+                sequence: 80
+            }
             source {
-        dataType: NUMBER
-    }
+                dataType: NUMBER
+            }
         )
+
         column TOTAL_SENT_QTY (
             type: plainText
             heading {
-        heading: 'Envoyé'
-        alignment: end
-    }
+                heading: Sent
+                alignment: end
+            }
             layout {
-        seq: 90
-    }
+                sequence: 90
+            }
             source {
-        dataType: NUMBER
-    }
+                dataType: NUMBER
+            }
         )
+
         column TOTAL_RECEIVED_QTY (
             type: plainText
             heading {
-        heading: 'Reçu'
-        alignment: end
-    }
+                heading: Received
+                alignment: end
+            }
             layout {
-        seq: 100
-    }
+                sequence: 100
+            }
             source {
-        dataType: NUMBER
-    }
+                dataType: NUMBER
+            }
         )
+
         column DAYS_IN_PROCESS (
             type: plainText
             heading {
-        heading: 'Jours'
-        alignment: end
-    }
+                heading: Days
+                alignment: end
+            }
             layout {
-        seq: 110
-    }
+                sequence: 110
+            }
             source {
-        dataType: NUMBER
-    }
+                dataType: NUMBER
+            }
         )
-        column AGE_BADGE (
-            type: htmlContent
+
+        column AGE_ALERTE (
+            type: plainText
             heading {
-        heading: 'Ancienneté'
-    }
+                heading: Age alert
+            }
             layout {
-        seq: 120
-    }
+                sequence: 120
+            }
             source {
-        dataType: STRING
-    }
+                dataType: VARCHAR2
+            }
         )
 
         savedReport default-transfers (
             visibility: primaryDefault
-            rowsPerPage: 25
+            view {
+                rowsPerPage: 25
+            }
         )
     )
 )

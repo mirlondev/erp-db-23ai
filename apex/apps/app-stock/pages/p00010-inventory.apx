@@ -1,30 +1,22 @@
-apex.schema.version: 26.1
-
 page 10 (
-    name: 'Inventory'
+    name: Inventory
     alias: INVENTORY
-    title: 'Inventaire Stock — LITOKO'
-    security {
-        authorizationScheme: @regal_vendeur
-        pageAccessProtection: argumentsMustHaveChecksum
+    title: Inventory
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
     }
     navigation {
         cursorFocus: doNotFocusCursor
     }
-
-    region breadcrumb (
-        type: breadcrumb
-        layout {
-        slot: breadcrumbBar
+    security {
+        authorizationScheme: @regal-vendeur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
     }
-        appearance {
-            template: @/title-bar
-            templateOptions: [ t-BreadcrumbRegion--useBreadcrumbTitle ]
-        }
-    )
 
     region inventory-kpi (
-        name: 'Inventory KPIs'
+        name: Inventory KPIs
         type: staticContent
         layout {
             sequence: 10
@@ -32,317 +24,295 @@ page 10 (
         }
         appearance {
             template: @/standard
-            templateOptions: [ t-Region--noPadding t-Region--removeHeader js-removeLandmark ]
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+                t-Region--removeHeader js-removeLandmark
+            ]
         }
-
-        pageItem P10_KPI_REFS (
-            type: displayOnly
-            label {
-        label: Références
-    }
-            layout {
-        column: 1
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(app_api.apex_kpi_stock_refs, ''FM999,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P10_KPI_UNITS (
-            type: displayOnly
-            label {
-        label: Total unités
-    }
-            layout {
-        column: 2
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(app_api.apex_kpi_stock_units, ''FM999,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P10_KPI_VALUE (
-            type: displayOnly
-            label {
-        label: Valeur stock (XAF)
-    }
-            layout {
-        column: 3
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(app_api.apex_kpi_stock_value_xaf, ''FM999,999,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P10_KPI_LOWSTOCK (
-            type: displayOnly
-            label {
-        label: Stock bas
-    }
-            layout {
-        column: 4
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(app_api.apex_kpi_stock_low_count, ''FM999,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
     )
 
-    region actions-bar (
-        name: 'Actions'
-        type: staticContent
+    pageItem P10_KPI_REFS (
+        type: displayOnly
+        label {
+            label: References
+        }
         layout {
-            sequence: 15
-            slot: body
+            sequence: 10
+            region: @inventory-kpi
+            slot: regionBody
+            column: 1
         }
         appearance {
-            template: @/standard
-            templateOptions: [ t-Region--noPadding t-Region--removeHeader js-removeLandmark ]
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
         }
+        source {
+            type: expression
+            plsqlExpression: to_char(app_api.apex_kpi_stock_refs, 'FM999,999')
+            used: always
+        }
+    )
 
-        button btn_new_transfer (
-            buttonName: 'NEW_TRANSFER'
-            label: 'Nouveau transfert'
-            layout {
-                column: 1
-                slot: regionBody
-                startNewRow: true
-            }
-            appearance {
-                buttonTemplate: @/text-with-icon
-                templateOptions: [ #DEFAULT# t-Button--large ]
-                hot: true
-            }
-            behavior {
-                action: redirectToPage
-                target: page 40
-            }
-        )
+    pageItem P10_KPI_UNITS (
+        type: displayOnly
+        label {
+            label: Total units
+        }
+        layout {
+            sequence: 20
+            region: @inventory-kpi
+            slot: regionBody
+            column: 2
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+        }
+        source {
+            type: expression
+            plsqlExpression: to_char(app_api.apex_kpi_stock_units, 'FM999,999')
+            used: always
+        }
+    )
 
-        button btn_bulk_import (
-            buttonName: 'BULK_IMPORT'
-            label: 'Importer CSV'
-            layout {
-                column: 2
-                slot: regionBody
-                startNewRow: false
-            }
-            appearance {
-                buttonTemplate: @/text-with-icon
-                templateOptions: [ #DEFAULT# t-Button--large ]
-            }
-            behavior {
-                action: redirectToPage
-                target: page 50
-            }
-        )
+    pageItem P10_KPI_VALUE (
+        type: displayOnly
+        label {
+            label: Stock value (XAF)
+        }
+        layout {
+            sequence: 30
+            region: @inventory-kpi
+            slot: regionBody
+            column: 3
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+        }
+        source {
+            type: expression
+            plsqlExpression: to_char(app_api.apex_kpi_stock_value_xaf, 'FM999,999,999')
+            used: always
+        }
+    )
+
+    pageItem P10_KPI_LOWSTOCK (
+        type: displayOnly
+        label {
+            label: Low stock
+        }
+        layout {
+            sequence: 40
+            region: @inventory-kpi
+            slot: regionBody
+            column: 4
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+        }
+        source {
+            type: expression
+            plsqlExpression: to_char(app_api.apex_kpi_stock_low_count, 'FM999,999')
+            used: always
+        }
     )
 
     region inventory-list (
-        name: 'Stock par dépôt'
+        name: Stock by warehouse
         type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select s.warehouse_code,
+                       p.product_code,
+                       p.product_name,
+                       nvl(s.stock_qty, 0) as stock_qty,
+                       nvl(s.ordered_qty, 0) as ordered_qty,
+                       nvl(s.reserved_qty, 0) as reserved_qty,
+                       nvl(s.ordered_qty, 0) - nvl(s.reserved_qty, 0) as available,
+                       nvl(p.standard_price, 0) as unit_price,
+                       round(nvl(s.stock_qty, 0) * nvl(p.standard_price, 0), 0) as value_xaf,
+                       case
+                         when nvl(s.stock_qty, 0) = 0                       then 'RUPTURE'
+                         when nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0)  then 'BAS'
+                         when nvl(s.stock_qty, 0) >= nvl(p.max_stock_qty, 0)  then 'PLEIN'
+                         else 'OK'
+                       end as stock_status
+                  from app_inv.inv_stock s
+                  join app_product.product p on p.product_code = s.product_code
+                 where s.stock_qty > 0
+                 order by s.warehouse_code, p.product_name
+                ```
+        }
         layout {
             sequence: 20
             slot: body
         }
         appearance {
             template: @/interactive-report
-            templateOptions: [ t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc ]
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
         }
-        source {
-            type: sqlQuery
-            sqlQuery: ```sql
-select s.warehouse_code,
-       p.product_code,
-       p.product_name,
-       p.product_category,
-       nvl(s.stock_qty, 0) as stock_qty,
-       nvl(s.ordered_qty, 0) as ordered_qty,
-       nvl(s.reserved_qty, 0) as reserved_qty,
-       nvl(s.ordered_qty, 0) - nvl(s.reserved_qty, 0) as available,
-       nvl(p.standard_price, 0) as unit_price,
-       round(nvl(s.stock_qty, 0) * nvl(p.standard_price, 0), 0) as value_xaf,
-       case
-         when nvl(s.stock_qty, 0) = 0                        then 'RUPTURE'
-         when nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0) then 'BAS'
-         when nvl(s.stock_qty, 0) >= nvl(p.max_stock_qty, 0) then 'PLEIN'
-         else 'OK'
-       end as stock_status,
-       case
-         when nvl(s.stock_qty, 0) = 0                        then '<span class="t-Badge t-Badge--danger">RUPTURE</span>'
-         when nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0) then '<span class="t-Badge t-Badge--warning">BAS</span>'
-         when nvl(s.stock_qty, 0) >= nvl(p.max_stock_qty, 0) then '<span class="t-Badge t-Badge--info">PLEIN</span>'
-         else '<span class="t-Badge t-Badge--success">OK</span>'
-       end as status_badge
-  from app_inv.inv_stock s
-  join app_product.product p on p.product_code = s.product_code
- where s.stock_qty >= 0
- order by s.warehouse_code, p.product_name
-```
-        }
-        
+
         column WAREHOUSE_CODE (
             type: plainText
             heading {
-        heading: Dépôt
-    }
+                heading: Warehouse
+            }
             layout {
-        sequence: 10
-    }
-            dataType: STRING
+                sequence: 10
+            }
+            source {
+                dataType: VARCHAR2
+            }
         )
+
         column PRODUCT_CODE (
             type: plainText
             heading {
-        heading: Code
-    }
+                heading: Code
+            }
             layout {
-        sequence: 20
-    }
-            dataType: STRING
+                sequence: 20
+            }
+            source {
+                dataType: VARCHAR2
+            }
         )
+
         column PRODUCT_NAME (
             type: plainText
             heading {
-        heading: Produit
-    }
+                heading: Product
+            }
             layout {
-        sequence: 30
-    }
-            dataType: STRING
+                sequence: 30
+            }
+            source {
+                dataType: VARCHAR2
+            }
         )
-        column PRODUCT_CATEGORY (
-            type: plainText
-            heading {
-        heading: Catégorie
-    }
-            layout {
-        sequence: 35
-    }
-            dataType: STRING
-        )
+
         column STOCK_QTY (
             type: plainText
             heading {
-        heading: Stock
-        alignment: end
-    }
+                heading: Stock
+                alignment: end
+            }
             layout {
-        sequence: 40
-    }
-            dataType: NUMBER
+                sequence: 40
+            }
+            source {
+                dataType: NUMBER
+            }
         )
+
         column ORDERED_QTY (
             type: plainText
             heading {
-        heading: Commandé
-        alignment: end
-    }
+                heading: Ordered
+                alignment: end
+            }
             layout {
-        sequence: 50
-    }
-            dataType: NUMBER
+                sequence: 50
+            }
+            source {
+                dataType: NUMBER
+            }
         )
+
         column RESERVED_QTY (
             type: plainText
             heading {
-        heading: Réservé
-        alignment: end
-    }
+                heading: Reserved
+                alignment: end
+            }
             layout {
-        sequence: 60
-    }
-            dataType: NUMBER
+                sequence: 60
+            }
+            source {
+                dataType: NUMBER
+            }
         )
+
         column AVAILABLE (
             type: plainText
             heading {
-        heading: Disponible
-        alignment: end
-    }
+                heading: Available
+                alignment: end
+            }
             layout {
-        sequence: 70
-    }
-            dataType: NUMBER
+                sequence: 70
+            }
+            source {
+                dataType: NUMBER
+            }
         )
+
         column UNIT_PRICE (
             type: plainText
             heading {
-        heading: Prix unit.
-        alignment: end
-    }
+                heading: Unit price
+                alignment: end
+            }
             layout {
-        sequence: 80
-    }
-            dataType: NUMBER
+                sequence: 80
+            }
+            source {
+                dataType: NUMBER
+            }
         )
+
         column VALUE_XAF (
             type: plainText
             heading {
-        heading: Valeur XAF
-        alignment: end
-    }
+                heading: Value (XAF)
+                alignment: end
+            }
             layout {
-        sequence: 90
-    }
-            dataType: NUMBER
+                sequence: 90
+            }
+            source {
+                dataType: NUMBER
+            }
         )
+
         column STOCK_STATUS (
             type: plainText
             heading {
-        heading: Statut
-    }
+                heading: Status
+            }
             layout {
-        sequence: 100
-    }
-            dataType: STRING
-            isHidden: true
-        )
-        column STATUS_BADGE (
-            type: htmlContent
-            heading {
-        heading: Statut
-    }
-            layout {
-        sequence: 110
-    }
-            dataType: STRING
+                sequence: 100
+            }
+            source {
+                dataType: VARCHAR2
+            }
         )
 
         savedReport default-inventory (
             visibility: primaryDefault
-            rowsPerPage: 25
-            sort {
-                column: STOCK_STATUS
-                direction: desc
-            }
-            sort {
-                column: VALUE_XAF
-                direction: desc
+            view {
+                rowsPerPage: 25
             }
         )
     )

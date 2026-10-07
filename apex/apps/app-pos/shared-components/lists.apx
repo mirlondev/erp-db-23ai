@@ -281,8 +281,8 @@ list page-navigation (
         }
     )
 
-    entry sessions (
-        label: Sessions
+    entry sessions-de-caisse (
+        label: Sessions de caisse
         icon {
             imageIconCssClasses: fa-cash-register
         }
@@ -296,8 +296,8 @@ list page-navigation (
         }
     )
 
-    entry historique (
-        label: Tickets
+    entry historique-tickets (
+        label: Historique tickets
         icon {
             imageIconCssClasses: fa-receipt
         }
@@ -311,8 +311,8 @@ list page-navigation (
         }
     )
 
-    entry z-caisse (
-        label: Z caisse
+    entry z-de-caisse (
+        label: Z de caisse
         icon {
             imageIconCssClasses: fa-money-bill
         }
@@ -327,7 +327,7 @@ list page-navigation (
     )
 
     entry customers (
-        label: Clients
+        label: Customers
         icon {
             imageIconCssClasses: fa-users
         }

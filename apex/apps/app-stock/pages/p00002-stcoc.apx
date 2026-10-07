@@ -10,7 +10,7 @@ page 2 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal_vendeur
+        authorizationScheme: @regal-vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -40,8 +40,8 @@ page 2 (
         name: Breadcrumb
         type: breadcrumb
         source {
-        breadcrumb: @breadcrumb
-    }
+            breadcrumb: @breadcrumb
+        }
         layout {
             sequence: 20
             slot: breadcrumbBar
@@ -118,99 +118,99 @@ page 2 (
             displayColumn (
                 column: @APEX$ROW_ACTION
                 layout {
-        sequence: 0
-    }
+                    sequence: 0
+                }
             )
 
             displayColumn (
                 column: @WAREHOUSE_CODE
                 layout {
-        sequence: 1
-    }
+                    sequence: 1
+                }
             )
 
             displayColumn (
                 column: @PRODUCT_CODE
                 layout {
-        sequence: 2
-    }
+                    sequence: 2
+                }
             )
 
             displayColumn (
                 column: @STOCK_QTY
                 layout {
-        sequence: 3
-    }
+                    sequence: 3
+                }
             )
 
             displayColumn (
                 column: @ORDERED_QTY
                 layout {
-        sequence: 4
-    }
+                    sequence: 4
+                }
             )
 
             displayColumn (
                 column: @RESERVED_QTY
                 layout {
-        sequence: 5
-    }
+                    sequence: 5
+                }
             )
 
             displayColumn (
                 column: @LOANED_QTY
                 layout {
-        sequence: 6
-    }
+                    sequence: 6
+                }
             )
 
             displayColumn (
                 column: @LAST_OUT_AT
                 layout {
-        sequence: 7
-    }
+                    sequence: 7
+                }
             )
 
             displayColumn (
                 column: @LAST_IN_AT
                 layout {
-        sequence: 8
-    }
+                    sequence: 8
+                }
             )
 
             displayColumn (
                 column: @LAST_COUNT_QTY
                 layout {
-        sequence: 9
-    }
+                    sequence: 9
+                }
             )
 
             displayColumn (
                 column: @LAST_COUNT_AT
                 layout {
-        sequence: 10
-    }
+                    sequence: 10
+                }
             )
 
             displayColumn (
                 column: @LOCATION
                 layout {
-        sequence: 11
-    }
+                    sequence: 11
+                }
             )
 
             displayColumn (
                 column: @PENDING_QTY
                 layout {
-        sequence: 12
-    }
+                    sequence: 12
+                }
             )
 
             displayColumn (
                 column: @UPDATED_AT
                 layout {
-        sequence: 13
-    }
+                    sequence: 13
+                }
             )
 
         )
@@ -218,25 +218,25 @@ page 2 (
         column APEX$ROW_ACTION (
             type: actionsMenu
             layout {
-        sequence: 20
-    }
+                sequence: 20
+            }
         )
 
         column APEX$ROW_SELECTOR (
             type: rowSelector
             layout {
-        sequence: 10
-    }
+                sequence: 10
+            }
         )
 
         column LAST_COUNT_AT (
             type: datePicker
             heading {
-        heading: Last Count At
-    }
+                heading: Last Count At
+            }
             layout {
-        sequence: 120
-    }
+                sequence: 120
+            }
             source {
                 databaseColumn: LAST_COUNT_AT
                 dataType: date
@@ -246,9 +246,9 @@ page 2 (
         column LAST_COUNT_QTY (
             type: numberField
             heading {
-        heading: Last Count Qty
-        alignment: end
-    }
+                heading: Last Count Qty
+                alignment: end
+            }
             layout {
                 sequence: 110
                 columnAlignment: end
@@ -265,11 +265,11 @@ page 2 (
         column LAST_IN_AT (
             type: datePicker
             heading {
-        heading: Last In At
-    }
+                heading: Last In At
+            }
             layout {
-        sequence: 100
-    }
+                sequence: 100
+            }
             source {
                 databaseColumn: LAST_IN_AT
                 dataType: date
@@ -279,11 +279,11 @@ page 2 (
         column LAST_OUT_AT (
             type: datePicker
             heading {
-        heading: Last Out At
-    }
+                heading: Last Out At
+            }
             layout {
-        sequence: 90
-    }
+                sequence: 90
+            }
             source {
                 databaseColumn: LAST_OUT_AT
                 dataType: date
@@ -293,16 +293,16 @@ page 2 (
         column LOANED_QTY (
             type: numberField
             heading {
-        heading: Loaned Qty
-        alignment: end
-    }
+                heading: Loaned Qty
+                alignment: end
+            }
             layout {
                 sequence: 80
                 columnAlignment: end
             }
             appearance {
-        formatMask: 999G999G999G999G999G999G999G999G999G990
-    }
+                formatMask: 999G999G999G999G999G999G999G999G999G990
+            }
             source {
                 databaseColumn: LOANED_QTY
                 dataType: number
@@ -315,14 +315,14 @@ page 2 (
         column LOCATION (
             type: textField
             heading {
-        heading: Location
-    }
+                heading: Location
+            }
             layout {
-        sequence: 130
-    }
+                sequence: 130
+            }
             validation {
-        maxLength: 40
-    }
+                maxLength: 40
+            }
             source {
                 databaseColumn: LOCATION
                 dataType: varchar2
@@ -340,16 +340,16 @@ page 2 (
         column ORDERED_QTY (
             type: numberField
             heading {
-        heading: Ordered Qty
-        alignment: end
-    }
+                heading: Ordered Qty
+                alignment: end
+            }
             layout {
                 sequence: 60
                 columnAlignment: end
             }
             appearance {
-        formatMask: 999G999G999G999G999G999G999G999G999G990
-    }
+                formatMask: 999G999G999G999G999G999G999G999G999G990
+            }
             source {
                 databaseColumn: ORDERED_QTY
                 dataType: number
@@ -362,16 +362,16 @@ page 2 (
         column PENDING_QTY (
             type: numberField
             heading {
-        heading: Pending Qty
-        alignment: end
-    }
+                heading: Pending Qty
+                alignment: end
+            }
             layout {
                 sequence: 140
                 columnAlignment: end
             }
             appearance {
-        formatMask: 999G999G999G999G999G999G999G999G999G990
-    }
+                formatMask: 999G999G999G999G999G999G999G999G999G990
+            }
             source {
                 databaseColumn: PENDING_QTY
                 dataType: number
@@ -384,11 +384,11 @@ page 2 (
         column PRODUCT_CODE (
             type: hidden
             heading {
-        heading: Product Code
-    }
+                heading: Product Code
+            }
             layout {
-        sequence: 40
-    }
+                sequence: 40
+            }
             source {
                 databaseColumn: PRODUCT_CODE
                 dataType: varchar2
@@ -402,16 +402,16 @@ page 2 (
         column RESERVED_QTY (
             type: numberField
             heading {
-        heading: Reserved Qty
-        alignment: end
-    }
+                heading: Reserved Qty
+                alignment: end
+            }
             layout {
                 sequence: 70
                 columnAlignment: end
             }
             appearance {
-        formatMask: 999G999G999G999G999G999G999G999G999G990
-    }
+                formatMask: 999G999G999G999G999G999G999G999G999G990
+            }
             source {
                 databaseColumn: RESERVED_QTY
                 dataType: number
@@ -424,16 +424,16 @@ page 2 (
         column STOCK_QTY (
             type: numberField
             heading {
-        heading: Stock Qty
-        alignment: end
-    }
+                heading: Stock Qty
+                alignment: end
+            }
             layout {
                 sequence: 50
                 columnAlignment: end
             }
             appearance {
-        formatMask: 999G999G999G999G999G999G999G999G999G990
-    }
+                formatMask: 999G999G999G999G999G999G999G999G999G990
+            }
             source {
                 databaseColumn: STOCK_QTY
                 dataType: number
@@ -446,11 +446,11 @@ page 2 (
         column UPDATED_AT (
             type: datePicker
             heading {
-        heading: Updated At
-    }
+                heading: Updated At
+            }
             layout {
-        sequence: 150
-    }
+                sequence: 150
+            }
             source {
                 databaseColumn: UPDATED_AT
                 dataType: timestamp
@@ -460,11 +460,11 @@ page 2 (
         column WAREHOUSE_CODE (
             type: hidden
             heading {
-        heading: Warehouse Code
-    }
+                heading: Warehouse Code
+            }
             layout {
-        sequence: 30
-    }
+                sequence: 30
+            }
             source {
                 databaseColumn: WAREHOUSE_CODE
                 dataType: varchar2
@@ -486,8 +486,8 @@ page 2 (
         type: interactiveGridAutoRowProcessing
         editableRegion: @stcoc
         execution {
-        sequence: 10
-    }
+            sequence: 10
+        }
         advanced {
             executionMappingIdentifier: 2618352469004181
         }

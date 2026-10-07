@@ -1,17 +1,22 @@
 page 1 (
-    name: 'Home'
+    name: Home
     alias: HOME
-    title: 'Dashboard Stock — LITOKO SARL'
-    security {
-        authorizationScheme: @regal_vendeur
-        pageAccessProtection: argumentsMustHaveChecksum
+    title: APP_STOCK Dashboard
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
     }
     navigation {
         cursorFocus: doNotFocusCursor
     }
+    security {
+        authorizationScheme: @regal-vendeur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
 
-    region app-stock (
-        name: 'APP_STOCK'
+    region app-stock-hero (
+        name: APP_STOCK Dashboard
         type: staticContent
         layout {
             sequence: 10
@@ -26,187 +31,100 @@ page 1 (
         }
     )
 
-    region kpi-header (
-        name: 'KPI Stock'
-        type: staticContent
+    region kpi-cards (
+        name: KPIs Stock
+        type: cards
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select label,
+                       valeur as value,
+                       case label
+                         when 'Ruptures stock'  then 'fa-warehouse'
+                         when 'Lots < 30j'      then 'fa-clock'
+                         when 'Encours total'   then 'fa-hand-holding-usd'
+                         when 'Encours echu'    then 'fa-exclamation-circle'
+                         when 'Alertes critiques' then 'fa-bell'
+                         when 'CA jour'         then 'fa-money-bill-wave'
+                         when 'Tickets jour'    then 'fa-receipt'
+                         when 'Panier moyen'    then 'fa-shopping-basket'
+                         else 'fa-chart-bar'
+                       end as icon,
+                       null as link
+                  from v_top_kpi_dashboard
+                 where label in ('Ruptures stock','Lots < 30j','Encours total','Encours echu')
+                 order by decode(label,'Ruptures stock',1,'Lots < 30j',2,'Encours total',3,'Encours echu',4)
+                ```
+        }
         layout {
             sequence: 20
             slot: body
         }
         appearance {
-            template: @/standard
-            templateOptions: [ t-Region--noPadding t-Region--removeHeader js-removeLandmark ]
+            template: @/cards-container
+            templateOptions: [
+                #DEFAULT#
+                t-CardsRegion--styleA
+            ]
         }
+        componentAppearance {
+            gridColumns: 4
+            template: @/cards
+            templateOptions: [
+                #DEFAULT#
+                u-colors
+                t-Cards--featured t-Cards--block force-fa-lg
+                t-Cards--displayIcons
+                t-Cards--animColorFill
+            ]
+        }
+        title {
+            column: LABEL
+        }
+        body {
+            column: VALUE
+            advancedFormatting: true
+            htmlExpression: <span class="t-Card-subtitle">&VALUE.</span>
+        }
+        media {
+            advancedFormatting: true
+            htmlExpression: <span class="fa-4x &ICON."></span>
+        }
+    }
 
-        pageItem P1_KPI_VALEUR (
-            type: displayOnly
-            label {
-        label: Valeur stock (XAF)
-    }
-            layout {
-        column: 1
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(nvl(app_api.apex_kpi_stock_value_xaf, 0), ''FM999G999G999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P1_KPI_REFS (
-            type: displayOnly
-            label {
-        label: Références actives
-    }
-            layout {
-        column: 2
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(nvl(app_api.apex_kpi_stock_refs, 0), ''FM999,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P1_KPI_RUPTURE (
-            type: displayOnly
-            label {
-        label: En rupture
-    }
-            layout {
-        column: 3
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(nvl(app_api.apex_kpi_stock_low_count, 0), ''FM9,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P1_KPI_TRANSFERTS (
-            type: displayOnly
-            label {
-        label: Transferts en cours
-    }
-            layout {
-        column: 4
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(nvl((select count(*) from app_inv.transfer_header where status in (''REQUESTED'',''APPROVED'',''PACKED'',''IN_TRANSIT'')),0),''FM9,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P1_KPI_BAS (
-            type: displayOnly
-            label {
-        label: Stock bas
-    }
-            layout {
-        column: 5
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(nvl((select count(*) from app_inv.inv_stock s join app_product.product p on p.product_code=s.product_code where s.stock_qty > 0 and s.stock_qty <= nvl(p.min_stock_qty,0)),0),''FM9,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-
-        pageItem P1_KPI_MOUVEMENTS (
-            type: displayOnly
-            label {
-        label: Mouvements ce mois
-    }
-            layout {
-        column: 6
-    }
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''to_char(nvl((select count(*) from app_inv.inv_movement where trunc(movement_date,''MM'')=trunc(sysdate,''MM'')),0),''FM999,999'')'''
-                used: always
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: [ t-Form-fieldContainer--large ]
-            }
-        )
-    )
-
-    region stock-by-site-chart (
-        name: 'Stock par site (valeur XAF)'
-        type: chart
+    region page-navigation (
+        name: Page Navigation
+        type: list
+        source {
+            list: @page-navigation
+        }
         layout {
             sequence: 30
             slot: body
         }
         appearance {
             template: @/standard
-            templateOptions: [ #DEFAULT# t-Region--scrollBody ]
-        }
-        chart {
-            type: bar
-            series stock-value (
-                name: 'Valeur XAF'
-                source {
-                    location: localDatabase
-                    type: sqlQuery
-                    sqlQuery: ```sql
-select ws.city as site_name,
-       sum(s.stock_qty * nvl(p.standard_price,0)) as total_value
-  from app_inv.inv_stock s
-  join app_product.product p on p.product_code = s.product_code
-  join app_org.org_warehouse w on w.warehouse_code = s.warehouse_code
-  join app_sys.site_master ws on ws.site_code = w.warehouse_code
- where s.stock_qty > 0
- group by ws.city
- order by total_value desc
-```
-                }
-                column {
-                    valueColumn: TOTAL_VALUE
-                    labelColumn: SITE_NAME
-                }
-            )
-        }
-    )
-
-    region page-navigation (
-        type: list
-        source {
-        list: @page_navigation
-    }
-        layout {
-            slot: body
-            sequence: 40
-        }
-        appearance {
-            template: @/standard
-            templateOptions: [ t-Region--hideHeader js-addHiddenHeadingRoleDesc t-Region--noUI t-Region--scrollBody ]
+            templateOptions: [
+                #DEFAULT#
+                t-Region--hideHeader js-addHiddenHeadingRoleDesc
+                t-Region--noUI
+                t-Region--scrollBody
+            ]
         }
         componentAppearance {
             listTemplate: @/cards
-            templateOptions: [ #DEFAULT# u-colors t-Cards--featured t-Cards--block force-fa-lg t-Cards--displayIcons t-Cards--4cols t-Cards--hideBody t-Cards--animColorFill ]
+            templateOptions: [
+                #DEFAULT#
+                u-colors
+                t-Cards--featured t-Cards--block force-fa-lg
+                t-Cards--displayIcons
+                t-Cards--4cols
+                t-Cards--hideBody
+                t-Cards--animColorFill
+            ]
         }
     )
+
 )

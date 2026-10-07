@@ -193,16 +193,91 @@ list page-navigation (
     name: Page Navigation
 
     entry stcoc (
-        label: stcoc
+        label: Stock legacy
         icon {
-            imageIconCssClasses: fa-table-pointer
+            imageIconCssClasses: fa-table
+        }
+        layout {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 2
+            }
+        }
+    )
+
+    entry inventory (
+        label: Inventory
+        icon {
+            imageIconCssClasses: fa-warehouse
         }
         layout {
             sequence: 20
         }
         link {
             target: {
-                page: 2
+                page: 10
+            }
+        }
+    )
+
+    entry low-stock (
+        label: Low Stock
+        icon {
+            imageIconCssClasses: fa-exclamation-triangle
+        }
+        layout {
+            sequence: 30
+        }
+        link {
+            target: {
+                page: 20
+            }
+        }
+    )
+
+    entry movements (
+        label: Movements
+        icon {
+            imageIconCssClasses: fa-exchange-alt
+        }
+        layout {
+            sequence: 40
+        }
+        link {
+            target: {
+                page: 30
+            }
+        }
+    )
+
+    entry transfers (
+        label: Transfers
+        icon {
+            imageIconCssClasses: fa-truck-loading
+        }
+        layout {
+            sequence: 50
+        }
+        link {
+            target: {
+                page: 40
+            }
+        }
+    )
+
+    entry bulk-import (
+        label: Bulk Import
+        icon {
+            imageIconCssClasses: fa-file-csv
+        }
+        layout {
+            sequence: 60
+        }
+        link {
+            target: {
+                page: 50
             }
         }
     )
