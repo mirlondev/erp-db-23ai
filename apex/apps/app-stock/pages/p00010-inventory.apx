@@ -182,7 +182,7 @@ page 10 (
                 sequence: 10
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -195,7 +195,7 @@ page 10 (
                 sequence: 20
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -208,7 +208,7 @@ page 10 (
                 sequence: 30
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -305,7 +305,7 @@ page 10 (
                 sequence: 100
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 

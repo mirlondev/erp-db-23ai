@@ -1,0 +1,83 @@
+breadcrumb breadcrumb (
+    name: Breadcrumb
+
+    entry all-data (
+        name: ALL_DATA
+        pageNumber: 4
+        execution {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 4
+            }
+        }
+    )
+
+    entry historique-tickets (
+        name: Historique tickets
+        pageNumber: 12
+        execution {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 12
+            }
+        }
+    )
+
+    entry home (
+        name: Home
+        pageNumber: 1
+        execution {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 1
+            }
+        }
+    )
+
+    entry rapport (
+        name: rapport
+        pageNumber: 8
+        execution {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 8
+            }
+        }
+    )
+
+    entry sessions-de-caisse (
+        name: Sessions de caisse
+        pageNumber: 10
+        execution {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 10
+            }
+        }
+    )
+
+    entry z-de-caisse (
+        name: Z de caisse
+        pageNumber: 14
+        execution {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 14
+            }
+        }
+    )
+
+)
+

@@ -78,7 +78,7 @@ page 40 (
                 sequence: 20
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -91,7 +91,7 @@ page 40 (
                 sequence: 30
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -104,7 +104,7 @@ page 40 (
                 sequence: 40
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -117,7 +117,7 @@ page 40 (
                 sequence: 50
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -130,7 +130,7 @@ page 40 (
                 sequence: 60
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -213,7 +213,7 @@ page 40 (
                 sequence: 120
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 

@@ -15,63 +15,9 @@ page 30 (
         formAutoComplete: false
     }
 
-    region trial-balance-filters (
-        name: Filtres
-        type: staticContent
-        layout {
-            sequence: 10
-            slot: body
-        }
-        appearance {
-            template: @/standard
-            templateOptions: [
-                #DEFAULT#
-                t-Region--noPadding
-            ]
-        }
-    )
-
-    pageItem P30_COMPANY (
-        type: textField
-        label {
-            label: Societe
-            alignment: left
-        }
-        layout {
-            sequence: 10
-            region: @trial-balance-filters
-            slot: regionBody
-            column: 1
-        }
-        appearance {
-            template: @/optional-floating
-            templateOptions: [
-                #DEFAULT#
-                t-Form-fieldContainer--large
-            ]
-            width: 8
-        }
-        validation {
-            maxLength: 2
-        }
-    )
-
-    region trial-balance-totals (
-        name: Totaux balance
-        type: staticContent
-        layout {
-            sequence: 20
-            slot: body
-        }
-        appearance {
-            template: @/blank-with-attributes
-            templateOptions: #DEFAULT#
-        }
-    )
-
     region trial-balance-list (
         name: Balance generale
-        type: classicReport
+        type: interactiveReport
         source {
             location: localDatabase
             type: sqlQuery
@@ -85,32 +31,32 @@ page 30 (
                        mvt_credit,
                        solde,
                        case
-                         when solde > 0 and account_class in ('Actif immobilise','Bilan','Tresorerie') then 'Debiteur'
-                         when solde < 0 and account_class in ('Actif immobilise','Bilan','Tresorerie') then 'Crediteur'
-                         when solde > 0 and account_class in ('Passif')                              then 'Crediteur'
-                         when solde < 0 and account_class in ('Passif')                              then 'Debiteur'
-                         when account_class in ('Charges')                                          then 'Debiteur'
-                         when account_class in ('Produits')                                         then 'Crediteur'
+                         when solde > 0 and account_class in ('Actif','Bilan','Tresorerie') then 'Debiteur'
+                         when solde < 0 and account_class in ('Actif','Bilan','Tresorerie') then 'Crediteur'
+                         when solde > 0 and account_class in ('Passif')                      then 'Crediteur'
+                         when solde < 0 and account_class in ('Passif')                      then 'Debiteur'
+                         when account_class in ('Charges')                                  then 'Debiteur'
+                         when account_class in ('Produits')                                 then 'Crediteur'
                          else '-'
                        end as sens
                   from v_gl_account_balance
-                 where (:P30_COMPANY is null or company_code = :P30_COMPANY)
                  order by company_code, account_code
                 ```
         }
         layout {
-            sequence: 30
+            sequence: 10
             slot: body
         }
         appearance {
-            template: @/standard
+            template: @/interactive-report
             templateOptions: [
                 #DEFAULT#
-                t-Region--scrollBody
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
             ]
         }
 
         column COMPANY_CODE (
+            type: plainText
             heading {
                 heading: Soc.
             }
@@ -118,11 +64,12 @@ page 30 (
                 sequence: 10
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
         column ACCOUNT_CODE (
+            type: plainText
             heading {
                 heading: Compte
             }
@@ -130,11 +77,12 @@ page 30 (
                 sequence: 20
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
         column ACCOUNT_NAME (
+            type: plainText
             heading {
                 heading: Libelle
             }
@@ -142,11 +90,12 @@ page 30 (
                 sequence: 30
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
         column ACCOUNT_CLASS (
+            type: plainText
             heading {
                 heading: Classe
             }
@@ -154,11 +103,12 @@ page 30 (
                 sequence: 40
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
         column MVT_DEBIT (
+            type: plainText
             heading {
                 heading: Debit (XAF)
                 alignment: end
@@ -167,11 +117,12 @@ page 30 (
                 sequence: 50
             }
             source {
-                dataType: number
+                dataType: NUMBER
             }
         )
 
         column MVT_CREDIT (
+            type: plainText
             heading {
                 heading: Credit (XAF)
                 alignment: end
@@ -180,11 +131,12 @@ page 30 (
                 sequence: 60
             }
             source {
-                dataType: number
+                dataType: NUMBER
             }
         )
 
         column SOLDE (
+            type: plainText
             heading {
                 heading: Solde (XAF)
                 alignment: end
@@ -193,11 +145,12 @@ page 30 (
                 sequence: 70
             }
             source {
-                dataType: number
+                dataType: NUMBER
             }
-        }
+        )
 
         column SENS (
+            type: plainText
             heading {
                 heading: Sens
             }
@@ -205,8 +158,16 @@ page 30 (
                 sequence: 80
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
-        }
+        )
+
+        savedReport default-trial-balance (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+        )
     )
+
 )

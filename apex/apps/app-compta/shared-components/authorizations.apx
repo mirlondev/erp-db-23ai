@@ -1,0 +1,83 @@
+authorization regal-superadmin (
+    name: REGAL SuperAdmin
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
+    }
+    error {
+        errorMessage: "⛔ Accès superadmin requis. Contactez l'administrateur système."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-admin (
+    name: REGAL Admin
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0 or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_SUPERADMIN,') > 0;
+    }
+    error {
+        errorMessage: "⛔ Accès administrateur requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-comptable (
+    name: REGAL Comptable
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_COMPTABLE,') > 0 or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0;
+    }
+    error {
+        errorMessage: "⛔ Accès comptable requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-manager (
+    name: REGAL Manager
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_MANAGER,') > 0 or instr(',' || upper(app_sys.pkg_apex_auth.user_roles(:APP_USER)) || ',', ',REGAL_ADMIN,') > 0;
+    }
+    error {
+        errorMessage: "⛔ Accès manager requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-vendeur (
+    name: REGAL Vendeur
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return app_sys.pkg_apex_auth.user_site_codes(:APP_USER) is not null or app_sys.pkg_apex_auth.user_roles(:APP_USER) is not null;
+    }
+    error {
+        errorMessage: "⛔ Accès vendeur requis."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)
+
+authorization regal-caissier (
+    name: REGAL Caissier
+    type: plSqlFunctionBody
+    settings {
+        plsqlFunctionBody: return :APP_USER is not null;
+    }
+    error {
+        errorMessage: "⛔ Authentification requise pour accéder à cette page."
+    }
+    advanced {
+        evaluationType: perSession
+    }
+)

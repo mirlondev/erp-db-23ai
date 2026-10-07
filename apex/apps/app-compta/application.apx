@@ -40,7 +40,7 @@ app APP-COMPTA (
         scheme: @regal-auth
     }
     sessionStateProtection {
-        checksumSalt: 99A3F1B27C48D8E4567F1A9B0C8D3E4F5678901ABCDEF1234567890ABCDEF12
+        checksumSalt: 58E6B26020C5433C56B28A117E16A025CA3209AA2E24C6C88767CF0F29C98E75
     }
     runtime {
         allowFeedback: true
@@ -52,13 +52,13 @@ app APP-COMPTA (
 
     substitution APP_NAME (
         value {
-            staticValue: REGAL Comptabilite
+            staticValue: REGAL POS
         }
     )
 
     substitution COMPANY_NAME (
         value {
-            staticValue: LITOKO SARL
+            staticValue: LITOKO SARL — Pointe-Noire
         }
     )
 
@@ -69,3 +69,4 @@ app APP-COMPTA (
     )
 
 )
+

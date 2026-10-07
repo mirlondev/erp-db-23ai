@@ -168,7 +168,7 @@ page 20 (
                 sequence: 20
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 
@@ -181,7 +181,7 @@ page 20 (
                 sequence: 30
             }
             source {
-                dataType: STRING
+                dataType: VARCHAR2
             }
         )
 

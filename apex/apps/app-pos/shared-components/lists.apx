@@ -233,3 +233,127 @@ list navigation-menu (
     )
 
 )
+list page-navigation (
+    name: Page Navigation
+
+    entry quick-billing (
+        label: Quick Billing
+        icon {
+            imageIconCssClasses: fa-bolt
+        }
+        layout {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 20
+            }
+        }
+    )
+
+    entry all-data (
+        label: All Data
+        icon {
+            imageIconCssClasses: fa-database
+        }
+        layout {
+            sequence: 20
+        }
+        link {
+            target: {
+                page: 4
+            }
+        }
+    )
+
+    entry rapport (
+        label: Rapport
+        icon {
+            imageIconCssClasses: fa-chart-line
+        }
+        layout {
+            sequence: 30
+        }
+        link {
+            target: {
+                page: 8
+            }
+        }
+    )
+
+    entry sessions (
+        label: Sessions
+        icon {
+            imageIconCssClasses: fa-cash-register
+        }
+        layout {
+            sequence: 40
+        }
+        link {
+            target: {
+                page: 10
+            }
+        }
+    )
+
+    entry historique (
+        label: Tickets
+        icon {
+            imageIconCssClasses: fa-receipt
+        }
+        layout {
+            sequence: 50
+        }
+        link {
+            target: {
+                page: 12
+            }
+        }
+    )
+
+    entry z-caisse (
+        label: Z caisse
+        icon {
+            imageIconCssClasses: fa-money-bill
+        }
+        layout {
+            sequence: 60
+        }
+        link {
+            target: {
+                page: 14
+            }
+        }
+    )
+
+    entry customers (
+        label: Clients
+        icon {
+            imageIconCssClasses: fa-users
+        }
+        layout {
+            sequence: 70
+        }
+        link {
+            target: {
+                page: 30
+            }
+        }
+    )
+
+    entry bulk-import (
+        label: Bulk Import
+        icon {
+            imageIconCssClasses: fa-file-csv
+        }
+        layout {
+            sequence: 80
+        }
+        link {
+            target: {
+                page: 40
+            }
+        }
+    )
+
+)

@@ -97,7 +97,7 @@ list navigation-menu (
     )
 
     entry journal (
-        label: Journal des ecritures
+        label: Journal
         icon {
             imageIconCssClasses: fa-book
         }
@@ -134,40 +134,52 @@ list navigation-menu (
         }
     )
 
-    entry fiscal-declarations (
-        label: Declarations fiscales
+)
+
+list page-navigation (
+    name: Page Navigation
+
+    entry chart-of-accounts (
+        label: Plan comptable
         icon {
-            imageIconCssClasses: fa-file-invoice
+            imageIconCssClasses: fa-sitemap
         }
         layout {
-            sequence: 50
-        }
-        isCurrent {
-            type: pages
-            pages: 40
+            sequence: 10
         }
         link {
             target: {
-                page: 40
+                page: 10
             }
         }
     )
 
-    entry ar-receivables (
-        label: Comptes clients
+    entry journal (
+        label: Journal
         icon {
-            imageIconCssClasses: fa-hand-holding-usd
+            imageIconCssClasses: fa-book
         }
         layout {
-            sequence: 60
-        }
-        isCurrent {
-            type: pages
-            pages: 50
+            sequence: 20
         }
         link {
             target: {
-                page: 50
+                page: 20
+            }
+        }
+    )
+
+    entry trial-balance (
+        label: Balance generale
+        icon {
+            imageIconCssClasses: fa-balance-scale
+        }
+        layout {
+            sequence: 30
+        }
+        link {
+            target: {
+                page: 30
             }
         }
     )
