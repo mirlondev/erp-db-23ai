@@ -10,7 +10,7 @@ page 30 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal_vendeur
+        authorizationScheme: @regal-vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -34,12 +34,12 @@ page 30 (
     pageItem P30_DATE_FROM (
         type: datePicker
         label {
-        label: From
-        alignment: left
-    }
+            label: From
+            alignment: left
+        }
         layout {
             sequence: 10
-            region: @movement_filters
+            region: @movement-filters
             slot: regionBody
             column: 1
         }
@@ -60,12 +60,12 @@ page 30 (
     pageItem P30_DATE_TO (
         type: datePicker
         label {
-        label: To
-        alignment: left
-    }
+            label: To
+            alignment: left
+        }
         layout {
             sequence: 20
-            region: @movement_filters
+            region: @movement-filters
             slot: regionBody
             column: 2
         }
@@ -86,16 +86,16 @@ page 30 (
     pageItem P30_WAREHOUSE (
         type: selectList
         label {
-        label: Warehouse
-        alignment: left
-    }
+            label: Warehouse
+            alignment: left
+        }
         lov {
             type: sharedComponent
             lov: @WAREHOUSES
         }
         layout {
             sequence: 30
-            region: @movement_filters
+            region: @movement-filters
             slot: regionBody
             column: 3
         }
@@ -151,102 +151,115 @@ page 30 (
         }
 
         column WAREHOUSE_CODE (
+            reportColumnQueryId: 100
+            derivedColumn: N
             heading {
-        heading: Warehouse
-    }
+                heading: Warehouse
+            }
             layout {
-        sequence: 10
-    }
-            source {
-        
-    }
+                sequence: 10
+            }
+            sorting {
+                sortable: false
+            }
         )
 
         column PRODUCT_CODE (
+            reportColumnQueryId: 200
+            derivedColumn: N
             heading {
-        heading: Code
-    }
+                heading: Code
+            }
             layout {
-        sequence: 20
-    }
-            source {
-        
-    }
+                sequence: 20
+            }
+            sorting {
+                sortable: false
+            }
         )
 
         column PRODUCT_NAME (
+            reportColumnQueryId: 300
+            derivedColumn: N
             heading {
-        heading: Product
-    }
+                heading: Product
+            }
             layout {
-        sequence: 30
-    }
-            source {
-        
-    }
+                sequence: 30
+            }
+            sorting {
+                sortable: false
+            }
         )
 
         column CURRENT_STOCK (
+            reportColumnQueryId: 400
+            derivedColumn: N
             heading {
-        heading: Stock
-        alignment: end
-    }
+                heading: Stock
+            }
             layout {
-        sequence: 40
-    }
-            source {
-        
-    }
+                sequence: 40
+            }
+            sorting {
+                sortable: false
+            }
         )
 
         column LAST_IN (
+            reportColumnQueryId: 500
+            derivedColumn: N
             heading {
-        heading: Last in
-    }
+                heading: Last in
+            }
             layout {
-        sequence: 50
-    }
-            source {
-        
-    }
+                sequence: 50
+            }
+            sorting {
+                sortable: false
+            }
         )
 
         column LAST_OUT (
+            reportColumnQueryId: 600
+            derivedColumn: N
             heading {
-        heading: Last out
-    }
+                heading: Last out
+            }
             layout {
-        sequence: 60
-    }
-            source {
-        
-    }
+                sequence: 60
+            }
+            sorting {
+                sortable: false
+            }
         )
 
         column HOURS_SINCE_LAST_MOVE (
+            reportColumnQueryId: 700
+            derivedColumn: N
             heading {
-        heading: Hours since
-        alignment: end
-    }
+                heading: Hours since
+            }
             layout {
-        sequence: 70
-    }
-            source {
-        
-    }
+                sequence: 70
+            }
+            sorting {
+                sortable: false
+            }
         )
 
         column UNIT_COST (
+            reportColumnQueryId: 800
+            derivedColumn: N
             heading {
-        heading: Unit cost
-        alignment: end
-    }
+                heading: Unit cost
+            }
             layout {
-        sequence: 80
-    }
-            source {
-        
-    }
+                sequence: 80
+            }
+            sorting {
+                sortable: false
+            }
         )
     )
 )

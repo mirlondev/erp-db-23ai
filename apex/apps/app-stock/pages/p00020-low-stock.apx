@@ -1,205 +1,189 @@
 page 20 (
-    name: 'Low Stock'
-    alias: LOW_STOCK
-    title: 'Articles en alerte stock'
-    security {
-        authorizationScheme: @regal_vendeur
-        pageAccessProtection: argumentsMustHaveChecksum
+    name: Low Stock
+    alias: LOW-STOCK
+    title: Low Stock Alerts
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
     }
     navigation {
         cursorFocus: doNotFocusCursor
     }
-
-    region breadcrumb (
-        type: breadcrumb
-        slot: breadcrumbBar
-        template: @/title-bar
-        templateOptions: t-BreadcrumbRegion--useBreadcrumbTitle
-    )
-
-    region low-stock-kpi (
-        type: staticContent
-        name: 'KPI Alertes'
-        slot: body
-        seq: 10
-        template: @/standard
-        templateOptions: t-Region--noPadding t-Region--removeHeader js-removeLandmark
-        
-        pageItem P20_KPI_RUPTURE (
-            type: displayOnly
-            label: 'Ruptures'
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''
-                    to_char(nvl((select count(*) from app_inv.inv_stock where stock_qty = 0),0),'FM9,999')
-                '''
-                used: always
-            }
-            layout {
-                region: @low_stock_kpi
-                column: 1
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: t-Form-fieldContainer--large
-            }
-        )
-
-        pageItem P20_KPI_BAS (
-            type: displayOnly
-            label: 'Stock bas'
-            source {
-                type: plsqlExpression
-                plsqlExpression: '''
-                    to_char(nvl((select count(*) from app_inv.inv_stock s join app_product.product p on p.product_code=s.product_code where s.stock_qty > 0 and s.stock_qty <= nvl(p.min_stock_qty,0)),0),'FM9,999')
-                '''
-                used: always
-            }
-            layout {
-                region: @low_stock_kpi
-                column: 2
-            }
-            appearance {
-                template: @/optional-floating
-                templateOptions: t-Form-fieldContainer--large
-            }
-        )
-    )
+    security {
+        authorizationScheme: @regal-manager
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
 
     region low-stock-list (
-        type: interactiveReport
-        name: 'Articles en alerte'
-        slot: body
-        seq: 20
-        template: @/interactive-report
-        templateOptions: t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+        name: Products to reorder
+        type: classicReport
         source {
+            location: localDatabase
             type: sqlQuery
-            sqlQuery: ```sql
+            sqlQuery:
+                ```sql
                 select s.warehouse_code,
-                       p.product_code,
+                       s.product_code,
                        p.product_name,
                        nvl(s.stock_qty, 0) as stock_qty,
-                       nvl(p.min_stock_qty, 0) as min_stock,
-                       nvl(p.standard_price, 0) as unit_price,
-                       case when nvl(s.stock_qty,0) = 0
-                            then '<span class="t-Badge t-Badge--danger">RUPTURE</span>'
-                            else '<span class="t-Badge t-Badge--warning">BAS</span>'
-                       end as status_badge,
-                       case when nvl(s.stock_qty,0) = 0 then 'RUPTURE' else 'BAS' end as sort_status
+                       nvl(p.min_stock_qty, 0) as min_stock_qty,
+                       nvl(p.min_stock_qty, 0) - nvl(s.stock_qty, 0) as qty_to_order,
+                       nvl(p.standard_price, 0) as unit_cost_xaf,
+                       round(
+                         (nvl(p.min_stock_qty, 0) - nvl(s.stock_qty, 0))
+                         * nvl(p.standard_price, 0), 0
+                       ) as reorder_cost_xaf,
+                       case
+                         when nvl(s.stock_qty, 0) = 0                       then 'RUPTURE'
+                         when nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0)  then 'BAS'
+                         else 'OK'
+                       end as alert
                   from app_inv.inv_stock s
                   join app_product.product p on p.product_code = s.product_code
                  where nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0)
-                 order by nvl(s.stock_qty,0) asc, p.product_name
-            ```
+                 order by stock_qty asc, qty_to_order desc
+                ```
         }
-        
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+        }
+
         column WAREHOUSE_CODE (
-            type: plainText
+            reportColumnQueryId: 100
+            derivedColumn: N
             heading {
-        heading: 'Dépôt'
-    }
+                heading: Warehouse
+            }
             layout {
-        seq: 10
-    }
-            source {
-        dataType: STRING
-    }
+                sequence: 10
+            }
+            sorting {
+                sortable: false
+            }
         )
+
         column PRODUCT_CODE (
-            type: plainText
+            reportColumnQueryId: 200
+            derivedColumn: N
             heading {
-        heading: 'Code'
-    }
+                heading: Code
+            }
             layout {
-        seq: 20
-    }
-            source {
-        dataType: STRING
-    }
+                sequence: 20
+            }
+            sorting {
+                sortable: false
+            }
         )
+
         column PRODUCT_NAME (
-            type: plainText
+            reportColumnQueryId: 300
+            derivedColumn: N
             heading {
-        heading: 'Produit'
-    }
+                heading: Product
+            }
             layout {
-        seq: 30
-    }
-            source {
-        dataType: STRING
-    }
+                sequence: 30
+            }
+            sorting {
+                sortable: false
+            }
         )
+
         column STOCK_QTY (
-            type: plainText
+            reportColumnQueryId: 400
+            derivedColumn: N
             heading {
-        heading: 'Stock'
-        alignment: end
-    }
+                heading: Stock
+            }
             layout {
-        seq: 40
-    }
-            source {
-        dataType: NUMBER
-    }
+                sequence: 40
+            }
+            sorting {
+                sortable: false
+            }
         )
-        column MIN_STOCK (
-            type: plainText
+
+        column MIN_STOCK_QTY (
+            reportColumnQueryId: 500
+            derivedColumn: N
             heading {
-        heading: 'Seuil min'
-        alignment: end
-    }
+                heading: Min
+            }
             layout {
-        seq: 50
-    }
-            source {
-        dataType: NUMBER
-    }
+                sequence: 50
+            }
+            sorting {
+                sortable: false
+            }
         )
-        column UNIT_PRICE (
-            type: plainText
+
+        column QTY_TO_ORDER (
+            reportColumnQueryId: 600
+            derivedColumn: N
             heading {
-        heading: 'Prix XAF'
-        alignment: end
-    }
+                heading: To order
+            }
             layout {
-        seq: 60
-    }
-            source {
-        dataType: NUMBER
-    }
+                sequence: 60
+            }
+            sorting {
+                sortable: false
+            }
         )
-        column STATUS_BADGE (
-            type: htmlContent
+
+        column UNIT_COST_XAF (
+            reportColumnQueryId: 700
+            derivedColumn: N
             heading {
-        heading: 'Statut'
-    }
+                heading: Unit cost
+            }
             layout {
-        seq: 70
-    }
-            source {
-        dataType: STRING
-    }
+                sequence: 70
+            }
+            sorting {
+                sortable: false
+            }
         )
-        column SORT_STATUS (
-            type: plainText
+
+        column REORDER_COST_XAF (
+            reportColumnQueryId: 800
+            derivedColumn: N
             heading {
-        heading: ''
-    }
+                heading: Reorder cost
+            }
             layout {
-        seq: 80
-    }
-            source {
-        dataType: STRING
-    }
-            appearance {
-        hidden: true
-    }
+                sequence: 80
+            }
+            sorting {
+                sortable: false
+            }
         )
-        
-        savedReport default-low-stock (
-            visibility: primaryDefault
-            rowsPerPage: 25
+
+        column ALERT (
+            reportColumnQueryId: 900
+            derivedColumn: N
+            heading {
+                heading: Alert
+            }
+            layout {
+                sequence: 90
+            }
+            sorting {
+                sortable: false
+            }
         )
     )
 )
