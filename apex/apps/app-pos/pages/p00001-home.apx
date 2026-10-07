@@ -1,67 +1,173 @@
 page 1 (
-    name: Home
+    name: 'Home'
     alias: HOME
-    title: APP_POS Dashboard
-    appearance {
-        pageTemplate: @/standard
-        templateOptions: #DEFAULT#
-    }
-    navigation {
-        cursorFocus: doNotFocusCursor
-    }
+    title: 'Dashboard Caisse — LITOKO SARL'
     security {
-        authorizationScheme: @regal-caissier
+        authorizationScheme: @regal_caissier
         pageAccessProtection: argumentsMustHaveChecksum
-        formAutoComplete: false
     }
-
-    region app-pos (
-        name: APP_POS
-        type: staticContent
-        layout {
-            sequence: 10
-            slot: breadcrumbBar
-        }
+    
+    region breadcrumb (
+        type: breadcrumb
+        slot: breadcrumbBar
         appearance {
-            template: @/hero
-            templateOptions: #DEFAULT#
-        }
-        image {
-            fileUrl: #APP_FILES#icons/app-icon-512.png
+            template: @/title-bar
+            templateOptions: 't-BreadcrumbRegion--useBreadcrumbTitle'
         }
     )
-
-    region page-navigation (
-        name: Page Navigation
-        type: list
-        source {
-            list: @page-navigation
+    
+    region kpi-header (
+        type: staticContent
+        slot: body
+        sequence: 10
+        appearance {
+            template: @/standard
+            templateOptions: 't-Region--noPadding t-Region--removeHeader js-removeLandmark'
         }
-        layout {
-            sequence: 30
-            slot: body
+        
+        pageItem P1_KPI_CA (
+            type: displayOnly
+            label {
+        label: CA Aujourd'hui (XAF)'
+    }
+            layout {
+        column: 1
+    }
+            appearance {
+        templateOptions: 't-Form-fieldContainer--large'
+    }
+            source {
+                type: plsqlExpression
+                plsqlExpression: ```plsql
+to_char(nvl(app_api.apex_kpi_ca_jour, 0), 'FM999G999G999')
+```
+            }
+        )
+        
+        pageItem P1_KPI_TICKETS (
+            type: displayOnly
+            label {
+        label: Tickets ouverts
+    }
+            layout {
+        column: 2
+    }
+            source {
+                type: plsqlExpression
+                plsqlExpression: ```plsql
+to_char(nvl(app_api.apex_kpi_tickets_ouverts, 0), 'FM999G999')
+```
+            }
+        )
+        
+        pageItem P1_KPI_SESSIONS (
+            type: displayOnly
+            label {
+        label: Sessions actives
+    }
+            layout {
+        column: 3
+    }
+            source {
+                type: plsqlExpression
+                plsqlExpression: ```plsql
+to_char(nvl(app_api.apex_kpi_sessions_actives, 0), 'FM9,999')
+```
+            }
+        )
+        
+        pageItem P1_KPI_PANIER (
+            type: displayOnly
+            label {
+        label: Panier moyen (XAF)
+    }
+            layout {
+        column: 4
+    }
+            source {
+                type: plsqlExpression
+                plsqlExpression: ```plsql
+to_char(nvl(app_api.apex_kpi_panier_moyen, 0), 'FM999G999')
+```
+            }
+        )
+    )
+    
+    region today-sales (
+        type: classicReport
+        name: 'Ventes du jour par terminal'
+        slot: body
+        sequence: 20
+        appearance {
+            template: @/standard
+            templateOptions: 't-Region--scrollBody'
+        }
+        source {
+            type: sqlQuery
+            sqlQuery: ```sql
+select terminal_name, nb_tickets, ca_ttc, ca_ht, avg_basket from app_api.v_today_sales order by ca_ttc desc
+```
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: 't-Report--stretch t-Report--horizontalBorders'
+        }
+        
+        column TERMINAL_NAME (
+            type: plainText
+            heading {
+        heading: Terminal
+    }
+        )
+        
+        column NB_TICKETS (
+            type: plainText
+            heading {
+        heading: Tickets
+        alignment: end
+    }
+        )
+        
+        column CA_TTC (
+            type: plainText
+            heading {
+        heading: CA TTC XAF
+        alignment: end
+    }
+        )
+        
+        column CA_HT (
+            type: plainText
+            heading {
+        heading: CA HT XAF
+        alignment: end
+    }
+        )
+        
+        column AVG_BASKET (
+            type: plainText
+            heading {
+        heading: Panier moyen
+        alignment: end
+    }
+        )
+    )
+    
+    region page-navigation (
+        type: list
+        slot: body
+        sequence: 30
+        source {
+            type: list
+            list: @page_navigation
         }
         appearance {
             template: @/standard
-            templateOptions: [
-                #DEFAULT#
-                t-Region--hideHeader js-addHiddenHeadingRoleDesc
-                t-Region--noUI
-                t-Region--scrollBody
-            ]
+            templateOptions: 't-Region--hideHeader js-addHiddenHeadingRoleDesc t-Region--noUI t-Region--scrollBody'
         }
         componentAppearance {
             listTemplate: @/cards
-            templateOptions: [
-                #DEFAULT#
-                u-colors
-                t-Cards--featured t-Cards--block force-fa-lg
-                t-Cards--displayIcons
-                t-Cards--4cols
-                t-Cards--hideBody
-                t-Cards--animColorFill
-            ]
+            templateOptions: '#DEFAULT# u-colors t-Cards--featured t-Cards--block force-fa-lg t-Cards--displayIcons t-Cards--4cols t-Cards--hideBody t-Cards--animColorFill'
         }
     )
-
 )

@@ -1,390 +1,506 @@
 page 20 (
-    name: Quick Billing
-    alias: QUICK-BILLING
-    title: Quick Billing
-    appearance {
-        pageTemplate: @/standard
-        templateOptions: #DEFAULT#
+    name: 'Nouvelle vente'
+    alias: QUICK_BILLING
+    title: 'Nouvelle vente — Caisse LITOKO'
+    security {
+        authorizationScheme: @regal_caissier
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
     }
     navigation {
         cursorFocus: firstItemOnPage
         warnOnUnsavedChanges: true
     }
-    security {
-        authorizationScheme: @regal-caissier
-        pageAccessProtection: argumentsMustHaveChecksum
-        formAutoComplete: false
-    }
-
-    region scan-product (
-        name: Scan Product
-        type: staticContent
-        layout {
-            sequence: 10
-            slot: body
+    
+    region breadcrumb (
+        type: breadcrumb
+        slot: breadcrumbBar
+        appearance {
+            template: @/title-bar
+            templateOptions: 't-BreadcrumbRegion--useBreadcrumbTitle'
         }
+    )
+    
+    region product-catalog (
+        type: interactiveReport
+        name: 'Catalogue produits'
+        slot: body
+        sequence: 15
         appearance {
             template: @/standard
-            templateOptions: [
-                #DEFAULT#
-                t-Region--scrollBody
-            ]
+            templateOptions: 't-Region--scrollBody t-Region--noPadding'
         }
-    )
-
-    pageItem P20_BARCODE (
-        type: textField
-        label {
-            label: Barcode
-            alignment: left
-        }
-        settings {
-            trimSpaces: leading
-            submitWhenEnterPressed: true
-        }
-        layout {
-            sequence: 10
-            region: @scan-product
-            slot: regionBody
-            column: 1
-        }
-        appearance {
-            template: @/optional-floating
-            templateOptions: [
-                #DEFAULT#
-                t-Form-fieldContainer--large
-            ]
-            width: 30
-        }
-        validation {
-            maxLength: 30
-        }
-    )
-
-    pageItem P20_QUANTITY (
-        type: numberField
-        label {
-            label: Quantity
-            alignment: left
-        }
-        settings {
-            virtualKeyboard: text
-        }
-        layout {
-            sequence: 20
-            region: @scan-product
-            slot: regionBody
-            column: 2
-        }
-        appearance {
-            template: @/optional-floating
-            templateOptions: [
-                #DEFAULT#
-                t-Form-fieldContainer--large
-            ]
-            width: 6
-        }
-        default {
-            type: static
-            staticValue: 1
-        }
-        validation {
-            maxLength: 10
-        }
-    )
-
-    button add-line (
-        buttonName: ADD_LINE
-        label: Add to Cart
-        layout {
-            sequence: 30
-            region: @scan-product
-            slot: regionBody
-            startNewRow: false
-        }
-        appearance {
-            buttonTemplate: @/text-with-icon
-            templateOptions: [
-                #DEFAULT#
-                t-Button--large
-            ]
-            hot: true
-        }
-        behavior {
-            action: submitPage
-            warnOnUnsavedChanges: doNotCheck
-        }
-    )
-
-    region current-cart (
-        name: Current Cart
-        type: interactiveReport
         source {
-            location: localDatabase
             type: sqlQuery
-            sqlQuery:
-                ```sql
-                select seq_id,
-                       c001 as product_code,
-                       c002 as product_name,
-                       to_number(c003) as unit_price,
-                       to_number(c004) as quantity,
-                       to_number(c005) as subtotal
-                  from apex_collections
-                 where collection_name = 'CART'
-                ```
+            sqlQuery: ```sql
+select p.product_code,
+       p.product_name,
+       p.product_category,
+       nvl(p.standard_price, 0) as unit_price,
+       nvl(s.stock_qty, 0) as stock_dispo,
+       case when nvl(s.stock_qty,0) = 0 then 'RUPTURE'
+            when nvl(s.stock_qty,0) <= nvl(p.min_stock_qty,0) then 'BAS'
+            else 'OK' end as dispo_status
+  from app_product.product p
+  left join app_inv.inv_stock s on s.product_code = p.product_code
+ where p.is_active = 'Y'
+ order by p.product_name
+```
         }
-        layout {
-            sequence: 20
-            slot: body
-        }
-        appearance {
-            template: @/interactive-report
-            templateOptions: [
-                #DEFAULT#
-                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
-            ]
-        }
-
-        column SEQ_ID (
-            type: hidden
-            heading {
-                heading: Line
-            }
-            layout {
-                sequence: 10
-            }
-            source {
-                dataType: NUMBER
-            }
-        )
-
+        
         column PRODUCT_CODE (
             type: plainText
+            sequence: 10
             heading {
-                heading: Code
-            }
-            layout {
-                sequence: 20
-            }
+        heading: Code
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
-
+        
         column PRODUCT_NAME (
             type: plainText
+            sequence: 20
             heading {
-                heading: Product
-            }
-            layout {
-                sequence: 30
-            }
+        heading: Article
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
-
+        
+        column PRODUCT_CATEGORY (
+            type: plainText
+            sequence: 30
+            heading {
+        heading: Catégorie
+    }
+            source {
+        dataType: STRING
+    }
+        )
+        
         column UNIT_PRICE (
             type: plainText
+            sequence: 40
             heading {
-                heading: Unit Price
-                alignment: end
-            }
-            layout {
-                sequence: 40
-            }
+        heading: Prix (XAF)
+        alignment: end
+    }
             source {
-                dataType: NUMBER
-            }
+        dataType: NUMBER
+    }
         )
-
-        column QUANTITY (
+        
+        column STOCK_DISPO (
             type: plainText
+            sequence: 50
             heading {
-                heading: Qty
-                alignment: end
-            }
-            layout {
-                sequence: 50
-            }
+        heading: Stock
+        alignment: end
+    }
             source {
-                dataType: NUMBER
-            }
+        dataType: NUMBER
+    }
         )
-
-        column SUBTOTAL (
+        
+        column DISPO_STATUS (
             type: plainText
+            sequence: 60
             heading {
-                heading: Subtotal
-                alignment: end
-            }
-            layout {
-                sequence: 60
-            }
+        heading: Dispo
+    }
             source {
-                dataType: NUMBER
-            }
+        dataType: STRING
+    }
         )
-
-        savedReport default-report (
+        
+        savedReport default-catalog (
             visibility: primaryDefault
-            view {
-                rowsPerPage: 15
-            }
+            rowsPerPage: 10
         )
     )
-
-    region cart-totals (
-        name: Cart Totals
+    
+    region scan-product (
         type: staticContent
-        layout {
-            sequence: 30
-            slot: body
-        }
+        name: 'Scanner un article'
+        slot: body
+        sequence: 20
         appearance {
             template: @/standard
-            templateOptions: [
-                #DEFAULT#
-                t-Region--noPadding
-            ]
+            templateOptions: 't-Region--noPadding'
         }
+        
+        pageItem P20_BARCODE (
+            type: textField
+            label {
+        label: Code-barres ou référence
+    }
+            layout {
+        column: 1
+        columnSpan: 7
+        startNewRow: true
+    }
+            settings {
+                trimSpaces: leading
+                submitWhenEnterPressed: true
+            }
+            appearance {
+                template: @/optional-floating
+                templateOptions: 't-Form-fieldContainer--large'
+                width: 40
+                valuePlaceholder: 'Scanner puis Entrée'
+            }
+            validation {
+        maxLength: 30
+    }
+        )
+        
+        pageItem P20_QUANTITY (
+            type: numberField
+            label {
+        label: Quantité
+    }
+            layout {
+        column: 8
+        columnSpan: 2
+        startNewRow: false
+    }
+            settings {
+        virtualKeyboard: text
+    }
+            appearance {
+                template: @/optional-floating
+                templateOptions: 't-Form-fieldContainer--large'
+                width: 8
+            }
+            default {
+        type: static
+        staticValue: '1'
+    }
+            validation {
+        maxLength: 10
+    }
+        )
+        
+        button add_line (
+            buttonName: 'ADD_LINE'
+            label: 'Ajouter au panier'
+            layout {
+        column: 10
+        startNewRow: false
+    }
+            appearance {
+                buttonTemplate: @/text-with-icon
+                templateOptions: 't-Button--large'
+                hot: true
+            }
+            behavior {
+                action: submitPage
+                warnOnUnsavedChanges: doNotCheck
+            }
+        )
     )
-
-    pageItem P20_TOTAL_HT (
-        type: displayOnly
-        label {
-            label: Total HT
+    
+    region current-cart (
+        type: classicReport
+        name: 'Panier en cours'
+        slot: body
+        sequence: 30
+        appearance {
+            template: @/standard
+            templateOptions: 't-Region--scrollBody'
         }
-        layout {
+        source {
+            type: sqlQuery
+            sqlQuery: ```sql
+select c001 as product_code,
+       c002 as product_name,
+       to_number(c003) as unit_price,
+       to_number(c004) as quantity,
+       to_number(c005) as subtotal
+  from apex_collections
+ where collection_name = 'CART'
+```
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: 't-Report--stretch t-Report--horizontalBorders'
+        }
+        
+        column PRODUCT_CODE (
+            type: plainText
             sequence: 10
-            region: @cart-totals
-            slot: regionBody
-            column: 1
-        }
-        appearance {
-            template: @/optional-floating
-            templateOptions: #DEFAULT#
-        }
-        source {
-            type: expression
-            plsqlExpression: nvl(app_api.apex_pos_cart_total_ht(), 0)
-            used: always
-        }
-    )
-
-    pageItem P20_TOTAL_TVA (
-        type: displayOnly
-        label {
-            label: TVA 18.9%
-        }
-        layout {
+            heading {
+        heading: Réf
+    }
+        )
+        
+        column PRODUCT_NAME (
+            type: plainText
             sequence: 20
-            region: @cart-totals
-            slot: regionBody
-            column: 2
-        }
-        appearance {
-            template: @/optional-floating
-            templateOptions: #DEFAULT#
-        }
-        source {
-            type: expression
-            plsqlExpression: nvl(app_api.apex_pos_cart_total_tva(), 0)
-            used: always
-        }
-    )
-
-    pageItem P20_TOTAL_TTC (
-        type: displayOnly
-        label {
-            label: Total TTC
-        }
-        layout {
+            heading {
+        heading: Article
+    }
+        )
+        
+        column UNIT_PRICE (
+            type: plainText
             sequence: 30
-            region: @cart-totals
-            slot: regionBody
-            column: 3
-        }
-        appearance {
-            template: @/optional-floating
-            templateOptions: #DEFAULT#
-        }
-        source {
-            type: expression
-            plsqlExpression: nvl(app_api.apex_pos_cart_total_ttc(), 0)
-            used: always
-        }
-    )
-
-    button settle (
-        buttonName: SETTLE
-        label: Settle Sale
-        layout {
+            heading {
+        heading: Prix XAF
+        alignment: end
+    }
+        )
+        
+        column QUANTITY (
+            type: plainText
             sequence: 40
-            region: @cart-totals
-            slot: regionBody
-            startNewRow: true
-        }
+            heading {
+        heading: Qté
+        alignment: end
+    }
+        )
+        
+        column SUBTOTAL (
+            type: plainText
+            sequence: 50
+            heading {
+        heading: Sous-total XAF
+        alignment: end
+    }
+        )
+    )
+    
+    region cart-totals (
+        type: staticContent
+        name: 'Récapitulatif'
+        slot: body
+        sequence: 40
         appearance {
-            buttonTemplate: @/text-with-icon
-            templateOptions: [
-                #DEFAULT#
-                t-Button--large
-            ]
-            hot: true
+            template: @/standard
+            templateOptions: 't-Region--noPadding'
         }
-        behavior {
-            action: submitPage
-            warnOnUnsavedChanges: doNotCheck
-        }
+        
+        pageItem P20_CUSTOMER_CODE (
+            type: selectList
+            label {
+        label: Client (optionnel)
+    }
+            layout {
+        column: 1
+        startNewRow: true
+    }
+            lov {
+                type: namedLov
+                lov: @parties_clients
+            }
+            appearance {
+                template: @/optional-floating
+                templateOptions: 't-Form-fieldContainer--large'
+            }
+            settings {
+        nullDisplayValue: '-- Vente anonyme --'
+    }
+        )
+        
+        pageItem P20_TOTAL_HT (
+            type: displayOnly
+            label {
+        label: Total HT (XAF)
+    }
+            layout {
+        column: 1
+        startNewRow: true
+    }
+            appearance {
+        template: @/optional-floating
+    }
+            source {
+                type: expression
+                plsqlExpression: ```plsql
+nvl(app_api.apex_pos_cart_total_ht(), 0)
+```
+                used: always
+            }
+        )
+        
+        pageItem P20_TOTAL_TVA (
+            type: displayOnly
+            label {
+        label: TVA 18,9% (XAF)
+    }
+            layout {
+        column: 1
+        startNewRow: true
+    }
+            appearance {
+        template: @/optional-floating
+    }
+            source {
+                type: expression
+                plsqlExpression: ```plsql
+nvl(app_api.apex_pos_cart_total_tva(), 0)
+```
+                used: always
+            }
+        )
+        
+        pageItem P20_TOTAL_TTC (
+            type: displayOnly
+            label {
+        label: TOTAL À PAYER (XAF)
+    }
+            layout {
+        column: 1
+        startNewRow: true
+    }
+            appearance {
+                template: @/optional-floating
+                templateOptions: 't-Form-fieldContainer--xlarge'
+            }
+            source {
+                type: expression
+                plsqlExpression: ```plsql
+nvl(app_api.apex_pos_cart_total_ttc(), 0)
+```
+                used: always
+            }
+        )
+        
+        pageItem P20_PAYMENT_MODE (
+            type: selectList
+            label {
+        label: Mode de paiement
+    }
+            layout {
+        column: 1
+        startNewRow: true
+    }
+            lov {
+                type: staticValues
+                staticValues: 'CASH;Espèces:MOBILE;Mobile Money:CARD;Carte bancaire:CREDIT;Crédit client'
+            }
+            default {
+        type: static
+        staticValue: 'CASH'
+    }
+            appearance {
+                template: @/required
+                templateOptions: 't-Form-fieldContainer--large'
+            }
+            validation {
+        valueRequired: true
+    }
+        )
+        
+        pageItem P20_INVOICE_NO (
+            type: displayOnly
+            label {
+        label: N° Ticket
+    }
+            layout {
+        column: 1
+        startNewRow: true
+    }
+            appearance {
+        template: @/optional-floating
+    }
+        )
+        
+        button settle (
+            buttonName: 'SETTLE'
+            label: 'Encaisser la vente'
+            layout {
+        column: 1
+        startNewRow: true
+    }
+            appearance {
+                buttonTemplate: @/text-with-icon
+                templateOptions: 't-Button--large'
+                hot: true
+            }
+            behavior {
+                action: submitPage
+                warnOnUnsavedChanges: doNotCheck
+            }
+        )
+        
+        button clear_cart (
+            buttonName: 'CLEAR_CART'
+            label: 'Vider le panier'
+            layout {
+        column: 2
+        startNewRow: false
+    }
+            appearance {
+                buttonTemplate: @/text-with-icon
+                templateOptions: 't-Button--large t-Button--danger'
+            }
+            behavior {
+                action: submitPage
+                warnOnUnsavedChanges: doNotCheck
+            }
+        )
     )
-
+    
     process add-to-cart (
-        name: Add to Cart
         type: executeCode
-        source {
-            plsqlCode:
-                ```plsql
-                app_api.apex_pos_cart_add(
-                    p_barcode  => :P20_BARCODE,
-                    p_quantity => nvl(:P20_QUANTITY, 1));
-                :P20_BARCODE := null;
-                :P20_QUANTITY := 1;
-                ```
-        }
+        sequence: 10
         execution {
-            sequence: 10
+        whenButtonPressed: @add_line
+    }
+        source {
+            plsqlCode: ```plsql
+app_api.apex_pos_cart_add(
+    p_barcode  => :P20_BARCODE,
+    p_quantity => nvl(:P20_QUANTITY, 1));
+:P20_BARCODE  := null;
+:P20_QUANTITY := 1;
+```
         }
         error {
-            errorMessage: #SQLERRM_TEXT#
-        }
-        serverSideCondition {
-            whenButtonPressed: @add-line
-        }
+        errorMessage: #SQLERRM_TEXT#
+    }
     )
-
+    
     process settle-sale (
-        name: Settle Sale
         type: executeCode
-        source {
-            plsqlCode:
-                ```plsql
-                :P20_INVOICE_NO := app_api.apex_pos_cart_settle(:APP_USER);
-                app_api.apex_pos_cart_clear;
-                ```
-        }
+        sequence: 20
         execution {
-            sequence: 20
+        whenButtonPressed: @settle
+    }
+        source {
+            plsqlCode: ```plsql
+:P20_INVOICE_NO := app_api.apex_pos_cart_settle(
+    p_user         => :APP_USER,
+    p_payment_mode => :P20_PAYMENT_MODE,
+    p_customer     => :P20_CUSTOMER_CODE);
+app_api.apex_pos_cart_clear;
+```
         }
-        successMessage {
-            successMessage: Vente enregistrée. Ticket: &P20_INVOICE_NO.
-        }
+        successMessage: 'Vente enregistrée — Ticket : &P20_INVOICE_NO.'
         error {
-            errorMessage: #SQLERRM_TEXT#
+        errorMessage: #SQLERRM_TEXT#
+    }
+    )
+    
+    process clear-cart (
+        type: executeCode
+        sequence: 30
+        execution {
+        whenButtonPressed: @clear_cart
+    }
+        source {
+            plsqlCode: ```plsql
+app_api.apex_pos_cart_clear;
+:P20_INVOICE_NO := null;
+```
         }
-        serverSideCondition {
-            whenButtonPressed: @settle
-        }
+        successMessage: 'Panier vidé.'
+        error {
+        errorMessage: #SQLERRM_TEXT#
+    }
     )
 )

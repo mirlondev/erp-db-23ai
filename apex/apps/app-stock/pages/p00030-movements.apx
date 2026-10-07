@@ -10,7 +10,7 @@ page 30 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-vendeur
+        authorizationScheme: @regal_vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -34,12 +34,12 @@ page 30 (
     pageItem P30_DATE_FROM (
         type: datePicker
         label {
-            label: From
-            alignment: left
-        }
+        label: From
+        alignment: left
+    }
         layout {
             sequence: 10
-            region: @movement-filters
+            region: @movement_filters
             slot: regionBody
             column: 1
         }
@@ -60,12 +60,12 @@ page 30 (
     pageItem P30_DATE_TO (
         type: datePicker
         label {
-            label: To
-            alignment: left
-        }
+        label: To
+        alignment: left
+    }
         layout {
             sequence: 20
-            region: @movement-filters
+            region: @movement_filters
             slot: regionBody
             column: 2
         }
@@ -86,16 +86,16 @@ page 30 (
     pageItem P30_WAREHOUSE (
         type: selectList
         label {
-            label: Warehouse
-            alignment: left
-        }
+        label: Warehouse
+        alignment: left
+    }
         lov {
             type: sharedComponent
             lov: @WAREHOUSES
         }
         layout {
             sequence: 30
-            region: @movement-filters
+            region: @movement_filters
             slot: regionBody
             column: 3
         }
@@ -152,93 +152,101 @@ page 30 (
 
         column WAREHOUSE_CODE (
             heading {
-                heading: Warehouse
-            }
+        heading: Warehouse
+    }
             layout {
-                sequence: 10
-            }
+        sequence: 10
+    }
             source {
-            }
+        
+    }
         )
 
         column PRODUCT_CODE (
             heading {
-                heading: Code
-            }
+        heading: Code
+    }
             layout {
-                sequence: 20
-            }
+        sequence: 20
+    }
             source {
-            }
+        
+    }
         )
 
         column PRODUCT_NAME (
             heading {
-                heading: Product
-            }
+        heading: Product
+    }
             layout {
-                sequence: 30
-            }
+        sequence: 30
+    }
             source {
-            }
+        
+    }
         )
 
         column CURRENT_STOCK (
             heading {
-                heading: Stock
-                alignment: end
-            }
+        heading: Stock
+        alignment: end
+    }
             layout {
-                sequence: 40
-            }
+        sequence: 40
+    }
             source {
-            }
+        
+    }
         )
 
         column LAST_IN (
             heading {
-                heading: Last in
-            }
+        heading: Last in
+    }
             layout {
-                sequence: 50
-            }
+        sequence: 50
+    }
             source {
-            }
+        
+    }
         )
 
         column LAST_OUT (
             heading {
-                heading: Last out
-            }
+        heading: Last out
+    }
             layout {
-                sequence: 60
-            }
+        sequence: 60
+    }
             source {
-            }
+        
+    }
         )
 
         column HOURS_SINCE_LAST_MOVE (
             heading {
-                heading: Hours since
-                alignment: end
-            }
+        heading: Hours since
+        alignment: end
+    }
             layout {
-                sequence: 70
-            }
+        sequence: 70
+    }
             source {
-            }
+        
+    }
         )
 
         column UNIT_COST (
             heading {
-                heading: Unit cost
-                alignment: end
-            }
+        heading: Unit cost
+        alignment: end
+    }
             layout {
-                sequence: 80
-            }
+        sequence: 80
+    }
             source {
-            }
+        
+    }
         )
     )
 )

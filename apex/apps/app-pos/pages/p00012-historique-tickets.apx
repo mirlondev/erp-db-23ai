@@ -1,6 +1,6 @@
 page 12 (
     name: Historique tickets
-    alias: HISTORIQUE-TICKETS
+    alias: HISTORIQUE_TICKETS
     title: Historique tickets
     appearance {
         pageTemplate: @/standard
@@ -10,7 +10,7 @@ page 12 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-vendeur
+        authorizationScheme: @regal_vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -19,8 +19,8 @@ page 12 (
         name: Breadcrumb
         type: breadcrumb
         source {
-            breadcrumb: @breadcrumb
-        }
+        breadcrumb: @breadcrumb
+    }
         layout {
             sequence: 10
             slot: breadcrumbBar
@@ -115,71 +115,71 @@ page 12 (
             displayColumn (
                 column: @TERMINAL_ID
                 layout {
-                    sequence: 1
-                }
+        sequence: 1
+    }
             )
 
             displayColumn (
                 column: @TICKET_NO
                 layout {
-                    sequence: 2
-                }
+        sequence: 2
+    }
             )
 
             displayColumn (
                 column: @TICKET_AT
                 layout {
-                    sequence: 3
-                }
+        sequence: 3
+    }
             )
 
             displayColumn (
                 column: @INVOICE_NO
                 layout {
-                    sequence: 4
-                }
+        sequence: 4
+    }
             )
 
             displayColumn (
                 column: @CUSTOMER_NAME
                 layout {
-                    sequence: 5
-                }
+        sequence: 5
+    }
             )
 
             displayColumn (
                 column: @USER_CODE
                 layout {
-                    sequence: 6
-                }
+        sequence: 6
+    }
             )
 
             displayColumn (
                 column: @TOTAL_HT
                 layout {
-                    sequence: 7
-                }
+        sequence: 7
+    }
             )
 
             displayColumn (
                 column: @TOTAL_TTC
                 layout {
-                    sequence: 8
-                }
+        sequence: 8
+    }
             )
 
             displayColumn (
                 column: @TOTAL_TVA
                 layout {
-                    sequence: 9
-                }
+        sequence: 9
+    }
             )
 
             displayColumn (
                 column: @STATUS
                 layout {
-                    sequence: 10
-                }
+        sequence: 10
+    }
             )
 
         )
@@ -187,14 +187,14 @@ page 12 (
         column CUSTOMER_NAME (
             type: textField
             heading {
-                heading: Customer Name
-            }
+        heading: Customer Name
+    }
             layout {
-                sequence: 50
-            }
+        sequence: 50
+    }
             validation {
-                maxLength: 120
-            }
+        maxLength: 120
+    }
             source {
                 databaseColumn: CUSTOMER_NAME
                 dataType: varchar2
@@ -212,9 +212,9 @@ page 12 (
         column INVOICE_NO (
             type: numberField
             heading {
-                heading: Invoice No
-                alignment: end
-            }
+        heading: Invoice No
+        alignment: end
+    }
             layout {
                 sequence: 40
                 columnAlignment: end
@@ -231,14 +231,14 @@ page 12 (
         column STATUS (
             type: textField
             heading {
-                heading: Status
-            }
+        heading: Status
+    }
             layout {
-                sequence: 100
-            }
+        sequence: 100
+    }
             validation {
-                maxLength: 4
-            }
+        maxLength: 4
+    }
             source {
                 databaseColumn: STATUS
                 dataType: varchar2
@@ -256,11 +256,11 @@ page 12 (
         column TERMINAL_ID (
             type: textField
             heading {
-                heading: Terminal Id
-            }
+        heading: Terminal Id
+    }
             layout {
-                sequence: 10
-            }
+        sequence: 10
+    }
             validation {
                 valueRequired: true
                 maxLength: 12
@@ -282,14 +282,14 @@ page 12 (
         column TICKET_AT (
             type: textField
             heading {
-                heading: Ticket At
-            }
+        heading: Ticket At
+    }
             layout {
-                sequence: 30
-            }
+        sequence: 30
+    }
             validation {
-                maxLength: 16
-            }
+        maxLength: 16
+    }
             source {
                 databaseColumn: TICKET_AT
                 dataType: varchar2
@@ -307,16 +307,16 @@ page 12 (
         column TICKET_NO (
             type: numberField
             heading {
-                heading: Ticket No
-                alignment: end
-            }
+        heading: Ticket No
+        alignment: end
+    }
             layout {
                 sequence: 20
                 columnAlignment: end
             }
             validation {
-                valueRequired: true
-            }
+        valueRequired: true
+    }
             source {
                 databaseColumn: TICKET_NO
                 dataType: number
@@ -329,9 +329,9 @@ page 12 (
         column TOTAL_HT (
             type: numberField
             heading {
-                heading: Total Ht
-                alignment: end
-            }
+        heading: Total Ht
+        alignment: end
+    }
             layout {
                 sequence: 70
                 columnAlignment: end
@@ -348,9 +348,9 @@ page 12 (
         column TOTAL_TTC (
             type: numberField
             heading {
-                heading: Total Ttc
-                alignment: end
-            }
+        heading: Total Ttc
+        alignment: end
+    }
             layout {
                 sequence: 80
                 columnAlignment: end
@@ -367,9 +367,9 @@ page 12 (
         column TOTAL_TVA (
             type: numberField
             heading {
-                heading: Total Tva
-                alignment: end
-            }
+        heading: Total Tva
+        alignment: end
+    }
             layout {
                 sequence: 90
                 columnAlignment: end
@@ -386,11 +386,11 @@ page 12 (
         column USER_CODE (
             type: textField
             heading {
-                heading: User Code
-            }
+        heading: User Code
+    }
             layout {
-                sequence: 60
-            }
+        sequence: 60
+    }
             validation {
                 valueRequired: true
                 maxLength: 20

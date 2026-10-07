@@ -34,12 +34,12 @@ page 9999 (
     pageItem P9999_PASSWORD (
         type: password
         label {
-            label: Password
-            alignment: right
-        }
+        label: Password
+        alignment: right
+    }
         layout {
             sequence: 20
-            region: @app-stock
+            region: @app_stock
             slot: regionBody
             alignment: left
         }
@@ -51,8 +51,8 @@ page 9999 (
             valuePlaceholder: Password
         }
         validation {
-            maxLength: 100
-        }
+        maxLength: 100
+    }
         advanced {
             customAttributes: autocomplete="current-password"
         }
@@ -64,12 +64,12 @@ page 9999 (
     pageItem P9999_REMEMBER (
         type: checkbox
         label {
-            label: Remember username
-            alignment: right
-        }
+        label: Remember username
+        alignment: right
+    }
         layout {
             sequence: 30
-            region: @app-stock
+            region: @app_stock
             slot: regionBody
             alignment: left
         }
@@ -86,12 +86,12 @@ page 9999 (
     pageItem P9999_USERNAME (
         type: textField
         label {
-            label: Username
-            alignment: right
-        }
+        label: Username
+        alignment: right
+    }
         layout {
             sequence: 10
-            region: @app-stock
+            region: @app_stock
             slot: regionBody
             alignment: left
         }
@@ -103,8 +103,8 @@ page 9999 (
             valuePlaceholder: Username
         }
         validation {
-            maxLength: 100
-        }
+        maxLength: 100
+    }
         advanced {
             customAttributes: autocomplete="username"
         }
@@ -118,7 +118,7 @@ page 9999 (
         label: Sign In
         layout {
             sequence: 40
-            region: @app-stock
+            region: @app_stock
             slot: next
         }
         appearance {
@@ -135,8 +135,8 @@ page 9999 (
         name: Clear Page(s) Cache
         type: clearSessionState
         execution {
-            sequence: 30
-        }
+        sequence: 30
+    }
         advanced {
             executionMappingIdentifier: 2600269980003548
         }
@@ -169,8 +169,8 @@ page 9999 (
             procedureOrFunction: LOGIN
         }
         execution {
-            sequence: 20
-        }
+        sequence: 20
+    }
         advanced {
             executionMappingIdentifier: 2596506774003535
         }
@@ -218,8 +218,8 @@ page 9999 (
             procedureOrFunction: SEND_LOGIN_USERNAME_COOKIE
         }
         execution {
-            sequence: 10
-        }
+        sequence: 10
+    }
         advanced {
             executionMappingIdentifier: 2598421400003544
         }

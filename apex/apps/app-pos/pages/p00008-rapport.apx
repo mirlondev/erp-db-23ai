@@ -10,7 +10,7 @@ page 8 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-vendeur
+        authorizationScheme: @regal_vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -19,8 +19,8 @@ page 8 (
         name: Breadcrumb
         type: breadcrumb
         source {
-            breadcrumb: @breadcrumb
-        }
+        breadcrumb: @breadcrumb
+    }
         layout {
             sequence: 10
             slot: breadcrumbBar
@@ -95,43 +95,43 @@ page 8 (
             displayColumn (
                 column: @TERMINAL_CODE
                 layout {
-                    sequence: 1
-                }
+        sequence: 1
+    }
             )
 
             displayColumn (
                 column: @TERMINAL_NAME
                 layout {
-                    sequence: 2
-                }
+        sequence: 2
+    }
             )
 
             displayColumn (
                 column: @STATUS
                 layout {
-                    sequence: 3
-                }
+        sequence: 3
+    }
             )
 
             displayColumn (
                 column: @HOURS_OPEN
                 layout {
-                    sequence: 4
-                }
+        sequence: 4
+    }
             )
 
             displayColumn (
                 column: @NB_TICKETS
                 layout {
-                    sequence: 5
-                }
+        sequence: 5
+    }
             )
 
             displayColumn (
                 column: @CA_SESSION_XAF
                 layout {
-                    sequence: 6
-                }
+        sequence: 6
+    }
             )
 
         )
@@ -139,9 +139,9 @@ page 8 (
         column CA_SESSION_XAF (
             type: numberField
             heading {
-                heading: Ca Session Xaf
-                alignment: end
-            }
+        heading: Ca Session Xaf
+        alignment: end
+    }
             layout {
                 sequence: 60
                 columnAlignment: end
@@ -158,9 +158,9 @@ page 8 (
         column HOURS_OPEN (
             type: numberField
             heading {
-                heading: Hours Open
-                alignment: end
-            }
+        heading: Hours Open
+        alignment: end
+    }
             layout {
                 sequence: 40
                 columnAlignment: end
@@ -177,9 +177,9 @@ page 8 (
         column NB_TICKETS (
             type: numberField
             heading {
-                heading: Nb Tickets
-                alignment: end
-            }
+        heading: Nb Tickets
+        alignment: end
+    }
             layout {
                 sequence: 50
                 columnAlignment: end
@@ -196,14 +196,14 @@ page 8 (
         column STATUS (
             type: textField
             heading {
-                heading: Status
-            }
+        heading: Status
+    }
             layout {
-                sequence: 30
-            }
+        sequence: 30
+    }
             validation {
-                maxLength: 6
-            }
+        maxLength: 6
+    }
             source {
                 databaseColumn: STATUS
                 dataType: varchar2
@@ -221,11 +221,11 @@ page 8 (
         column TERMINAL_CODE (
             type: textField
             heading {
-                heading: Terminal Code
-            }
+        heading: Terminal Code
+    }
             layout {
-                sequence: 10
-            }
+        sequence: 10
+    }
             validation {
                 valueRequired: true
                 maxLength: 12
@@ -247,11 +247,11 @@ page 8 (
         column TERMINAL_NAME (
             type: textField
             heading {
-                heading: Terminal Name
-            }
+        heading: Terminal Name
+    }
             layout {
-                sequence: 20
-            }
+        sequence: 20
+    }
             validation {
                 valueRequired: true
                 maxLength: 120

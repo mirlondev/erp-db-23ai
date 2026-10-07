@@ -1,6 +1,6 @@
 page 14 (
     name: Z de caisse
-    alias: Z-DE-CAISSE
+    alias: Z_DE_CAISSE
     title: Z de caisse
     appearance {
         pageTemplate: @/standard
@@ -10,7 +10,7 @@ page 14 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-manager
+        authorizationScheme: @regal_manager
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -19,8 +19,8 @@ page 14 (
         name: Breadcrumb
         type: breadcrumb
         source {
-            breadcrumb: @breadcrumb
-        }
+        breadcrumb: @breadcrumb
+    }
         layout {
             sequence: 10
             slot: breadcrumbBar
@@ -128,113 +128,113 @@ page 14 (
             displayColumn (
                 column: @APEX$LINK
                 layout {
-                    sequence: 1
-                }
+        sequence: 1
+    }
             )
 
             displayColumn (
                 column: @TERMINAL_ID
                 layout {
-                    sequence: 2
-                }
+        sequence: 2
+    }
             )
 
             displayColumn (
                 column: @SESSION_NO
                 layout {
-                    sequence: 3
-                }
+        sequence: 3
+    }
             )
 
             displayColumn (
                 column: @USER_CODE
                 layout {
-                    sequence: 4
-                }
+        sequence: 4
+    }
             )
 
             displayColumn (
                 column: @TERMINAL_NAME
                 layout {
-                    sequence: 5
-                }
+        sequence: 5
+    }
             )
 
             displayColumn (
                 column: @WAREHOUSE_CODE
                 layout {
-                    sequence: 6
-                }
+        sequence: 6
+    }
             )
 
             displayColumn (
                 column: @OPENED
                 layout {
-                    sequence: 7
-                }
+        sequence: 7
+    }
             )
 
             displayColumn (
                 column: @CLOSED
                 layout {
-                    sequence: 8
-                }
+        sequence: 8
+    }
             )
 
             displayColumn (
                 column: @STATUS
                 layout {
-                    sequence: 9
-                }
+        sequence: 9
+    }
             )
 
             displayColumn (
                 column: @OPENING_BALANCE
                 layout {
-                    sequence: 10
-                }
+        sequence: 10
+    }
             )
 
             displayColumn (
                 column: @CLOSING_BALANCE
                 layout {
-                    sequence: 11
-                }
+        sequence: 11
+    }
             )
 
             displayColumn (
                 column: @THEORETICAL_BALANCE
                 layout {
-                    sequence: 12
-                }
+        sequence: 12
+    }
             )
 
             displayColumn (
                 column: @ECART
                 layout {
-                    sequence: 13
-                }
+        sequence: 13
+    }
             )
 
             displayColumn (
                 column: @NB_TICKETS
                 layout {
-                    sequence: 14
-                }
+        sequence: 14
+    }
             )
 
             displayColumn (
                 column: @CA_HT
                 layout {
-                    sequence: 15
-                }
+        sequence: 15
+    }
             )
 
             displayColumn (
                 column: @CA_TTC
                 layout {
-                    sequence: 16
-                }
+        sequence: 16
+    }
             )
 
         )
@@ -242,8 +242,8 @@ page 14 (
         column APEX$LINK (
             type: link
             heading {
-                alignment: center
-            }
+        alignment: center
+    }
             layout {
                 sequence: 10
                 columnAlignment: center
@@ -261,16 +261,16 @@ page 14 (
                 linkText: <span role="img" aria-label="Edit" class="fa fa-edit" title="Edit"></span>
             }
             source {
-                type: none
-            }
+        type: none
+    }
         )
 
         column CA_HT (
             type: numberField
             heading {
-                heading: Ca Ht
-                alignment: end
-            }
+        heading: Ca Ht
+        alignment: end
+    }
             layout {
                 sequence: 150
                 columnAlignment: end
@@ -287,9 +287,9 @@ page 14 (
         column CA_TTC (
             type: numberField
             heading {
-                heading: Ca Ttc
-                alignment: end
-            }
+        heading: Ca Ttc
+        alignment: end
+    }
             layout {
                 sequence: 160
                 columnAlignment: end
@@ -306,14 +306,14 @@ page 14 (
         column CLOSED (
             type: textField
             heading {
-                heading: Closed
-            }
+        heading: Closed
+    }
             layout {
-                sequence: 80
-            }
+        sequence: 80
+    }
             validation {
-                maxLength: 16
-            }
+        maxLength: 16
+    }
             source {
                 databaseColumn: CLOSED
                 dataType: varchar2
@@ -331,9 +331,9 @@ page 14 (
         column CLOSING_BALANCE (
             type: numberField
             heading {
-                heading: Closing Balance
-                alignment: end
-            }
+        heading: Closing Balance
+        alignment: end
+    }
             layout {
                 sequence: 110
                 columnAlignment: end
@@ -350,9 +350,9 @@ page 14 (
         column ECART (
             type: numberField
             heading {
-                heading: Ecart
-                alignment: end
-            }
+        heading: Ecart
+        alignment: end
+    }
             layout {
                 sequence: 130
                 columnAlignment: end
@@ -369,9 +369,9 @@ page 14 (
         column NB_TICKETS (
             type: numberField
             heading {
-                heading: Nb Tickets
-                alignment: end
-            }
+        heading: Nb Tickets
+        alignment: end
+    }
             layout {
                 sequence: 140
                 columnAlignment: end
@@ -388,14 +388,14 @@ page 14 (
         column OPENED (
             type: textField
             heading {
-                heading: Opened
-            }
+        heading: Opened
+    }
             layout {
-                sequence: 70
-            }
+        sequence: 70
+    }
             validation {
-                maxLength: 16
-            }
+        maxLength: 16
+    }
             source {
                 databaseColumn: OPENED
                 dataType: varchar2
@@ -413,16 +413,16 @@ page 14 (
         column OPENING_BALANCE (
             type: numberField
             heading {
-                heading: Opening Balance
-                alignment: end
-            }
+        heading: Opening Balance
+        alignment: end
+    }
             layout {
                 sequence: 100
                 columnAlignment: end
             }
             validation {
-                valueRequired: true
-            }
+        valueRequired: true
+    }
             source {
                 databaseColumn: OPENING_BALANCE
                 dataType: number
@@ -435,8 +435,8 @@ page 14 (
         column SESSION_NO (
             type: hidden
             layout {
-                sequence: 30
-            }
+        sequence: 30
+    }
             source {
                 databaseColumn: SESSION_NO
                 dataType: number
@@ -450,14 +450,14 @@ page 14 (
         column STATUS (
             type: textField
             heading {
-                heading: Status
-            }
+        heading: Status
+    }
             layout {
-                sequence: 90
-            }
+        sequence: 90
+    }
             validation {
-                maxLength: 7
-            }
+        maxLength: 7
+    }
             source {
                 databaseColumn: STATUS
                 dataType: varchar2
@@ -475,8 +475,8 @@ page 14 (
         column TERMINAL_ID (
             type: hidden
             layout {
-                sequence: 20
-            }
+        sequence: 20
+    }
             source {
                 databaseColumn: TERMINAL_ID
                 dataType: number
@@ -490,11 +490,11 @@ page 14 (
         column TERMINAL_NAME (
             type: textField
             heading {
-                heading: Terminal Name
-            }
+        heading: Terminal Name
+    }
             layout {
-                sequence: 50
-            }
+        sequence: 50
+    }
             validation {
                 valueRequired: true
                 maxLength: 120
@@ -516,9 +516,9 @@ page 14 (
         column THEORETICAL_BALANCE (
             type: numberField
             heading {
-                heading: Theoretical Balance
-                alignment: end
-            }
+        heading: Theoretical Balance
+        alignment: end
+    }
             layout {
                 sequence: 120
                 columnAlignment: end
@@ -535,11 +535,11 @@ page 14 (
         column USER_CODE (
             type: textField
             heading {
-                heading: User Code
-            }
+        heading: User Code
+    }
             layout {
-                sequence: 40
-            }
+        sequence: 40
+    }
             validation {
                 valueRequired: true
                 maxLength: 20
@@ -561,14 +561,14 @@ page 14 (
         column WAREHOUSE_CODE (
             type: textField
             heading {
-                heading: Warehouse Code
-            }
+        heading: Warehouse Code
+    }
             layout {
-                sequence: 60
-            }
+        sequence: 60
+    }
             validation {
-                maxLength: 5
-            }
+        maxLength: 5
+    }
             source {
                 databaseColumn: WAREHOUSE_CODE
                 dataType: varchar2
@@ -594,7 +594,7 @@ page 14 (
         label: Create
         layout {
             sequence: 10
-            region: @z-de-caisse
+            region: @z_de_caisse
             slot: edit
         }
         appearance {
@@ -615,19 +615,19 @@ page 14 (
     dynamicAction edit-report-dialog-closed (
         name: Edit Report - Dialog Closed
         execution {
-            sequence: 10
-        }
+        sequence: 10
+    }
         when {
             event: apexafterclosedialog
             selectionType: region
-            region: @z-de-caisse
+            region: @z_de_caisse
         }
 
         action native-refresh (
             action: refresh
             affectedElements {
                 selectionType: region
-                region: @z-de-caisse
+                region: @z_de_caisse
             }
             execution {
                 sequence: 10

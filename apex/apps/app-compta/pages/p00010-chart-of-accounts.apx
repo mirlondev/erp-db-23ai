@@ -64,7 +64,7 @@ page 10 (
                 sequence: 10
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -77,7 +77,7 @@ page 10 (
                 sequence: 20
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -90,7 +90,7 @@ page 10 (
                 sequence: 30
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -103,7 +103,7 @@ page 10 (
                 sequence: 40
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -116,7 +116,7 @@ page 10 (
                 sequence: 50
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -129,7 +129,7 @@ page 10 (
                 sequence: 60
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -142,7 +142,7 @@ page 10 (
                 sequence: 70
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -155,7 +155,7 @@ page 10 (
                 sequence: 80
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 
@@ -168,7 +168,7 @@ page 10 (
                 sequence: 90
             }
             source {
-                dataType: VARCHAR2
+                dataType: STRING
             }
         )
 

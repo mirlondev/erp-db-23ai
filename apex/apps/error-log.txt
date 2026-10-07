@@ -1,0 +1,3010 @@
+odema@HP-250-G7-ZORIN:~/Bureau/OracleDBA/migration_26ai/erp-db-23ai/apex/apps$ sql sys/oracle@localhost:1521/FREEPDB1 as sysdba
+
+SQLcl : version 26.2 Production sur mer. oct. 07 10:39:50 2026
+
+Copyright (c) 1982, 2026, Oracle. Tous droits réservés.
+
+Connecté à :
+Oracle AI Database 26ai Free Release 23.26.0.0.0 - Develop, Learn, and Run for Free
+Version 23.26.0.0.0
+
+SQL> apex import -workspace REGAL -input app-pos.zip -id 100;
+Import de l'ID d'application 100 dans l'espace de travail REGAL
+Erreurs de compilation APEXlang :
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 54
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Code' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 55
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 55
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 56
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 61
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Article' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 62
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 62
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 63
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 68
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Catégorie' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 69
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 69
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 70
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 75
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Prix (XAF)' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 76
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 76
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: NUMBER }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 77
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 82
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Stock' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 83
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 83
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: NUMBER }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 84
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 89
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Dispo' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 90
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 90
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 91
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 111
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Code-barres ou référence' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 112
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 112
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 columnSpan: 7 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 113
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: settings {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 123
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: maxLength: 30 }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 124
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 128
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Quantité' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 129
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 129
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 8 columnSpan: 2 startNewRow: false }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 130
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: settings {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 130
+Colonne : 23
+Type : SYNTAX
+Erreur : Invalid token: virtualKeyboard: text }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 131
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 136
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: type: static staticValue: '1' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 137
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: validation {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 137
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: maxLength: 10 }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 138
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 143
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 10 startNewRow: false }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 144
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 185
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Réf' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 186
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 191
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Article' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 192
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 197
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Prix XAF' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 198
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 203
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Qté' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 204
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 209
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Sous-total XAF' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 210
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 225
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Client (optionnel)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 226
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 226
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 227
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: lov {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 235
+Colonne : 23
+Type : SYNTAX
+Erreur : Invalid token: nullDisplayValue: '-- Vente anonyme --' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 236
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 240
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Total HT (XAF)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 241
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 241
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 242
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 242
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: template: @/optional-floating }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 243
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 254
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'TVA 18,9% (XAF)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 255
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 255
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 256
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 256
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: template: @/optional-floating }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 257
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 268
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'TOTAL À PAYER (XAF)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 269
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 269
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 270
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 285
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Mode de paiement' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 286
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 286
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 287
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: lov {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 291
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: type: static staticValue: 'CASH' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 292
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 296
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: valueRequired: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 297
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 301
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'N° Ticket' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 302
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 302
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 303
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 303
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: template: @/optional-floating }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 304
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 309
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 310
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 324
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 2 startNewRow: false }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 325
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 339
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: whenButtonPressed: @add-line }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 340
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 349
+Colonne : 16
+Type : SYNTAX
+Erreur : Invalid token: errorMessage: '#SQLERRM_TEXT#' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 350
+Colonne : 4
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 355
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: whenButtonPressed: @settle }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 356
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 366
+Colonne : 16
+Type : SYNTAX
+Erreur : Invalid token: errorMessage: '#SQLERRM_TEXT#' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 367
+Colonne : 4
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 372
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: whenButtonPressed: @clear-cart }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 373
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 380
+Colonne : 16
+Type : SYNTAX
+Erreur : Invalid token: errorMessage: '#SQLERRM_TEXT#' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 381
+Colonne : 4
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 3
+Colonne : 4
+Type : INVALID_PROPERTY
+Erreur : Invalid property (String contains one or more restricted characters: [\t :&,.+?^'"
+]|(^0$|^-?[1-9]\d*(\.\d+)?$)): alias
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 30
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'CA Aujourd''hui (XAF)' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 31
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 31
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 32
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 45
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Tickets ouverts' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 46
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 46
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 2 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 47
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 57
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Sessions actives' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 58
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 58
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 3 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 59
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 69
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Panier moyen (XAF)' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 70
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 70
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 4 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 71
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 102
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Terminal' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 103
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 107
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Tickets' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 108
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 112
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'CA TTC XAF' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 113
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 117
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'CA HT XAF' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 118
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 122
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Panier moyen' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 123
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 3
+Colonne : 4
+Type : INVALID_PROPERTY
+Erreur : Invalid property (String contains one or more restricted characters: [\t :&,.+?^'"
+]|(^0$|^-?[1-9]\d*(\.\d+)?$)): alias
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 17
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 27
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 28
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 102
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 103
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 159
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 160
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 216
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 217
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 12
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 21
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 22
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 83
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 84
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 128
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 129
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 131
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: type
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 338
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 354
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 365
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: successMessage
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 371
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 379
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: successMessage
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 53
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 60
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 67
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 74
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 81
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 88
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 294
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: isSortable
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 295
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: isSearchable
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 296
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: isBreakable
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 312
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: htmlExpression
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 95
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: rowsPerPage
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 184
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 190
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 196
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 202
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 208
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00040-bulk-import.apx
+Ligne : 297
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: htmlExpression
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 1
+Colonne : 0
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (11): appearance - pageTemplate (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 1
+Colonne : 0
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (11): appearance - pageTemplate (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (385): source - breadcrumb (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 24
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 24
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 99
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 99
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 156
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 156
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 213
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 213
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (385): source - breadcrumb (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 19
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 19
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 19
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 80
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 80
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 126
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 126
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 126
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 336
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 336
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (60): execution - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 352
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 352
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (60): execution - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 369
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 369
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (60): execution - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (387): componentAppearance - breadcrumbTemplate (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (387): componentAppearance - breadcrumbTemplate (string)
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (387): componentAppearance - breadcrumbTemplate (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (387): componentAppearance - breadcrumbTemplate (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 51
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 51
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 51
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 58
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 58
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 58
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 65
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 65
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 65
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 72
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 72
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 72
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 79
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 79
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 79
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 86
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 86
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 86
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 182
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 188
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 194
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 200
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 206
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 100
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 105
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 110
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 115
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 120
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 109
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_BARCODE not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 126
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_QUANTITY not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 140
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: button add-line not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 223
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_CUSTOMER_CODE not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 238
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_TOTAL_HT not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 252
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_TOTAL_TVA not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 266
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_TOTAL_TTC not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 283
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_PAYMENT_MODE not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 299
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_INVOICE_NO not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 306
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: button settle not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 321
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: button clear-cart not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 28
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_CA not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 43
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_TICKETS not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 55
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_SESSIONS not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 67
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_PANIER not found
+
+
+
+SQL> apex import -workspace REGAL -input app-pos.zip -id 200;
+Import de l'ID d'application 200 dans l'espace de travail REGAL
+Erreurs de compilation APEXlang :
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 54
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Code' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 55
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 55
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 56
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 61
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Article' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 62
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 62
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 63
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 68
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Catégorie' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 69
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 69
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 70
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 75
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Prix (XAF)' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 76
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 76
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: NUMBER }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 77
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 82
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Stock' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 83
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 83
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: NUMBER }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 84
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 89
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Dispo' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 90
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 90
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: dataType: STRING }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 91
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 111
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Code-barres ou référence' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 112
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 112
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 columnSpan: 7 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 113
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: settings {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 123
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: maxLength: 30 }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 124
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 128
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Quantité' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 129
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 129
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 8 columnSpan: 2 startNewRow: false }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 130
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: settings {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 130
+Colonne : 23
+Type : SYNTAX
+Erreur : Invalid token: virtualKeyboard: text }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 131
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 136
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: type: static staticValue: '1' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 137
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: validation {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 137
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: maxLength: 10 }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 138
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 143
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 10 startNewRow: false }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 144
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 185
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Réf' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 186
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 191
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Article' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 192
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 197
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Prix XAF' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 198
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 203
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Qté' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 204
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 209
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Sous-total XAF' alignment: end }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 210
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 225
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Client (optionnel)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 226
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 226
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 227
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: lov {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 235
+Colonne : 23
+Type : SYNTAX
+Erreur : Invalid token: nullDisplayValue: '-- Vente anonyme --' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 236
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 240
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Total HT (XAF)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 241
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 241
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 242
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 242
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: template: @/optional-floating }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 243
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 254
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'TVA 18,9% (XAF)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 255
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 255
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 256
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 256
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: template: @/optional-floating }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 257
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 268
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'TOTAL À PAYER (XAF)' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 269
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 269
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 270
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 285
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Mode de paiement' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 286
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 286
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 287
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: lov {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 291
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: type: static staticValue: 'CASH' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 292
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 296
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: valueRequired: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 297
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 301
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'N° Ticket' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 302
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 302
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 303
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 303
+Colonne : 25
+Type : SYNTAX
+Erreur : Invalid token: template: @/optional-floating }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 304
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 309
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 startNewRow: true }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 310
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 324
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 2 startNewRow: false }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 325
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 339
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: whenButtonPressed: @add-line }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 340
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 349
+Colonne : 16
+Type : SYNTAX
+Erreur : Invalid token: errorMessage: '#SQLERRM_TEXT#' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 350
+Colonne : 4
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 355
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: whenButtonPressed: @settle }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 356
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 366
+Colonne : 16
+Type : SYNTAX
+Erreur : Invalid token: errorMessage: '#SQLERRM_TEXT#' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 367
+Colonne : 4
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 372
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: whenButtonPressed: @clear-cart }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 373
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 380
+Colonne : 16
+Type : SYNTAX
+Erreur : Invalid token: errorMessage: '#SQLERRM_TEXT#' }
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 381
+Colonne : 4
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 3
+Colonne : 4
+Type : INVALID_PROPERTY
+Erreur : Invalid property (String contains one or more restricted characters: [\t :&,.+?^'"
+]|(^0$|^-?[1-9]\d*(\.\d+)?$)): alias
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 30
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'CA Aujourd''hui (XAF)' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 31
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 31
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 1 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 32
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: appearance {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 45
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Tickets ouverts' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 46
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 46
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 2 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 47
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 57
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Sessions actives' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 58
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 58
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 3 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 59
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 69
+Colonne : 20
+Type : SYNTAX
+Erreur : Invalid token: title: 'Panier moyen (XAF)' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 70
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: layout {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 70
+Colonne : 21
+Type : SYNTAX
+Erreur : Invalid token: column: 4 }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 71
+Colonne : 12
+Type : SYNTAX
+Erreur : Invalid token: source {
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 102
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Terminal' }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 103
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 107
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Tickets' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 108
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 112
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'CA TTC XAF' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 113
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 117
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'CA HT XAF' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 118
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 122
+Colonne : 22
+Type : SYNTAX
+Erreur : Invalid token: title: 'Panier moyen' alignment: end }
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 123
+Colonne : 8
+Type : SYNTAX
+Erreur : Invalid token: )
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 3
+Colonne : 4
+Type : INVALID_PROPERTY
+Erreur : Invalid property (String contains one or more restricted characters: [\t :&,.+?^'"
+]|(^0$|^-?[1-9]\d*(\.\d+)?$)): alias
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 17
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 27
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 28
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 102
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 103
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 159
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 160
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 216
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 217
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 12
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 21
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 22
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 83
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 84
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 128
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: slot
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 129
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 131
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: type
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 338
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 354
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 365
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: successMessage
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 371
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 379
+Colonne : 8
+Type : INVALID_PROPERTY
+Erreur : Invalid property: successMessage
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 53
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 60
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 67
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 74
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 81
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 88
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 294
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: isSortable
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 295
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: isSearchable
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 296
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: isBreakable
+
+Fichier : app-pos/pages/p00030-customers.apx
+Ligne : 312
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: htmlExpression
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 95
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: rowsPerPage
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 184
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 190
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 196
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 202
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 208
+Colonne : 12
+Type : INVALID_PROPERTY
+Erreur : Invalid property: sequence
+
+Fichier : app-pos/pages/p00040-bulk-import.apx
+Ligne : 297
+Colonne : 16
+Type : INVALID_PROPERTY
+Erreur : Invalid property: htmlExpression
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 1
+Colonne : 0
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (11): appearance - pageTemplate (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 1
+Colonne : 0
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (11): appearance - pageTemplate (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (385): source - breadcrumb (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 24
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 24
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 99
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 99
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 156
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 156
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 213
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 213
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (385): source - breadcrumb (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 19
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 19
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 19
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 80
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 80
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 126
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 126
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (191): layout - slot (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 126
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 336
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 336
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (60): execution - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 352
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 352
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (60): execution - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 369
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (1): identification - name (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 369
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (60): execution - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 15
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (387): componentAppearance - breadcrumbTemplate (string)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 10
+Colonne : 4
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (387): componentAppearance - breadcrumbTemplate (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 51
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 51
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 51
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 58
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 58
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 58
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 65
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 65
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 65
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 72
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 72
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 72
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 79
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 79
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 79
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 86
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (268): source - dataType (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 86
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (272): heading - heading (string)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 86
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 182
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 188
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 194
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 200
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 206
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 100
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 105
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 110
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 115
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 120
+Colonne : 8
+Type : MISSING_REQUIRED_PROPERTY
+Erreur : Missing required parameter (97): layout - sequence (number)
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 109
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_BARCODE not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 126
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_QUANTITY not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 140
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: button add-line not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 223
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_CUSTOMER_CODE not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 238
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_TOTAL_HT not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 252
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_TOTAL_TVA not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 266
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_TOTAL_TTC not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 283
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_PAYMENT_MODE not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 299
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P20_INVOICE_NO not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 306
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: button settle not found
+
+Fichier : app-pos/pages/p00020-quick-billing.apx
+Ligne : 321
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: button clear-cart not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 28
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_CA not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 43
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_TICKETS not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 55
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_SESSIONS not found
+
+Fichier : app-pos/pages/p00001-home.apx
+Ligne : 67
+Colonne : 8
+Type : COMPONENT_NOT_FOUND
+Erreur : Component: pageItem P1_KPI_PANIER not found
+
+
+
+SQL> 
+

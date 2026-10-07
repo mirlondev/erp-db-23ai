@@ -1,6 +1,6 @@
 page 15 (
     name: Z de caisse Form
-    alias: Z-DE-CAISSE-FORM
+    alias: Z_DE_CAISSE_FORM
     title: Z de caisse Form
     appearance {
         pageMode: modalDialog
@@ -17,7 +17,7 @@ page 15 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-manager
+        authorizationScheme: @regal_manager
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
@@ -98,12 +98,12 @@ page 15 (
     pageItem P15_CA_HT (
         type: numberField
         label {
-            label: Ca Ht
-            alignment: right
-        }
+        label: Ca Ht
+        alignment: right
+    }
         layout {
             sequence: 140
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -113,10 +113,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 7
-        }
+        maxLength: 7
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: CA_HT
             dataType: number
         }
@@ -125,12 +125,12 @@ page 15 (
     pageItem P15_CA_TTC (
         type: numberField
         label {
-            label: Ca Ttc
-            alignment: right
-        }
+        label: Ca Ttc
+        alignment: right
+    }
         layout {
             sequence: 150
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -140,10 +140,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 7
-        }
+        maxLength: 7
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: CA_TTC
             dataType: number
         }
@@ -152,12 +152,12 @@ page 15 (
     pageItem P15_CLOSED (
         type: textField
         label {
-            label: Closed
-            alignment: right
-        }
+        label: Closed
+        alignment: right
+    }
         layout {
             sequence: 70
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -167,10 +167,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 16
-        }
+        maxLength: 16
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: CLOSED
             dataType: varchar2
         }
@@ -179,12 +179,12 @@ page 15 (
     pageItem P15_CLOSING_BALANCE (
         type: numberField
         label {
-            label: Closing Balance
-            alignment: right
-        }
+        label: Closing Balance
+        alignment: right
+    }
         layout {
             sequence: 100
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -194,10 +194,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 7
-        }
+        maxLength: 7
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: CLOSING_BALANCE
             dataType: number
         }
@@ -206,12 +206,12 @@ page 15 (
     pageItem P15_ECART (
         type: numberField
         label {
-            label: Ecart
-            alignment: right
-        }
+        label: Ecart
+        alignment: right
+    }
         layout {
             sequence: 120
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -221,10 +221,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 7
-        }
+        maxLength: 7
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: ECART
             dataType: number
         }
@@ -233,12 +233,12 @@ page 15 (
     pageItem P15_NB_TICKETS (
         type: numberField
         label {
-            label: Nb Tickets
-            alignment: right
-        }
+        label: Nb Tickets
+        alignment: right
+    }
         layout {
             sequence: 130
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -248,10 +248,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 7
-        }
+        maxLength: 7
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: NB_TICKETS
             dataType: number
         }
@@ -260,12 +260,12 @@ page 15 (
     pageItem P15_OPENED (
         type: textField
         label {
-            label: Opened
-            alignment: right
-        }
+        label: Opened
+        alignment: right
+    }
         layout {
             sequence: 60
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -275,10 +275,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 16
-        }
+        maxLength: 16
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: OPENED
             dataType: varchar2
         }
@@ -287,12 +287,12 @@ page 15 (
     pageItem P15_OPENING_BALANCE (
         type: numberField
         label {
-            label: Opening Balance
-            alignment: right
-        }
+        label: Opening Balance
+        alignment: right
+    }
         layout {
             sequence: 90
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -306,7 +306,7 @@ page 15 (
             maxLength: 7
         }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: OPENING_BALANCE
             dataType: number
         }
@@ -316,11 +316,11 @@ page 15 (
         type: hidden
         layout {
             sequence: 20
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
         }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: SESSION_NO
             dataType: number
             primaryKey: true
@@ -333,12 +333,12 @@ page 15 (
     pageItem P15_STATUS (
         type: textField
         label {
-            label: Status
-            alignment: right
-        }
+        label: Status
+        alignment: right
+    }
         layout {
             sequence: 80
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -348,10 +348,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 7
-        }
+        maxLength: 7
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: STATUS
             dataType: varchar2
         }
@@ -361,11 +361,11 @@ page 15 (
         type: hidden
         layout {
             sequence: 10
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
         }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: TERMINAL_ID
             dataType: number
             primaryKey: true
@@ -378,12 +378,12 @@ page 15 (
     pageItem P15_TERMINAL_NAME (
         type: textField
         label {
-            label: Terminal Name
-            alignment: right
-        }
+        label: Terminal Name
+        alignment: right
+    }
         layout {
             sequence: 40
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -397,7 +397,7 @@ page 15 (
             maxLength: 120
         }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: TERMINAL_NAME
             dataType: varchar2
         }
@@ -406,12 +406,12 @@ page 15 (
     pageItem P15_THEORETICAL_BALANCE (
         type: numberField
         label {
-            label: Theoretical Balance
-            alignment: right
-        }
+        label: Theoretical Balance
+        alignment: right
+    }
         layout {
             sequence: 110
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -421,10 +421,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 7
-        }
+        maxLength: 7
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: THEORETICAL_BALANCE
             dataType: number
         }
@@ -433,12 +433,12 @@ page 15 (
     pageItem P15_USER_CODE (
         type: textField
         label {
-            label: User Code
-            alignment: right
-        }
+        label: User Code
+        alignment: right
+    }
         layout {
             sequence: 30
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -452,7 +452,7 @@ page 15 (
             maxLength: 20
         }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: USER_CODE
             dataType: varchar2
         }
@@ -461,12 +461,12 @@ page 15 (
     pageItem P15_WAREHOUSE_CODE (
         type: textField
         label {
-            label: Warehouse Code
-            alignment: right
-        }
+        label: Warehouse Code
+        alignment: right
+    }
         layout {
             sequence: 50
-            region: @z-de-caisse-form
+            region: @z_de_caisse_form
             slot: regionBody
             alignment: left
         }
@@ -476,10 +476,10 @@ page 15 (
             width: 32
         }
         validation {
-            maxLength: 5
-        }
+        maxLength: 5
+    }
         source {
-            formRegion: @z-de-caisse-form
+            formRegion: @z_de_caisse_form
             column: WAREHOUSE_CODE
             dataType: varchar2
         }
@@ -504,8 +504,8 @@ page 15 (
         triggerAction native-dialog-cancel (
             action: cancelDialog
             execution {
-                sequence: 10
-            }
+        sequence: 10
+    }
         )
 
     )
@@ -591,8 +591,8 @@ page 15 (
         name: Close Dialog
         type: closeDialog
         execution {
-            sequence: 50
-        }
+        sequence: 50
+    }
         advanced {
             executionMappingIdentifier: 2682670383216945
         }
@@ -605,7 +605,7 @@ page 15 (
     process initialize-form-z-de-caisse-form (
         name: Initialize form Z de caisse Form
         type: formInitialization
-        formRegion: @z-de-caisse-form
+        formRegion: @z_de_caisse_form
         execution {
             sequence: 10
             point: beforeHeader
@@ -618,10 +618,10 @@ page 15 (
     process process-form-z-de-caisse-form (
         name: Process form Z de caisse Form
         type: formAutoRowProcessing
-        formRegion: @z-de-caisse-form
+        formRegion: @z_de_caisse_form
         execution {
-            sequence: 10
-        }
+        sequence: 10
+    }
         advanced {
             executionMappingIdentifier: 2682268433216945
         }

@@ -1,167 +1,205 @@
 page 20 (
-    name: Low Stock
-    alias: LOW-STOCK
-    title: Low Stock Alerts
-    appearance {
-        pageTemplate: @/standard
-        templateOptions: #DEFAULT#
+    name: 'Low Stock'
+    alias: LOW_STOCK
+    title: 'Articles en alerte stock'
+    security {
+        authorizationScheme: @regal_vendeur
+        pageAccessProtection: argumentsMustHaveChecksum
     }
     navigation {
         cursorFocus: doNotFocusCursor
     }
-    security {
-        authorizationScheme: @regal-manager
-        pageAccessProtection: argumentsMustHaveChecksum
-        formAutoComplete: false
-    }
+
+    region breadcrumb (
+        type: breadcrumb
+        slot: breadcrumbBar
+        template: @/title-bar
+        templateOptions: t-BreadcrumbRegion--useBreadcrumbTitle
+    )
+
+    region low-stock-kpi (
+        type: staticContent
+        name: 'KPI Alertes'
+        slot: body
+        seq: 10
+        template: @/standard
+        templateOptions: t-Region--noPadding t-Region--removeHeader js-removeLandmark
+        
+        pageItem P20_KPI_RUPTURE (
+            type: displayOnly
+            label: 'Ruptures'
+            source {
+                type: plsqlExpression
+                plsqlExpression: '''
+                    to_char(nvl((select count(*) from app_inv.inv_stock where stock_qty = 0),0),'FM9,999')
+                '''
+                used: always
+            }
+            layout {
+                region: @low_stock_kpi
+                column: 1
+            }
+            appearance {
+                template: @/optional-floating
+                templateOptions: t-Form-fieldContainer--large
+            }
+        )
+
+        pageItem P20_KPI_BAS (
+            type: displayOnly
+            label: 'Stock bas'
+            source {
+                type: plsqlExpression
+                plsqlExpression: '''
+                    to_char(nvl((select count(*) from app_inv.inv_stock s join app_product.product p on p.product_code=s.product_code where s.stock_qty > 0 and s.stock_qty <= nvl(p.min_stock_qty,0)),0),'FM9,999')
+                '''
+                used: always
+            }
+            layout {
+                region: @low_stock_kpi
+                column: 2
+            }
+            appearance {
+                template: @/optional-floating
+                templateOptions: t-Form-fieldContainer--large
+            }
+        )
+    )
 
     region low-stock-list (
-        name: Products to reorder
-        type: classicReport
+        type: interactiveReport
+        name: 'Articles en alerte'
+        slot: body
+        seq: 20
+        template: @/interactive-report
+        templateOptions: t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
         source {
-            location: localDatabase
             type: sqlQuery
-            sqlQuery:
-                ```sql
+            sqlQuery: ```sql
                 select s.warehouse_code,
-                       s.product_code,
+                       p.product_code,
                        p.product_name,
                        nvl(s.stock_qty, 0) as stock_qty,
-                       nvl(p.min_stock_qty, 0) as min_stock_qty,
-                       nvl(p.min_stock_qty, 0) - nvl(s.stock_qty, 0) as qty_to_order,
-                       nvl(p.standard_price, 0) as unit_cost_xaf,
-                       round(
-                         (nvl(p.min_stock_qty, 0) - nvl(s.stock_qty, 0))
-                         * nvl(p.standard_price, 0), 0
-                       ) as reorder_cost_xaf,
-                       case
-                         when nvl(s.stock_qty, 0) = 0                       then 'RUPTURE'
-                         when nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0)  then 'BAS'
-                         else 'OK'
-                       end as alert
+                       nvl(p.min_stock_qty, 0) as min_stock,
+                       nvl(p.standard_price, 0) as unit_price,
+                       case when nvl(s.stock_qty,0) = 0
+                            then '<span class="t-Badge t-Badge--danger">RUPTURE</span>'
+                            else '<span class="t-Badge t-Badge--warning">BAS</span>'
+                       end as status_badge,
+                       case when nvl(s.stock_qty,0) = 0 then 'RUPTURE' else 'BAS' end as sort_status
                   from app_inv.inv_stock s
                   join app_product.product p on p.product_code = s.product_code
                  where nvl(s.stock_qty, 0) <= nvl(p.min_stock_qty, 0)
-                 order by stock_qty asc, qty_to_order desc
-                ```
+                 order by nvl(s.stock_qty,0) asc, p.product_name
+            ```
         }
-        layout {
-            sequence: 10
-            slot: body
-        }
-        appearance {
-            template: @/standard
-            templateOptions: [
-                #DEFAULT#
-                t-Region--scrollBody
-            ]
-        }
-        componentAppearance {
-            template: @/standard
-        }
-
+        
         column WAREHOUSE_CODE (
+            type: plainText
             heading {
-                heading: Warehouse
-            }
+        heading: 'Dépôt'
+    }
             layout {
-                sequence: 10
-            }
+        seq: 10
+    }
             source {
-            }
+        dataType: STRING
+    }
         )
-
         column PRODUCT_CODE (
+            type: plainText
             heading {
-                heading: Code
-            }
+        heading: 'Code'
+    }
             layout {
-                sequence: 20
-            }
+        seq: 20
+    }
             source {
-            }
+        dataType: STRING
+    }
         )
-
         column PRODUCT_NAME (
+            type: plainText
             heading {
-                heading: Product
-            }
+        heading: 'Produit'
+    }
             layout {
-                sequence: 30
-            }
+        seq: 30
+    }
             source {
-            }
+        dataType: STRING
+    }
         )
-
         column STOCK_QTY (
+            type: plainText
             heading {
-                heading: Stock
-                alignment: end
-            }
+        heading: 'Stock'
+        alignment: end
+    }
             layout {
-                sequence: 40
-            }
+        seq: 40
+    }
             source {
-            }
+        dataType: NUMBER
+    }
         )
-
-        column MIN_STOCK_QTY (
+        column MIN_STOCK (
+            type: plainText
             heading {
-                heading: Min
-                alignment: end
-            }
+        heading: 'Seuil min'
+        alignment: end
+    }
             layout {
-                sequence: 50
-            }
+        seq: 50
+    }
             source {
-            }
+        dataType: NUMBER
+    }
         )
-
-        column QTY_TO_ORDER (
+        column UNIT_PRICE (
+            type: plainText
             heading {
-                heading: To order
-                alignment: end
-            }
+        heading: 'Prix XAF'
+        alignment: end
+    }
             layout {
-                sequence: 60
-            }
+        seq: 60
+    }
             source {
-            }
+        dataType: NUMBER
+    }
         )
-
-        column UNIT_COST_XAF (
+        column STATUS_BADGE (
+            type: htmlContent
             heading {
-                heading: Unit cost
-                alignment: end
-            }
+        heading: 'Statut'
+    }
             layout {
-                sequence: 70
-            }
+        seq: 70
+    }
             source {
-            }
+        dataType: STRING
+    }
         )
-
-        column REORDER_COST_XAF (
+        column SORT_STATUS (
+            type: plainText
             heading {
-                heading: Reorder cost
-                alignment: end
-            }
+        heading: ''
+    }
             layout {
-                sequence: 80
-            }
+        seq: 80
+    }
             source {
-            }
+        dataType: STRING
+    }
+            appearance {
+        hidden: true
+    }
         )
-
-        column ALERT (
-            heading {
-                heading: Alert
-            }
-            layout {
-                sequence: 90
-            }
-            source {
-            }
+        
+        savedReport default-low-stock (
+            visibility: primaryDefault
+            rowsPerPage: 25
         )
     )
 )

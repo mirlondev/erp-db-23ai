@@ -1,240 +1,228 @@
 page 50 (
-    name: Bulk Stock Import
-    alias: BULK-IMPORT
-    title: Bulk Stock Import
-    appearance {
-        pageTemplate: @/standard
-        templateOptions: #DEFAULT#
+    name: 'Bulk Stock Import'
+    alias: BULK_IMPORT
+    title: 'Import Stock CSV — LITOKO'
+    security {
+        authorizationScheme: @regal_manager
+        pageAccessProtection: argumentsMustHaveChecksum
     }
     navigation {
         cursorFocus: doNotFocusCursor
     }
-    security {
-        authorizationScheme: @regal-manager
-        pageAccessProtection: argumentsMustHaveChecksum
-        formAutoComplete: false
-    }
+
+    region breadcrumb (
+        type: breadcrumb
+        slot: breadcrumbBar
+        template: @/title-bar
+        templateOptions: t-BreadcrumbRegion--useBreadcrumbTitle
+    )
+
+    region import-steps (
+        type: staticContent
+        name: 'Étapes import'
+        slot: body
+        seq: 5
+        template: @/wizard-container
+        templateOptions: #DEFAULT#
+        source {
+            type: htmlCode
+            htmlCode: '''
+                <div class="t-Wizard-steps">
+                  <div class="t-Wizard-step is-active"><span class="t-Wizard-stepNumber">1</span><span class="t-Wizard-stepLabel">Préparer le CSV</span></div>
+                  <div class="t-Wizard-step"><span class="t-Wizard-stepNumber">2</span><span class="t-Wizard-stepLabel">Uploader</span></div>
+                  <div class="t-Wizard-step"><span class="t-Wizard-stepNumber">3</span><span class="t-Wizard-stepLabel">Résultats</span></div>
+                </div>
+            '''
+        }
+    )
 
     region help-text (
-        name: How to import
         type: staticContent
+        name: 'Format attendu'
+        slot: body
+        seq: 10
+        template: @/collapsible
+        templateOptions: is-collapsed t-Region--scrollBody
         source {
-            htmlCode: <p>Upload a stock CSV with columns: codart, coddep, qte_stock, pmp. Maximum file size: 50 MB.</p>
-        }
-        layout {
-            sequence: 10
-            slot: body
-        }
-        appearance {
-            template: @/collapsible
-            templateOptions: [
-                #DEFAULT#
-                is-collapsed
-                t-Region--scrollBody
-            ]
+            type: htmlCode
+            htmlCode: '''
+                <p><strong>Colonnes CSV requises :</strong> <code>codart, coddep, qte_stock, pmp</code></p>
+                <p>Exemple : <code>ART001,DEP-PNR,250,1500</code></p>
+                <p class="t-Alert--info">Encodage UTF-8, séparateur virgule, taille max 50 Mo.</p>
+            '''
         }
     )
 
     region upload-region (
-        name: Upload stock CSV
         type: staticContent
-        layout {
-            sequence: 20
-            slot: body
-        }
-        appearance {
-            template: @/standard
-            templateOptions: [
-                #DEFAULT#
-                t-Region--scrollBody
-            ]
-        }
-    )
+        name: 'Upload stock CSV'
+        slot: body
+        seq: 20
+        template: @/standard
+        templateOptions: t-Region--scrollBody
 
-    pageItem P50_CSV_FILE (
-        type: fileUpload
-        label {
-            label: CSV file
-            alignment: left
-        }
-        display {
-            displayAs: blockDropzone
-            dropzoneDesc: Drop stock CSV here or click to browse
-        }
-        storage {
-            type: appTempFiles
-            maxFileSize: 50000
-        }
-        layout {
-            sequence: 10
-            region: @upload-region
-            slot: regionBody
-            alignment: left
-        }
-        appearance {
-            template: @/required
-            templateOptions: [
-                #DEFAULT#
-                t-Form-fieldContainer--large
-            ]
-            width: 64
-        }
-        validation {
-            valueRequired: true
-        }
-    )
+        pageItem P50_CSV_FILE (
+            type: fileUpload
+            label: 'Fichier CSV stock'
+            layout {
+                region: @upload_region
+                slot: regionBody
+                seq: 10
+            }
+            appearance {
+                template: @/required
+                templateOptions: t-Form-fieldContainer--large
+                width: 64
+                display: displayAs
+                displayAs: blockDropzone
+            }
+            behavior {
+                dropzoneDesc: 'Glisser-déposer le CSV stock ici ou cliquer pour parcourir (max 50 Mo)'
+                storage {
+                    type: appTempFiles
+                    maxFileSize: 50000
+                }
+            }
+            validation {
+        valueRequired: true
+    }
+        )
 
-    button import-stock (
-        buttonName: IMPORT_STOCK
-        label: Import stock
-        layout {
-            sequence: 20
-            region: @upload-region
-            slot: regionBody
-            startNewRow: true
-        }
-        appearance {
-            buttonTemplate: @/text-with-icon
-            templateOptions: [
-                #DEFAULT#
-                t-Button--large
-            ]
-            hot: true
-        }
-        behavior {
-            action: submitPage
-            warnOnUnsavedChanges: doNotCheck
-        }
+        button import_stock (
+            buttonName: IMPORT_STOCK
+            label: 'Importer le stock'
+            layout {
+                region: @upload_region
+                slot: regionBody
+                seq: 20
+                startNewRow: true
+            }
+            appearance {
+                buttonTemplate: @/text-with-icon
+                templateOptions: t-Button--large
+                hot: true
+            }
+            behavior {
+                action: submitPage
+                warnOnUnsavedChanges: doNotCheck
+            }
+        )
     )
 
     region import-result (
-        name: Import results
         type: classicReport
+        name: 'Résultats import stock'
+        slot: body
+        seq: 30
+        template: @/standard
+        templateOptions: t-Region--scrollBody
         source {
-            location: localDatabase
             type: sqlQuery
-            sqlQuery:
-                ```sql
+            sqlQuery: ```sql
                 select etl_id,
                        source_table,
                        target_table,
                        rows_processed,
-                       status,
+                       case when status = 'OK' then '<span class="t-Badge t-Badge--success">OK</span>'
+                            when status = 'ERROR' then '<span class="t-Badge t-Badge--danger">ERREUR</span>'
+                            else '<span class="t-Badge t-Badge--neutral">' || status || '</span>'
+                       end as status_html,
                        to_char(started_at, 'DD/MM/YYYY HH24:MI') as started
                   from app_api.etl_run_progress
                  where source_table = 'CAISSE.GCSTOCK'
                    and started_at >= trunc(sysdate)
                  order by started_at desc
-                ```
+            ```
         }
-        layout {
-            sequence: 30
-            slot: body
-        }
-        appearance {
-            template: @/standard
-            templateOptions: [
-                #DEFAULT#
-                t-Region--scrollBody
-            ]
-        }
-        componentAppearance {
-            template: @/standard
-        }
-
+        
         column ETL_ID (
+            type: plainText
             heading {
-                heading: ETL ID
-            }
+        heading: 'ETL ID'
+    }
             layout {
-                sequence: 10
-            }
-            source {
-            }
+        seq: 10
+    }
         )
-
         column SOURCE_TABLE (
+            type: plainText
             heading {
-                heading: Source
-            }
+        heading: 'Source'
+    }
             layout {
-                sequence: 20
-            }
-            source {
-            }
+        seq: 20
+    }
         )
-
         column TARGET_TABLE (
+            type: plainText
             heading {
-                heading: Target
-            }
+        heading: 'Cible'
+    }
             layout {
-                sequence: 30
-            }
-            source {
-            }
+        seq: 30
+    }
         )
-
         column ROWS_PROCESSED (
+            type: plainText
             heading {
-                heading: Rows
-                alignment: end
-            }
+        heading: 'Lignes'
+        alignment: end
+    }
             layout {
-                sequence: 40
-            }
-            source {
-            }
+        seq: 40
+    }
         )
-
-        column STATUS (
+        column STATUS_HTML (
+            type: htmlContent
             heading {
-                heading: Status
-            }
+        heading: 'Statut'
+    }
             layout {
-                sequence: 50
-            }
+        seq: 50
+    }
             source {
-            }
+        dataType: STRING
+    }
         )
-
         column STARTED (
+            type: plainText
             heading {
-                heading: Started
-            }
+        heading: 'Démarré'
+    }
             layout {
-                sequence: 60
-            }
-            source {
-            }
+        seq: 60
+    }
         )
+
+        appearance {
+            componentAppearance {
+                template: @/standard
+                templateOptions: t-Report--stretch t-Report--horizontalBorders
+            }
+        }
     )
 
     process do-import-stock (
-        name: Run stock import
         type: executeCode
+        layout {
+        seq: 10
+    }
+        execution {
+        whenButtonPressed: @import_stock
+    }
         source {
-            plsqlCode:
-                ```plsql
+            plsqlCode: ```plsql
                 app_api.pkg_etl_legacy.dispatch_reference_table(
                     p_source_owner => 'CAISSE',
                     p_source_table => 'GCSTOCK',
                     p_target_owner => 'APP_INV',
                     p_target_table => 'INV_STOCK',
                     p_pk_column    => 'PRODUCT_CODE');
-                ```
+            ```
         }
-        execution {
-            sequence: 10
-        }
-        successMessage {
-            successMessage: Import stock terminé.
-        }
-        error {
+        messages {
+            successMessage: 'Import stock terminé.'
             errorMessage: #SQLERRM_TEXT#
-        }
-        serverSideCondition {
-            whenButtonPressed: @import-stock
         }
     )
 )

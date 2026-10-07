@@ -1,7 +1,7 @@
 page 40 (
     name: Bulk Import
-    alias: BULK-IMPORT
-    title: Bulk Import
+    alias: BULK_IMPORT
+    title: Import en masse — POS
     appearance {
         pageTemplate: @/standard
         templateOptions: #DEFAULT#
@@ -10,17 +10,60 @@ page 40 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-manager
+        authorizationScheme: @regal_manager
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
 
-    region help-text (
-        name: How to import
+    region breadcrumb (
+        name: Breadcrumb
+        type: breadcrumb
+        source {
+        breadcrumb: @breadcrumb
+    }
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: [
+                #DEFAULT#
+                t-BreadcrumbRegion--useBreadcrumbTitle
+            ]
+        }
+        componentAppearance {
+            breadcrumbTemplate: @/breadcrumb
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region import-steps (
+        name: Étapes import
         type: staticContent
         source {
-            htmlCode: <p>Select the data type and upload the CSV file. Format expected: codart,libart,tarifstd for products; codtie,nomtie,adrtie1 for customers.</p>
+        htmlCode: <div class="t-Wizard-steps"><div class="t-Wizard-step is-active"><span class="t-Wizard-stepNumber">1</span><span class="t-Wizard-stepLabel">Choisir le type</span></div><div class="t-Wizard-step"><span class="t-Wizard-stepNumber">2</span><span class="t-Wizard-stepLabel">Uploader le CSV</span></div><div class="t-Wizard-step"><span class="t-Wizard-stepNumber">3</span><span class="t-Wizard-stepLabel">Résultats</span></div></div>
+    }
+        layout {
+            sequence: 5
+            slot: body
         }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--noPadding
+                t-Region--removeHeader js-removeLandmark
+            ]
+        }
+    )
+
+    region help-text (
+        name: Comment importer ?
+        type: staticContent
+        source {
+        htmlCode: <p><strong>Format CSV attendu selon le type :</strong></p><table class="t-Report-report"><thead><tr><th>Type</th><th>Colonnes requises</th><th>Exemple</th></tr></thead><tbody><tr><td>PRODUCTS</td><td>codart, libart, tarifstd</td><td>ART001,Bière 65cl,1500</td></tr><tr><td>CUSTOMERS</td><td>codtie, nomtie, adrtie1</td><td>CLI001,Jean Mbemba,Pointe-Noire</td></tr></tbody></table><p>Encodage UTF-8, séparateur virgule, max 50 Mo.</p>
+    }
         layout {
             sequence: 10
             slot: body
@@ -54,18 +97,19 @@ page 40 (
     pageItem P40_DATA_TYPE (
         type: selectList
         label {
-            label: Data type
-            alignment: left
-        }
+        label: Type de données
+        alignment: left
+    }
         lov {
             type: staticValues
-            staticValues: PRODUCTS;Products:CUSTOMERS;Customers
+            staticValues: PRODUCTS;Produits:CUSTOMERS;Clients
         }
         layout {
             sequence: 10
-            region: @upload-region
+            region: @upload_region
             slot: regionBody
             alignment: left
+            startNewRow: true
         }
         appearance {
             template: @/required
@@ -79,19 +123,19 @@ page 40 (
             staticValue: PRODUCTS
         }
         validation {
-            valueRequired: true
-        }
+        valueRequired: true
+    }
     )
 
     pageItem P40_CSV_FILE (
         type: fileUpload
         label {
-            label: CSV file
-            alignment: left
-        }
+        label: Fichier CSV
+        alignment: left
+    }
         display {
             displayAs: blockDropzone
-            dropzoneDesc: Drop CSV file here or click to browse (max 50 MB)
+            dropzoneDesc: Glisser-déposer le fichier CSV ici ou cliquer pour parcourir (max 50 Mo)
         }
         storage {
             type: appTempFiles
@@ -99,9 +143,10 @@ page 40 (
         }
         layout {
             sequence: 20
-            region: @upload-region
+            region: @upload_region
             slot: regionBody
             alignment: left
+            startNewRow: true
         }
         appearance {
             template: @/required
@@ -112,16 +157,16 @@ page 40 (
             width: 64
         }
         validation {
-            valueRequired: true
-        }
+        valueRequired: true
+    }
     )
 
-    button import-csv (
+    button import_csv (
         buttonName: IMPORT
-        label: Import CSV
+        label: Importer le CSV
         layout {
             sequence: 30
-            region: @upload-region
+            region: @upload_region
             slot: regionBody
             startNewRow: true
         }
@@ -140,7 +185,7 @@ page 40 (
     )
 
     region import-result (
-        name: Import results
+        name: Résultats du dernier import
         type: classicReport
         source {
             location: localDatabase
@@ -152,10 +197,15 @@ page 40 (
                        target_table,
                        rows_processed,
                        status,
+                       case when status = 'OK'    then '<span class="t-Badge t-Badge--success">OK</span>'
+                            when status = 'ERROR' then '<span class="t-Badge t-Badge--danger">ERREUR</span>'
+                            else '<span class="t-Badge t-Badge--neutral">' || status || '</span>'
+                       end as status_badge,
                        to_char(started_at, 'DD/MM/YYYY HH24:MI:SS') as started_at,
                        substr(error_message, 1, 200) as error
                   from app_api.etl_run_progress
                  where started_at >= trunc(sysdate)
+                 order by started_at desc
                 ```
         }
         layout {
@@ -171,85 +221,113 @@ page 40 (
         }
         componentAppearance {
             template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--horizontalBorders
+            ]
         }
 
         column ETL_ID (
             heading {
-                heading: ETL ID
-            }
+        heading: ETL ID
+    }
             layout {
-                sequence: 10
-            }
+        sequence: 10
+    }
             source {
-            }
+        
+    }
         )
 
         column SOURCE_TABLE (
             heading {
-                heading: Source
-            }
+        heading: Source
+    }
             layout {
-                sequence: 20
-            }
+        sequence: 20
+    }
             source {
-            }
+        
+    }
         )
 
         column TARGET_TABLE (
             heading {
-                heading: Target
-            }
+        heading: Cible
+    }
             layout {
-                sequence: 30
-            }
+        sequence: 30
+    }
             source {
-            }
+        
+    }
         )
 
         column ROWS_PROCESSED (
             heading {
-                heading: Rows
-                alignment: end
-            }
+        heading: Lignes
+        alignment: end
+    }
             layout {
-                sequence: 40
-            }
+        sequence: 40
+    }
             source {
-            }
+        
+    }
         )
 
         column STATUS (
             heading {
-                heading: Status
-            }
+        heading: Statut (raw)
+    }
             layout {
-                sequence: 50
-            }
+        sequence: 45
+    }
             source {
-            }
+        
+    }
+        )
+
+        column STATUS_BADGE (
+            heading {
+        heading: Statut
+    }
+            layout {
+        sequence: 50
+    }
+            source {
+        
+    }
+            appearance {
+        htmlExpression: #STATUS_BADGE#
+    }
         )
 
         column STARTED_AT (
             heading {
-                heading: Started
-            }
+        heading: Démarré
+    }
             layout {
-                sequence: 60
-            }
+        sequence: 60
+    }
             source {
-            }
+        
+    }
         )
 
         column ERROR (
             heading {
-                heading: Error
-            }
+        heading: Erreur
+    }
             layout {
-                sequence: 70
-            }
+        sequence: 70
+    }
             source {
-            }
+        
+    }
         )
+
     )
 
     process do-import-csv (
@@ -265,21 +343,22 @@ page 40 (
                     app_api.pkg_etl_legacy.dispatch_reference_table(
                         p_source_owner => 'CAISSE', p_source_table => 'GCPTIE',
                         p_target_owner => 'APP_PARTY', p_target_table => 'PARTY',
-                        p_pk_column => 'PARTY_CODE');
+                        p_pk_column    => 'PARTY_CODE');
                 end if;
                 ```
         }
         execution {
-            sequence: 10
-        }
+        sequence: 10
+    }
         successMessage {
-            successMessage: Import terminé.
+            successMessage: Import terminé avec succès.
         }
         error {
-            errorMessage: #SQLERRM_TEXT#
-        }
+        errorMessage: #SQLERRM_TEXT#
+    }
         serverSideCondition {
-            whenButtonPressed: @import-csv
+            whenButtonPressed: @import_csv
         }
     )
+
 )

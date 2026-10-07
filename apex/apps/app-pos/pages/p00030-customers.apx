@@ -1,7 +1,7 @@
 page 30 (
     name: Customers
     alias: CUSTOMERS
-    title: Customers
+    title: Clients — LITOKO SARL
     appearance {
         pageTemplate: @/standard
         templateOptions: #DEFAULT#
@@ -10,13 +10,36 @@ page 30 (
         cursorFocus: doNotFocusCursor
     }
     security {
-        authorizationScheme: @regal-vendeur
+        authorizationScheme: @regal_vendeur
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
 
+    region breadcrumb (
+        name: Breadcrumb
+        type: breadcrumb
+        source {
+        breadcrumb: @breadcrumb
+    }
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: [
+                #DEFAULT#
+                t-BreadcrumbRegion--useBreadcrumbTitle
+            ]
+        }
+        componentAppearance {
+            breadcrumbTemplate: @/breadcrumb
+            templateOptions: #DEFAULT#
+        }
+    )
+
     region customers-kpi (
-        name: Customer KPIs
+        name: Indicateurs clients
         type: staticContent
         layout {
             sequence: 10
@@ -35,13 +58,14 @@ page 30 (
     pageItem P30_KPI_TOTAL (
         type: displayOnly
         label {
-            label: Total customers
-        }
+        label: Total clients
+    }
         layout {
             sequence: 10
-            region: @customers-kpi
+            region: @customers_kpi
             slot: regionBody
             column: 1
+            startNewRow: true
         }
         appearance {
             template: @/optional-floating
@@ -60,13 +84,14 @@ page 30 (
     pageItem P30_KPI_BLOCKED (
         type: displayOnly
         label {
-            label: Blocked
-        }
+        label: Bloqués
+    }
         layout {
             sequence: 20
-            region: @customers-kpi
+            region: @customers_kpi
             slot: regionBody
             column: 2
+            startNewRow: false
         }
         appearance {
             template: @/optional-floating
@@ -78,6 +103,32 @@ page 30 (
         source {
             type: expression
             plsqlExpression: to_char(app_api.apex_kpi_customer_blocked_count, 'FM999,999')
+            used: always
+        }
+    )
+
+    pageItem P30_KPI_NEW_MONTH (
+        type: displayOnly
+        label {
+        label: Nouveaux ce mois
+    }
+        layout {
+            sequence: 30
+            region: @customers_kpi
+            slot: regionBody
+            column: 3
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: [
+                #DEFAULT#
+                t-Form-fieldContainer--large
+            ]
+        }
+        source {
+            type: expression
+            plsqlExpression: to_char(nvl((select count(*) from app_party.party where nature_id=1 and trunc(created_at,'MM')=trunc(sysdate,'MM')),0),'FM999,999')
             used: always
         }
     )
@@ -98,7 +149,14 @@ page 30 (
                        p.email,
                        p.payment_terms,
                        p.credit_days,
-                       case when p.is_blocked = 'Y' then 'BLOCKED' else 'OK' end as status
+                       case when p.is_blocked = 'Y'
+                            then 'BLOQUÉ'
+                            else 'OK'
+                       end as status,
+                       case when p.is_blocked = 'Y'
+                            then '<span class="t-Badge t-Badge--danger">BLOQUÉ</span>'
+                            else '<span class="t-Badge t-Badge--success">OK</span>'
+                       end as status_badge
                   from app_party.party p
                  where p.nature_id = 1
                  order by p.party_name
@@ -119,119 +177,140 @@ page 30 (
         column PARTY_CODE (
             type: plainText
             heading {
-                heading: Code
-            }
+        heading: Code
+    }
             layout {
-                sequence: 10
-            }
+        sequence: 10
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column PARTY_NAME (
             type: plainText
             heading {
-                heading: Name
-            }
+        heading: Nom
+    }
             layout {
-                sequence: 20
-            }
+        sequence: 20
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column CITY (
             type: plainText
             heading {
-                heading: City
-            }
+        heading: Ville
+    }
             layout {
-                sequence: 30
-            }
+        sequence: 30
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column COUNTRY (
             type: plainText
             heading {
-                heading: Country
-            }
+        heading: Pays
+    }
             layout {
-                sequence: 40
-            }
+        sequence: 40
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column PHONE (
             type: plainText
             heading {
-                heading: Phone
-            }
+        heading: Téléphone
+    }
             layout {
-                sequence: 50
-            }
+        sequence: 50
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column EMAIL (
             type: plainText
             heading {
-                heading: Email
-            }
+        heading: Email
+    }
             layout {
-                sequence: 60
-            }
+        sequence: 60
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column PAYMENT_TERMS (
             type: plainText
             heading {
-                heading: Terms
-            }
+        heading: Conditions
+    }
             layout {
-                sequence: 70
-            }
+        sequence: 70
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column CREDIT_DAYS (
             type: plainText
             heading {
-                heading: Credit days
-                alignment: end
-            }
+        heading: Jours crédit
+        alignment: end
+    }
             layout {
-                sequence: 80
-            }
+        sequence: 80
+    }
             source {
-                dataType: VARCHAR2
-            }
+        dataType: STRING
+    }
         )
 
         column STATUS (
             type: plainText
             heading {
-                heading: Status
-            }
+        heading: Statut (raw)
+    }
             layout {
-                sequence: 90
-            }
+        sequence: 85
+    }
             source {
-                dataType: VARCHAR2
+        dataType: STRING
+    }
+            filter {
+                isSortable: true
+                isSearchable: true
+                isBreakable: true
             }
+        )
+
+        column STATUS_BADGE (
+            type: plainText
+            heading {
+        heading: Statut
+    }
+            layout {
+        sequence: 90
+    }
+            source {
+        dataType: STRING
+    }
+            appearance {
+        htmlExpression: #STATUS_BADGE#
+    }
         )
 
         savedReport default-customers (
@@ -241,4 +320,5 @@ page 30 (
             }
         )
     )
+
 )
