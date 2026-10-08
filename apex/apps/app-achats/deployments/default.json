@@ -1,0 +1,11 @@
+{
+  "app" : {
+    "id" : 400,
+    "databaseSession" : {
+      "parsingSchema" : "APP_PURCHASE"
+    },
+    "runtime" : {
+      "debugging" : true
+    }
+  }
+}

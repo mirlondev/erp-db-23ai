@@ -1,0 +1,217 @@
+page 30 (
+    name: Receptions
+    alias: RECEPTIONS
+    title: Bons de livraison
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-acheteur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region receptions-list (
+        name: Receptions fournisseurs
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select bl.delivery_id,
+                       bl.delivery_number,
+                       to_char(bl.delivery_date, 'DD/MM/YYYY') as delivery_date,
+                       bl.po_number,
+                       s.party_name as supplier_name,
+                       w.warehouse_code,
+                       bl.total_ht,
+                       bl.currency_code,
+                       case bl.status
+                         when 'OPEN' then 'Ouverte'
+                         when 'PARTIAL' then 'Partielle'
+                         when 'CLOSED' then 'Fermee'
+                         else bl.status
+                       end as status,
+                       bl.notes,
+                       bl.received_by
+                  from app_purchase.delivery_note bl
+                  join app_party.party s on s.party_code = bl.supplier_code
+                  left join app_org.org_warehouse w on w.warehouse_code = bl.warehouse_code
+                 order by bl.delivery_date desc
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column DELIVERY_ID (
+            reportColumnQueryId: 100
+            derivedColumn: N
+            heading {
+                heading: ID
+            }
+            layout {
+                sequence: 10
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column DELIVERY_NUMBER (
+            reportColumnQueryId: 200
+            derivedColumn: N
+            heading {
+                heading: N° BL
+            }
+            layout {
+                sequence: 20
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column DELIVERY_DATE (
+            reportColumnQueryId: 300
+            derivedColumn: N
+            heading {
+                heading: Date
+            }
+            layout {
+                sequence: 30
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column PO_NUMBER (
+            reportColumnQueryId: 400
+            derivedColumn: N
+            heading {
+                heading: BC
+            }
+            layout {
+                sequence: 40
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column SUPPLIER_NAME (
+            reportColumnQueryId: 500
+            derivedColumn: N
+            heading {
+                heading: Fournisseur
+            }
+            layout {
+                sequence: 50
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column WAREHOUSE_CODE (
+            reportColumnQueryId: 600
+            derivedColumn: N
+            heading {
+                heading: Depot
+            }
+            layout {
+                sequence: 60
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column TOTAL_HT (
+            reportColumnQueryId: 700
+            derivedColumn: N
+            heading {
+                heading: Total HT
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column CURRENCY_CODE (
+            reportColumnQueryId: 800
+            derivedColumn: N
+            heading {
+                heading: Devise
+            }
+            layout {
+                sequence: 80
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column STATUS (
+            reportColumnQueryId: 900
+            derivedColumn: N
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 90
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column NOTES (
+            reportColumnQueryId: 1000
+            derivedColumn: N
+            heading {
+                heading: Notes
+            }
+            layout {
+                sequence: 100
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column RECEIVED_BY (
+            reportColumnQueryId: 1100
+            derivedColumn: N
+            heading {
+                heading: Recu par
+            }
+            layout {
+                sequence: 110
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+    )
+
+)

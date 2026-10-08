@@ -1,0 +1,221 @@
+list navigation-bar (
+    name: Navigation Bar
+
+    entry app-user (
+        label: &APP_USER.
+        icon {
+            imageIconCssClasses: fa-user
+        }
+        layout {
+            sequence: 10
+        }
+        link {
+            target: {
+                type: url
+                url: #
+            }
+        }
+        userDefinedAttributes {
+            2: has-username
+        }
+    )
+
+    entry list_item (
+        label: ---
+        layout {
+            sequence: 20
+            parentEntry: @app-user
+        }
+        link {
+            target: {
+                type: url
+                url: separator
+            }
+        }
+        serverSideCondition {
+            type: userIsAuthenticated
+        }
+    )
+
+    entry sign-out (
+        label: Sign Out
+        icon {
+            imageIconCssClasses: fa-sign-out
+        }
+        layout {
+            sequence: 30
+            parentEntry: @app-user
+        }
+        link {
+            target: {
+                type: url
+                url: &LOGOUT_URL.
+            }
+        }
+        serverSideCondition {
+            type: userIsAuthenticated
+        }
+    )
+
+)
+
+list navigation-menu (
+    name: Navigation Menu
+
+    entry home (
+        label: Dashboard
+        icon {
+            imageIconCssClasses: fa-chart-line
+        }
+        layout {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 1
+            }
+        }
+    )
+
+    entry suppliers (
+        label: Fournisseurs
+        icon {
+            imageIconCssClasses: fa-truck
+        }
+        layout {
+            sequence: 20
+        }
+        isCurrent {
+            type: pages
+            pages: 10
+        }
+        link {
+            target: {
+                page: 10
+            }
+        }
+    )
+
+    entry purchase-orders (
+        label: Bons de commande
+        icon {
+            imageIconCssClasses: fa-shopping-cart
+        }
+        layout {
+            sequence: 30
+        }
+        isCurrent {
+            type: pages
+            pages: 20
+        }
+        link {
+            target: {
+                page: 20
+            }
+        }
+    )
+
+    entry receptions (
+        label: Bons de livraison
+        icon {
+            imageIconCssClasses: fa-truck-loading
+        }
+        layout {
+            sequence: 40
+        }
+        isCurrent {
+            type: pages
+            pages: 30
+        }
+        link {
+            target: {
+                page: 30
+            }
+        }
+    )
+
+    entry supplier-products (
+        label: Catalogue articles
+        icon {
+            imageIconCssClasses: fa-boxes
+        }
+        layout {
+            sequence: 50
+        }
+        isCurrent {
+            type: pages
+            pages: 40
+        }
+        link {
+            target: {
+                page: 40
+            }
+        }
+    )
+
+)
+
+list page-navigation (
+    name: Page Navigation
+
+    entry suppliers (
+        label: Fournisseurs
+        icon {
+            imageIconCssClasses: fa-truck
+        }
+        layout {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 10
+            }
+        }
+    )
+
+    entry purchase-orders (
+        label: Bons de commande
+        icon {
+            imageIconCssClasses: fa-shopping-cart
+        }
+        layout {
+            sequence: 20
+        }
+        link {
+            target: {
+                page: 20
+            }
+        }
+    )
+
+    entry receptions (
+        label: Bons de livraison
+        icon {
+            imageIconCssClasses: fa-truck-loading
+        }
+        layout {
+            sequence: 30
+        }
+        link {
+            target: {
+                page: 30
+            }
+        }
+    )
+
+    entry supplier-products (
+        label: Catalogue articles
+        icon {
+            imageIconCssClasses: fa-boxes
+        }
+        layout {
+            sequence: 40
+        }
+        link {
+            target: {
+                page: 40
+            }
+        }
+    }
+
+)

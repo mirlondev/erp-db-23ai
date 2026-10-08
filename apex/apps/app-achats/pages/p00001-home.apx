@@ -1,0 +1,127 @@
+page 1 (
+    name: Home
+    alias: HOME
+    title: APP_ACHATS Dashboard
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-acheteur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region app-achats-hero (
+        name: APP_ACHATS Dashboard
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/hero
+            templateOptions: #DEFAULT#
+        }
+        image {
+            fileUrl: #APP_FILES#icons/app-icon-512.png
+        }
+    )
+
+    region kpi-cards (
+        name: KPIs Achats
+        type: cards
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select label, valeur as value,
+                       case label
+                         when 'Demandes ouvertes'    then 'fa-file-alt'
+                         when 'Commandes en cours'    then 'fa-shopping-cart'
+                         when 'Receptions en attente' then 'fa-truck-loading'
+                         when 'Fournisseurs actifs'   then 'fa-truck'
+                         when 'Montant achats MTD'    then 'fa-money-bill-wave'
+                         when 'OTD global'           then 'fa-chart-line'
+                         else 'fa-chart-bar'
+                       end as icon,
+                       null as link
+                  from app_api.v_achats_kpi_cards
+                 where label in ('Demandes ouvertes','Commandes en cours','Receptions en attente','Fournisseurs actifs')
+                 order by decode(label,'Demandes ouvertes',1,'Commandes en cours',2,'Receptions en attente',3,'Fournisseurs actifs',4)
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/cards-container
+            templateOptions: [
+                #DEFAULT#
+                t-CardsRegion--styleA
+            ]
+        }
+        componentAppearance {
+            gridColumns: 4
+            template: @/cards
+            templateOptions: [
+                #DEFAULT#
+                u-colors
+                t-Cards--featured t-Cards--block force-fa-lg
+                t-Cards--displayIcons
+                t-Cards--animColorFill
+            ]
+        }
+        title {
+            column: LABEL
+        }
+        body {
+            column: VALUE
+            advancedFormatting: true
+            htmlExpression: <span class="t-Card-subtitle">&VALUE.</span>
+        }
+        media {
+            advancedFormatting: true
+            htmlExpression: <span class="fa-4x &ICON."></span>
+        }
+    )
+
+    region page-navigation (
+        name: Page Navigation
+        type: list
+        source {
+            list: @page-navigation
+        }
+        layout {
+            sequence: 30
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--hideHeader js-addHiddenHeadingRoleDesc
+                t-Region--noUI
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            listTemplate: @/cards
+            templateOptions: [
+                #DEFAULT#
+                u-colors
+                t-Cards--featured t-Cards--block force-fa-lg
+                t-Cards--displayIcons
+                t-Cards--4cols
+                t-Cards--hideBody
+                t-Cards--animColorFill
+            ]
+        }
+    )
+
+)

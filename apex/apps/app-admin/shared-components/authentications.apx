@@ -1,0 +1,20 @@
+authentication regal-auth (
+    name: REGAL Authentication
+    type: custom
+    settings {
+        authFunctionName: regal_login
+    }
+    source {
+        plsqlCode:
+            ```plsql
+            function regal_login (
+                p_username in varchar2,
+                p_password in varchar2 )
+                return boolean
+            is
+            begin
+                return app_sys.pkg_apex_auth.authenticate(p_username, p_password);
+            end regal_login;
+            ```
+    }
+)

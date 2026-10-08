@@ -1,0 +1,72 @@
+app APP-ACHATS (
+    name: APP_ACHATS
+    logo {
+        type: text
+        text: APP_ACHATS
+    }
+    navigation {
+        homeUrl: {
+            page: 1
+        }
+        loginUrl: {
+            page: LOGIN
+        }
+    }
+    navigationMenu {
+        listTemplate: @/side-navigation-menu
+        templateOptions: [
+            #DEFAULT#
+            t-TreeNav--styleA
+            js-navCollapsed--hidden
+        ]
+        list: @navigation-menu
+    }
+    navigationBar {
+        list: @navigation-bar
+        listTemplate: @/navigation-bar
+        templateOptions: #DEFAULT#
+    }
+    userInterface {
+        currentTheme: @universal-theme
+        globalPage: 0
+        addBuiltWithApexToFooter: false
+    }
+    appFormatMasks {
+        date: DS
+        timestamp: DS
+        timestampTimeZone: DS
+    }
+    authentication {
+        scheme: @regal-auth
+    }
+    sessionStateProtection {
+        checksumSalt: 1A2B3C4D5E6F7890A1B2C3D4E5F6789012345678A1B2C3D4E5F6789012345678A
+    }
+    runtime {
+        allowFeedback: true
+    }
+    globalization {
+        primaryLanguage: fr
+        languageDerivedFrom: session
+    }
+
+    substitution APP_NAME (
+        value {
+            staticValue: REGAL Achats
+        }
+    )
+
+    substitution COMPANY_NAME (
+        value {
+            staticValue: LITOKO SARL — Pointe-Noire
+        }
+    )
+
+    substitution CURRENCY_CODE (
+        value {
+            staticValue: XAF
+        }
+    )
+
+)
+

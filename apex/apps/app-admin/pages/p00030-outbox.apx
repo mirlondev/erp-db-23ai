@@ -1,0 +1,282 @@
+page 30 (
+    name: Outbox CDC
+    alias: OUTBOX
+    title: Outbox / CDC (sync)
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-admin
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region outbox-stats (
+        name: Statistiques outbox
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select status,
+                       count(*) as nb_events,
+                       min(created_at) as oldest,
+                       max(created_at) as newest
+                  from app_sys.outbox_event
+                 where created_at > systimestamp - interval '7' day
+                 group by status
+                 order by decode(status,'PENDING',1,'FAILED',2,'PROCESSED',3,'RETRYING',4,5)
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column STATUS (
+            reportColumnQueryId: 100
+            derivedColumn: N
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 10
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column NB_EVENTS (
+            reportColumnQueryId: 200
+            derivedColumn: N
+            heading {
+                heading: Nb evenements
+                alignment: end
+            }
+            layout {
+                sequence: 20
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column OLDEST (
+            reportColumnQueryId: 300
+            derivedColumn: N
+            heading {
+                heading: Plus ancien
+            }
+            layout {
+                sequence: 30
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column NEWEST (
+            reportColumnQueryId: 400
+            derivedColumn: N
+            heading {
+                heading: Plus recent
+            }
+            layout {
+                sequence: 40
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+    )
+
+    region outbox-events (
+        name: Evenements outbox (echecs)
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select event_id,
+                       object_owner,
+                       object_name,
+                       primary_key_value,
+                       operation,
+                       status,
+                       retry_count,
+                       to_char(created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at,
+                       to_char(processed_at, 'DD/MM/YYYY HH24:MI:SS') as processed_at,
+                       substr(error_message, 1, 200) as error
+                  from app_sys.outbox_event
+                 where status in ('FAILED','PENDING','RETRYING')
+                 order by created_at desc
+                 fetch first 100 rows only
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column EVENT_ID (
+            type: hidden
+            heading {
+                heading: ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column OBJECT_OWNER (
+            type: plainText
+            heading {
+                heading: Schema
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column OBJECT_NAME (
+            type: plainText
+            heading {
+                heading: Table
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PRIMARY_KEY_VALUE (
+            type: plainText
+            heading {
+                heading: PK value
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column OPERATION (
+            type: plainText
+            heading {
+                heading: Op
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column STATUS (
+            type: plainText
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column RETRY_COUNT (
+            type: plainText
+            heading {
+                heading: Retry
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column CREATED_AT (
+            type: plainText
+            heading {
+                heading: Cree
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PROCESSED_AT (
+            type: plainText
+            heading {
+                heading: Traite
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column ERROR (
+            type: plainText
+            heading {
+                heading: Erreur
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        savedReport default-outbox (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 25
+            }
+        )
+    )
+
+)

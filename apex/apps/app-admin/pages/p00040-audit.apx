@@ -1,0 +1,192 @@
+page 40 (
+    name: Audit Trail
+    alias: AUDIT
+    title: Audit trail
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-superadmin
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region audit-trail (
+        name: Audit trail (SYS_AUDIT_TRAIL partitionne)
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select audit_id,
+                       to_char(audit_date, 'DD/MM/YYYY HH24:MI:SS') as audit_date,
+                       user_code,
+                       app_code,
+                       entity_code,
+                       action_code,
+                       table_name,
+                       primary_key,
+                       ip_address,
+                       substr(details, 1, 200) as details
+                  from app_sys.sys_audit_trail
+                 where audit_date >= trunc(sysdate) - 30
+                 order by audit_date desc
+                 fetch first 500 rows only
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column AUDIT_ID (
+            type: hidden
+            heading {
+                heading: ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column AUDIT_DATE (
+            type: plainText
+            heading {
+                heading: Date
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column USER_CODE (
+            type: plainText
+            heading {
+                heading: User
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column APP_CODE (
+            type: plainText
+            heading {
+                heading: App
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column ENTITY_CODE (
+            type: plainText
+            heading {
+                heading: Entite
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column ACTION_CODE (
+            type: plainText
+            heading {
+                heading: Action
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column TABLE_NAME (
+            type: plainText
+            heading {
+                heading: Table
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PRIMARY_KEY (
+            type: plainText
+            heading {
+                heading: PK
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column IP_ADDRESS (
+            type: plainText
+            heading {
+                heading: IP
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column DETAILS (
+            type: plainText
+            heading {
+                heading: Details
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        savedReport default-audit (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+        )
+    )
+
+)

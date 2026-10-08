@@ -1,0 +1,139 @@
+page 20 (
+    name: Roles
+    alias: ROLES
+    title: Roles et permissions
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-admin
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region roles-list (
+        name: Roles REGAL
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select role_code,
+                       role_name,
+                       role_level,
+                       decode(is_active,
+                                    1, 'Actif',
+                                    0, 'Inactif',
+                                    is_active) as status,
+                       description,
+                       (select count(*) from app_sys.sys_user_role ur where ur.role_code = r.role_code) as nb_users
+                  from app_sys.sys_role r
+                 order by role_level, role_code
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+
+        column ROLE_CODE (
+            reportColumnQueryId: 100
+            derivedColumn: N
+            heading {
+                heading: Code role
+            }
+            layout {
+                sequence: 10
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column ROLE_NAME (
+            reportColumnQueryId: 200
+            derivedColumn: N
+            heading {
+                heading: Nom
+            }
+            layout {
+                sequence: 20
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column ROLE_LEVEL (
+            reportColumnQueryId: 300
+            derivedColumn: N
+            heading {
+                heading: Niveau
+                alignment: end
+            }
+            layout {
+                sequence: 30
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column STATUS (
+            reportColumnQueryId: 400
+            derivedColumn: N
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 40
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column DESCRIPTION (
+            reportColumnQueryId: 500
+            derivedColumn: N
+            heading {
+                heading: Description
+            }
+            layout {
+                sequence: 50
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+        column NB_USERS (
+            reportColumnQueryId: 600
+            derivedColumn: N
+            heading {
+                heading: Nb utilisateurs
+                alignment: end
+            }
+            layout {
+                sequence: 60
+            }
+            sorting {
+                sortable: false
+            }
+        )
+
+    )
+
+)

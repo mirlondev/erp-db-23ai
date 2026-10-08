@@ -1,0 +1,192 @@
+page 10 (
+    name: Suppliers
+    alias: SUPPLIERS
+    title: Fournisseurs (OTD)
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-acheteur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region suppliers-list (
+        name: Liste fournisseurs
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select party_code,
+                       party_name,
+                       city,
+                       country,
+                       phone,
+                       email,
+                       payment_terms,
+                       credit_days,
+                       is_blocked,
+                       creation_date
+                  from app_party.party
+                 where nature_id = 2  -- suppliers
+                 order by party_name
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column PARTY_CODE (
+            type: plainText
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PARTY_NAME (
+            type: plainText
+            heading {
+                heading: Nom fournisseur
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column CITY (
+            type: plainText
+            heading {
+                heading: Ville
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column COUNTRY (
+            type: plainText
+            heading {
+                heading: Pays
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PHONE (
+            type: plainText
+            heading {
+                heading: Tel
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column EMAIL (
+            type: plainText
+            heading {
+                heading: Email
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PAYMENT_TERMS (
+            type: plainText
+            heading {
+                heading: Conditions
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column CREDIT_DAYS (
+            type: plainText
+            heading {
+                heading: Credit (j)
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column IS_BLOCKED (
+            type: plainText
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column CREATION_DATE (
+            type: plainText
+            heading {
+                heading: Cree le
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: DATE
+            }
+        )
+
+        savedReport default-suppliers (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 25
+            }
+        )
+    )
+
+)

@@ -1,0 +1,236 @@
+page 20 (
+    name: Purchase Orders
+    alias: PURCHASE-ORDERS
+    title: Bons de commande
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-acheteur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region po-list (
+        name: Bons de commande fournisseurs
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select po.po_id,
+                       po.po_number,
+                       to_char(po.po_date, 'DD/MM/YYYY') as po_date,
+                       s.party_code as supplier_code,
+                       s.party_name as supplier_name,
+                       w.warehouse_code,
+                       po.currency_code,
+                       po.total_ht,
+                       po.total_ttc,
+                       po.status,
+                       po.expected_delivery,
+                       po.notes,
+                       po.created_by
+                  from app_purchase.purchase_order po
+                  join app_party.party s on s.party_code = po.supplier_code
+                  left join app_org.org_warehouse w on w.warehouse_code = po.destination_warehouse
+                 order by po.po_date desc
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column PO_ID (
+            type: plainText
+            heading {
+                heading: ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column PO_NUMBER (
+            type: plainText
+            heading {
+                heading: N° BC
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PO_DATE (
+            type: plainText
+            heading {
+                heading: Date
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column SUPPLIER_CODE (
+            type: plainText
+            heading {
+                heading: Fournisseur
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column SUPPLIER_NAME (
+            type: plainText
+            heading {
+                heading: Nom
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column WAREHOUSE_CODE (
+            type: plainText
+            heading {
+                heading: Depot
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column CURRENCY_CODE (
+            type: plainText
+            heading {
+                heading: Devise
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column TOTAL_HT (
+            type: plainText
+            heading {
+                heading: Total HT (XAF)
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column TOTAL_TTC (
+            type: plainText
+            heading {
+                heading: Total TTC
+                alignment: end
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column STATUS (
+            type: plainText
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column EXPECTED_DELIVERY (
+            type: plainText
+            heading {
+                heading: Livraison prevue
+            }
+            layout {
+                sequence: 110
+            }
+            source {
+                dataType: DATE
+            }
+        )
+
+        column NOTES (
+            type: plainText
+            heading {
+                heading: Notes
+            }
+            layout {
+                sequence: 120
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column CREATED_BY (
+            type: plainText
+            heading {
+                heading: Cree par
+            }
+            layout {
+                sequence: 130
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        savedReport default-po (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 25
+            }
+        )
+    )
+
+)

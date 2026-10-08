@@ -1,0 +1,236 @@
+page 40 (
+    name: Supplier Products
+    alias: SUPPLIER-PRODUCTS
+    title: Catalogue articles par fournisseur
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-acheteur
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region supplier-products-list (
+        name: Articles par fournisseur
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select sp.supplier_product_id,
+                       sp.supplier_code,
+                       s.party_name as supplier_name,
+                       sp.product_code,
+                       sp.product_name,
+                       sp.unit_purchase,
+                       sp.purchase_price,
+                       sp.min_order_qty,
+                       sp.lead_time_days,
+                       to_char(sp.valid_from, 'DD/MM/YYYY') as valid_from,
+                       to_char(sp.valid_to, 'DD/MM/YYYY') as valid_to,
+                       case when sp.is_preferred = 1 then 'Oui' else 'Non' end as is_preferred,
+                       sp.supplier_ref
+                  from app_api.supplier_product sp
+                  join app_party.party s on s.party_code = sp.supplier_code
+                 order by sp.supplier_code, sp.product_code
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column SUPPLIER_PRODUCT_ID (
+            type: hidden
+            heading {
+                heading: ID
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column SUPPLIER_CODE (
+            type: plainText
+            heading {
+                heading: Fournisseur
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column SUPPLIER_NAME (
+            type: plainText
+            heading {
+                heading: Nom
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PRODUCT_CODE (
+            type: plainText
+            heading {
+                heading: Article
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PRODUCT_NAME (
+            type: plainText
+            heading {
+                heading: Libelle
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column UNIT_PURCHASE (
+            type: plainText
+            heading {
+                heading: Unite
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PURCHASE_PRICE (
+            type: plainText
+            heading {
+                heading: Prix achat
+                alignment: end
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column MIN_ORDER_QTY (
+            type: plainText
+            heading {
+                heading: Qte min
+                alignment: end
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column LEAD_TIME_DAYS (
+            type: plainText
+            heading {
+                heading: Delai (j)
+                alignment: end
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column VALID_FROM (
+            type: plainText
+            heading {
+                heading: Valide du
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column VALID_TO (
+            type: plainText
+            heading {
+                heading: au
+            }
+            layout {
+                sequence: 110
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column IS_PREFERRED (
+            type: plainText
+            heading {
+                heading: Prefere
+            }
+            layout {
+                sequence: 120
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column SUPPLIER_REF (
+            type: plainText
+            heading {
+                heading: Ref fournisseur
+            }
+            layout {
+                sequence: 130
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        savedReport default-supplier-products (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+        )
+    )
+
+)

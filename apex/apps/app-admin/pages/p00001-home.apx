@@ -1,0 +1,127 @@
+page 1 (
+    name: Home
+    alias: HOME
+    title: APP_ADMIN Dashboard
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-admin
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region app-admin-hero (
+        name: APP_ADMIN Dashboard
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/hero
+            templateOptions: #DEFAULT#
+        }
+        image {
+            fileUrl: #APP_FILES#icons/app-icon-512.png
+        }
+    )
+
+    region kpi-cards (
+        name: KPIs Administration
+        type: cards
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select label, valeur as value,
+                       case label
+                         when 'Utilisateurs actifs'      then 'fa-users'
+                         when 'Roles configures'        then 'fa-key'
+                         when 'Evenements outbox'       then 'fa-stream'
+                         when 'Sites deployes'          then 'fa-globe-africa'
+                         when 'Alertes ouvertes'         then 'fa-bell'
+                         when 'API erreurs 24h'         then 'fa-exclamation-circle'
+                         else 'fa-cog'
+                       end as icon,
+                       null as link
+                  from app_api.v_admin_kpi_cards
+                 where label in ('Utilisateurs actifs','Roles configures','Evenements outbox','API erreurs 24h')
+                 order by decode(label,'Utilisateurs actifs',1,'Roles configures',2,'Evenements outbox',3,'API erreurs 24h',4)
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/cards-container
+            templateOptions: [
+                #DEFAULT#
+                t-CardsRegion--styleA
+            ]
+        }
+        componentAppearance {
+            gridColumns: 4
+            template: @/cards
+            templateOptions: [
+                #DEFAULT#
+                u-colors
+                t-Cards--featured t-Cards--block force-fa-lg
+                t-Cards--displayIcons
+                t-Cards--animColorFill
+            ]
+        }
+        title {
+            column: LABEL
+        }
+        body {
+            column: VALUE
+            advancedFormatting: true
+            htmlExpression: <span class="t-Card-subtitle">&VALUE.</span>
+        }
+        media {
+            advancedFormatting: true
+            htmlExpression: <span class="fa-4x &ICON."></span>
+        }
+    )
+
+    region page-navigation (
+        name: Page Navigation
+        type: list
+        source {
+            list: @page-navigation
+        }
+        layout {
+            sequence: 30
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--hideHeader js-addHiddenHeadingRoleDesc
+                t-Region--noUI
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            listTemplate: @/cards
+            templateOptions: [
+                #DEFAULT#
+                u-colors
+                t-Cards--featured t-Cards--block force-fa-lg
+                t-Cards--displayIcons
+                t-Cards--4cols
+                t-Cards--hideBody
+                t-Cards--animColorFill
+            ]
+        }
+    )
+
+)

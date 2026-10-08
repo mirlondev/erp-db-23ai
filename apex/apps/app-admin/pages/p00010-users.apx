@@ -1,0 +1,162 @@
+page 10 (
+    name: Users
+    alias: USERS
+    title: Utilisateurs REGAL
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        authorizationScheme: @regal-admin
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region users-list (
+        name: Liste des utilisateurs
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select u.user_code,
+                       u.user_name,
+                       u.email,
+                       u.language_code,
+                       case u.is_active when 1 then 'Actif' else 'Inactif' end as status,
+                       u.password_changed_at,
+                       u.last_login_at,
+                       u.creation_date
+                  from app_sys.sys_user u
+                 order by u.user_name
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--hideHeader js-addHiddenHeadingRoleDesc
+            ]
+        }
+
+        column USER_CODE (
+            type: plainText
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column USER_NAME (
+            type: plainText
+            heading {
+                heading: Nom
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column EMAIL (
+            type: plainText
+            heading {
+                heading: Email
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column LANGUAGE_CODE (
+            type: plainText
+            heading {
+                heading: Langue
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column STATUS (
+            type: plainText
+            heading {
+                heading: Statut
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: VARCHAR2
+            }
+        )
+
+        column PASSWORD_CHANGED_AT (
+            type: plainText
+            heading {
+                heading: MDP change
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: DATE
+            }
+        )
+
+        column LAST_LOGIN_AT (
+            type: plainText
+            heading {
+                heading: Derniere connexion
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: DATE
+            }
+        )
+
+        column CREATION_DATE (
+            type: plainText
+            heading {
+                heading: Cree le
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: DATE
+            }
+        )
+
+        savedReport default-users (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 25
+            }
+        )
+    )
+
+)

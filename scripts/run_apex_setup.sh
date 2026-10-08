@@ -26,6 +26,7 @@ for script in \
   05_apex_litoko_branding.sql \
   06_apex_components_fix.sql \
   14_bootstrap_users.sql \
+  15_app_achats_admin_views.sql \
   07_apex_lovs.sql \
   08_apex_authorizations.sql \
   09_apex_nav_menus.sql \
@@ -74,7 +75,7 @@ echo ""
 echo "  URLs d'accès (après démarrage ORDS) :"
 echo "    App 100 POS      : http://localhost:8080/apex/f?p=100:10"
 echo "    App 200 Stock    : http://localhost:8080/apex/f?p=200:10"
-echo "    App 300 Achats   : http://localhost:8080/apex/f?p=300:10"
-echo "    App 400 Compta   : http://localhost:8080/apex/f?p=400:10"
+echo "    App 300 Achats   : http://localhost:8080/apex/f?p=400:10"
+echo "    App 400 Compta   : http://localhost:8080/apex/f?p=300:10"
 echo "    App 500 Admin    : http://localhost:8080/apex/f?p=500:10"
 echo "═══════════════════════════════════════════════════════════"
